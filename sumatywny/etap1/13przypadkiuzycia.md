@@ -13,20 +13,20 @@ Tabela 1.3.1 Słownik aktorów w systemie
 
 <br>
 
-![Diagram przypadków użycia - aktor Student](/img/uc_student.png)
+![Diagram przypadków użycia - aktor Student](img/uc_student.png)
 
 Rysunek 1.3.1 Diagram przypadków użycia dla aktora Student
 
 
-![Diagram przypadków użycia - aktor Prowadzący](/img/uc_teacher.png)
+![Diagram przypadków użycia - aktor Prowadzący](img/uc_teacher.png)
 
 Rysunek 1.3.2 Diagram przypadków użycia dla aktora Prowadzący
 
-![Diagram przypadków użycia - aktor Prowadzący dodatkowy](/img/uc_additional_teacher.png)
+![Diagram przypadków użycia - aktor Prowadzący dodatkowy](img/uc_additional_teacher.png)
 
 Rysunek 1.3.3 Diagram przypadków użycia dla aktora Prowadzący dodatkowy
 
-![Diagram przypadków użycia - aktor System](/img/uc_system.png)
+![Diagram przypadków użycia - aktor System](img/uc_system.png)
 
 Rysunek 1.3.4 Diagram przypadków użycia dla aktora System
 
