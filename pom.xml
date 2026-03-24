@@ -14,7 +14,7 @@
     <artifactId>ssbd01</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ssbd01-api</name>
-    <description>SSBD 2026 Projekt C-Well Finder Grupa 01 - API</description>
+    <description></description>
 
     <properties>
         <java.version>25</java.version>
