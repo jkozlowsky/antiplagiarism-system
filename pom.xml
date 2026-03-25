@@ -12,7 +12,7 @@
 
     <groupId>pl.lodz.p.it.ssbd2026.ssbd01</groupId>
     <artifactId>ssbd01</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>ssbd01-api</name>
     <description>Projekt antyplagiatowy</description>
 
@@ -24,6 +24,13 @@
                 <role>Szef</role>
                 <role>Repozytorium</role>
                 <role>Kontrola zgodności</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Remigiusz Bartczak</name>
+            <email>252926@edu.p.lodz.pl</email>
+            <roles>
+                <role>Architektura</role>
             </roles>
         </developer>
     </developers>
