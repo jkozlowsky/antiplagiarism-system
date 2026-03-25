@@ -12,11 +12,11 @@ Zamawiający: **Marcin Kwapisz**
 
 **Członkowie zespołu:**
 * **Danylo Dobrianskyi 258668 - szef zespołu**
-* Paweł Rajnert -
-* Mateusz Chodulski -
-* Karol Dawid -
-* Jan Kozłowski -
-* Remigiusz Bartczak -
+* Paweł Rajnert
+* Mateusz Chodulski
+* Karol Dawid
+* Jan Kozłowski
+* Remigiusz Bartczak
 
 [TOC]
 
