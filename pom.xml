@@ -33,6 +33,13 @@
                 <role>Architektura</role>
             </roles>
         </developer>
+        <developer>
+            <name>Jan Kozłowski</name>
+            <email>251562@edu.p.lodz.pl</email>
+            <roles>
+                <role>Dokumentacja</role>
+            </roles>
+        </developer>
     </developers>
 
     <properties>
