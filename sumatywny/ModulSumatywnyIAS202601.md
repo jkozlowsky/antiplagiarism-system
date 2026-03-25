@@ -6,13 +6,17 @@ INFRASTRUKTURA I APLIKACJE SIECIOWE
 
 # Dane projektu
 
-Projekt Moduł Sumatywny IAS 2026 **0X: "Temat projektu"**
+Projekt Moduł Sumatywny IAS 2026 **01: "Temat projektu"**
 
-Zamawiający: **Imię Nazwisko**
+Zamawiający: **Marcin Kwapisz**
 
 **Członkowie zespołu:**
-* **Imię Nazwisko Indeks - szef zespołu**
-* Imię Nazwisko Indeks
+* **Danylo Dobrianskyi 258668 - szef zespołu**
+* Paweł Rajnert -
+* Mateusz Chodulski -
+* Karol Dawid -
+* Jan Kozłowski -
+* Remigiusz Bartczak -
 
 [TOC]
 
