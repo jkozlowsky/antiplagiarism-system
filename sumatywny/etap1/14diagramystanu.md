@@ -1,18 +1,21 @@
-Remek, Mati
 ## 1.4. Diagram(y) stanów (przejść)
 
-Należy zaprezentować diagram(y) stanów (przejść) dla tych obiektów modelu dziedzinowego, które w ramach swojego cyklu życia zmieniają stan (w sensie zmiany
-znaczenia dziedzinowego). 
+![Diagram stanów - Raport](img/sd_raport.png)
 
-Obowiązkiem zaprezentowania nie są objęte:
-* zmiany stanów kont użytkowników systemu
-* trywialne jednoprzejściowe i bezwarunkowe zmiany stanów np. obiekt aktywny i nieaktywny
-* aktualizacje stanu agregatu wyliczeniowego, na przykład zaktualizowanie wartości koszyka zakupów po dodaniu produktu
+Rysunek 1.4.1 Diagram stanów dla Raportu.
 
-UWAGA: nie traktuje się jako zmiany stanu obiektu zbudowania czy też porzucenia związku z innym obiektem, na przykład dodania produktu do koszyka zakupów nie
-traktuje się jako zmiany stanu ani produktu, ani koszyka.
+![Diagram stanów - Przedmiot](img/sd_subject.png)
 
-Dla każdego przejścia na diagramie należy opisać jaka akcja/przypadek użycia wraz z rolą powoduje dane przejście oraz ewentualne warunki danego przejścia. To, że
-dany obiekt musi istnieć, aby mógł zmienić stan, należy przyjąć jako oczywistość.
+Rysunek 1.4.2 Diagram stanów dla Przedmiotu.
 
-Przykład opisu: Nauczyciel: zatwierdź zaliczenie / ocena nie mniejsza niż minimalna
+![Diagram stanów - Harmonogram](img/sd_schedule.png)
+
+Rysunek 1.4.3 Diagram stanów dla Harmonogramu.
+
+![Diagram stanów - Repozytorium](img/sd_repository.png)
+
+Rysunek 1.4.4 Diagram stanów dla Repozytorium.
+
+![Diagram stanów - Konto](img/sd_account.png)
+
+Rysunek 1.4.5 Diagram stanów dla Konta.
