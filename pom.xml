@@ -27,6 +27,14 @@
             </roles>
         </developer>
         <developer>
+            <name>Mateusz Chodulski</name>
+            <email>252929@edu.p.lodz.pl</email>
+            <roles>
+                <role>Wdrożenie</role>
+                <role>Kontrola jakości</role>
+            </roles>
+        </developer>
+        <developer>
             <name>Remigiusz Bartczak</name>
             <email>252926@edu.p.lodz.pl</email>
             <roles>
