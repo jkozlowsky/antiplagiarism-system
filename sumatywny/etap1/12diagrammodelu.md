@@ -1,7 +1,7 @@
-Danylo
 ## 1.2. Diagram UML klas modelu dziedzinowego
 
-Diagram uwzględniający klasy modelu dziedzinowego wraz z ich atrybutami oraz powiązaniami (w tym — licznością związków).
+Diagram uwzględniający klasy modelu dziedzinowego wraz z ich atrybutami oraz powiązaniami (w tym — licznością związków) zaprezentowano na rysunku 1.2.1.
 
-Diagram musi uwzględniać wszystkie klasy związane z dziedziną projektu, natomiast nie musi zawierać klas i atrybutów związanych z technicznymi aspektami
-uwierzytelniania, kontroli dostępu i zarządzania kontami w systemie.
+![Diagram UML klas modelu dziedzinowego](./img/Domain_UML_V1_1.jpg)
+
+Rysunek 1.2.1. Diagram UML klas modelu dziedzinowego.
