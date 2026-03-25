@@ -14,7 +14,19 @@
     <artifactId>ssbd01</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ssbd01-api</name>
-    <description></description>
+    <description>Projekt antyplagiatowy</description>
+
+    <developers>
+        <developer>
+            <name>Danylo Dobrianskyi</name>
+            <email>258668@edu.p.lodz.pl</email>
+            <roles>
+                <role>Szef</role>
+                <role>Repozytorium</role>
+                <role>Kontrola zgodności</role>
+            </roles>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>25</java.version>
