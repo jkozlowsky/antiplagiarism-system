@@ -48,6 +48,14 @@
                 <role>Dokumentacja</role>
             </roles>
         </developer>
+        <developer>
+            <name>Paweł Rajnert</name>
+            <email>251618@edu.p.lodz.pl</email>
+            <roles>
+                <role>Baza danych</role>
+                <role>Kontola jakości</role>
+            </roles>
+        </developer>
     </developers>
 
     <properties>
