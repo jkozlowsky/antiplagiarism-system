@@ -48,12 +48,20 @@
                 <role>Dokumentacja</role>
             </roles>
         </developer>
-	<developer>
+	    <developer>
             <name>Karol Dawid</name>
             <email>252931@edu.p.lodz.pl</email>
             <roles>
                 <role>Wdrożenie</role>
                 <role>Kontrola jakości</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Paweł Rajnert</name>
+            <email>251618@edu.p.lodz.pl</email>
+            <roles>
+                <role>Baza danych</role>
+                <role>Kontola jakości</role>
             </roles>
         </developer>
     </developers>
