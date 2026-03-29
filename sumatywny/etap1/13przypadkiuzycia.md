@@ -4,19 +4,18 @@ Tabela 1.3.1 Słownik aktorów w systemie
 
 |Aktor|Opis roli aktora|Przypadki użycia aktora|
 |-|-|-|
-|Gość|Użytkownik nieuwierzytelniony, nieposiadający dostępu do głównych funkcjonalności systemu. W celu wyświetlenia dalszych informacji oprócz strony głównej i strony logowania, użytkownik musi zalogować się do systemu.|Z wyjątkiem Modułu Obsługi Kont - brak|
-|Administrator|Administrator systemu, posiadający uprawnienia do zarządzania Modułem Obsługi Kont.|Z wyjątkiem Modułu Obsługi Kont - brak|
-|Student|Student to uczeń, który realizuje dany przedmiot lub przedmioty na semestrze, gdzie jest zobligowany do zamieszczania kodu na repozytorium.|Sprawdzanie swojego kodu - MPP X<br />Przeglądanie swoich raportów - MPP X|
-|Prowadzący|Prowadzący to nauczyciel, który ma dostęp do danego przedmiotu, może precyzować zakresy uprawnień dla Studentów i inne ustawienia przedmiotu. Jest on właścicielem danego przedmiotu.|Generowanie raportów - MPP X<br />Generowanie raportów po ustawieniu harmonogramu - MPP X<br />Generowanie raportów na żądanie - MPP X<br />Przeglądanie raportów - MPP X<br />Przeglądanie wszystkich raportów - MPP X<br />Przeglądanie jednego raportu - MPP X<br />Przeglądanie przedmiotów - MPP X<br />Sortuj przedmioty - MPP X<br />Filtruj przedmioty - MPP X<br />Usuwanie raportów - MPP X<br />Przeglądanie repozytoriów - MPP X<br />Przeglądanie kont użytkowników - MPP X<br />Tworzenie harmonogramu - MPP X<br />Tworzenie przedmiotu - MPP X<br />Edycja przedmiotu - MPP X<br />Usuwanie przedmiotu - MPP X<br />Tworzenie reguł - MPP X<br />Przeglądanie reguł - MPP X<br />Edycja reguł - MPP X<br />Usuwanie reguł - MPP X|
-|Prowadzący dodatkowy|Prowadzący dodatkowy to nauczyciel, który jest współrealizatorem danego przedmiotu, jednak nie posiada praw edycji.|Generowanie raportów - MPP X<br />Generowanie raportów na żądanie - MPP X<br />Przeglądanie raportów - MPP X<br />Przeglądanie wszystkich raportów - MPP X<br />Przeglądanie jednego raportu - MPP X<br />Przeglądanie przedmiotów - MPP X<br />Sortuj przedmioty - MPP X<br />Filtruj przedmioty - MPP X<br />Przeglądanie repozytoriów - MPP X<br />Przeglądanie kont użytkowników - MPP X<br />Przeglądanie reguł - MPP X|
-|System|System to aktor w systemie odpowiadający za automatycznie wykonywane i zaplanowane akcje bez dodatkowego działania Prowadzącego.|Wygeneruj raport według harmonogramu - MPP X|
+|Gość|Użytkownik nieuwierzytelniony, aby skorzystać z funkcjonalnośći aplikacji należy zarejestrować się lub zalogować się na obecnie istniejące konto z innym poziomem dostępu.|Z wyjątkiem Modułu Obsługi Kont - brak|
+|Administrator|Administrator to jedyny aktor posiadający uprawnienia pozwalające na zarządzanie wszystkimi dostępnymi kontami w systemie.|Z wyjątkiem Modułu Obsługi Kont - brak|
+|Student|Student to uczeń, który realizuje dany przedmiot lub przedmioty na semestrze, gdzie jest zobligowany do zamieszczania kodu na repozytorium.|MPP.19 - Sprawdzenie swojego kodu<br />MPP.20 - Przeglądanie swoich raportów|
+|Prowadzący|Prowadzący to nauczyciel akademicki, który zarządza dostępnymi przedmiotami wraz z ich regułami oraz harmonogramami i monitoruje wyniki Studentów względem możliwego plagiatu.|MPP.1 - Generowanie raportu po ustawieniu harmonogramu<br />MPP.2 - Generowanie raportu na żądanie<br />MPP.3 - Przeglądanie wszystkich raportów<br />MPP.4 - Przeglądanie jednego raportu<br />MPP.5 - Przeglądanie przedmiotów<br />MPP.6 - Filtrowanie przedmiotów<br />MPP.7 - Sortowanie przedmiotów<br />MPP.8 - Usuwanie raportów<br />MPP.9 - Przeglądanie repozytoriów<br />MPP.10 - Przeglądanie kont użytkowników<br />MPP.11 - Przeglądanie harmonogramu<br />MPP.12 - Przeglądanie reguł<br />MPP.13 - Tworzenie przedmiotu<br />MPP.14 - Edycja przedmiotu<br />MPP.15 - Usuwanie przedmiotu<br />MPP.16 - Tworzenie reguł<br />MPP.17 - Edycja reguł<br />MPP.18 - Usuwanie reguł|
+|Prowadzący dodatkowy|Prowadzący dodatkowy to nauczyciel akademicki posiadający jedynie prawo do odczytu w danym przedmiocie.|MPP.2 - Generowanie raportu na żądanie<br />MPP.3 - Przeglądanie wszystkich raportów<br />MPP.4 - Przeglądanie jednego raportu<br />MPP.5 - Przeglądanie przedmiotów<br />MPP.6 - Filtrowanie przedmiotów<br />MPP.7 - Sortowanie przedmiotów<br />MPP.9 - Przeglądanie repozytoriów<br />MPP.10 - Przeglądanie kont użytkowników<br />MPP.12 - Przeglądanie reguł|
+|System|System to aktor w systemie odpowiadający za automatyczne wykonywanie zaplanowanych akcji bez dodatkowego działania Prowadzącego.|MPP.21 - Wygeneruj raport według harmonogramu|
 
 <br>
 
 ![Diagram przypadków użycia - aktor Student](img/uc_student.png)
 
 Rysunek 1.3.1 Diagram przypadków użycia dla aktora Student
-
 
 ![Diagram przypadków użycia - aktor Prowadzący](img/uc_teacher.png)
 
