@@ -1,6 +1,6 @@
 ## 1.4. Diagram(y) stanów (przejść)
 
-![Diagram stanów - Raport](img/sd_raport.png)
+![Diagram stanów - Raport](img/sd_report.png)
 
 Rysunek 1.4.1 Diagram stanów dla Raportu.
 
