@@ -49,214 +49,634 @@ Rysunek 1.2.6 Diagram przypadków użycia dla aktora Student
 
 Tabela 1.2.2 Scenariusz dla przypadku użycia MOK.1
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.1| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.1|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.3 Scenariusz dla przypadku użycia MOK.2
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.2| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.2|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.4 Scenariusz dla przypadku użycia MOK.3
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.3| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.3|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.5 Scenariusz dla przypadku użycia MOK.4
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.4| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.4|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.6 Scenariusz dla przypadku użycia MOK.5
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.5| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.5|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.7 Scenariusz dla przypadku użycia MOK.6
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.6| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.6|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.8 Scenariusz dla przypadku użycia MOK.7
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.7| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.7|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.9 Scenariusz dla przypadku użycia MOK.8
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.8| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.8|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.10 Scenariusz dla przypadku użycia MOK.9
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.9| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.9|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.11 Scenariusz dla przypadku użycia MOK.10
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.10| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.10|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.12 Scenariusz dla przypadku użycia MOK.11
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.11| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.11|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.13 Scenariusz dla przypadku użycia MOK.12
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.12| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.12|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.14 Scenariusz dla przypadku użycia MOK.13
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.13| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.13|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.15 Scenariusz dla przypadku użycia MOK.14
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MOK.14| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.14|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.16 Scenariusz dla przypadku użycia MPP.1
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.1| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.1|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.17 Scenariusz dla przypadku użycia MPP.2
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.2| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.2|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.3
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.3| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.3|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 
 Tabela 1.2.19 Scenariusz dla przypadku użycia MPP.4
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.4| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.4|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.5
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.5| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.5|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.6
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.6| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.6|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.22 Scenariusz dla przypadku użycia MPP.7
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.7| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.7|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.23 Scenariusz dla przypadku użycia MPP.8
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.8| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.8|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.24 Scenariusz dla przypadku użycia MPP.9
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.9| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.9|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.25 Scenariusz dla przypadku użycia MPP.10
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.10| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.10|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.26 Scenariusz dla przypadku użycia MPP.11
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.11| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.11|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.27 Scenariusz dla przypadku użycia MPP.12
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.12| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.12|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.28 Scenariusz dla przypadku użycia MPP.13
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.13| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.13|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.29 Scenariusz dla przypadku użycia MPP.14
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.14| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.14|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.30 Scenariusz dla przypadku użycia MPP.15
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.15| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.15|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.16
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.16| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.16|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.17
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.17| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.17|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.33 Scenariusz dla przypadku użycia MPP.18
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.18| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.18|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.19
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.19| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.19|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.20
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.20| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.20|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
 
-|Przypadek użycia|Twórca|Poziom ważności|Typ przypadku użycia|Aktorzy|Krótki opis|Warunki wstępne|Warunki końcowe|Główny przepływ zdarzeń|Alternatywne przepłīwy zdarzeń|Specjalne wymagania|Notatki i kwestie|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-|MPP.21| | | | | | | | | | | |
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.21|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
 
 **Lista modułów funkcjonalnych i przypadków użycia**
 
