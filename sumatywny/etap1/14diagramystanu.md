@@ -10,7 +10,7 @@ Proces generowania raportu inicjowany jest ręcznie przez prowadzącego lub auto
 
 Rysunek 1.4.2 Diagram stanów dla Przedmiotu.
 
-Nowo utworzony przedmiot wymaga wstępnej konfiguracji, polegającej na poprawnym przypisaniu repozytoriów oraz innych prowadzących. Po udanej walidacji danych i uruchomieniu harmonogramu sprawdzania zadań, przedmiot staje się w pełni aktywny i jest monitorowany przez system. Po zakończeniu okresu prowadzenia zajęć prowadzący może przenieść przedmiot do archiwum, a z czasem całkowicie go usunąć wraz ze wszystkimi historycznymi raportami.
+Nowo utworzony przedmiot wymaga wstępnej konfiguracji, polegającej na poprawnym przypisaniu repozytoriów oraz innych prowadzących. Po udanej walidacji danych i uruchomieniu harmonogramu sprawdzania zadań przedmiot staje się w pełni aktywny i jest monitorowany przez system. Po zakończeniu okresu prowadzenia zajęć prowadzący może przenieść przedmiot do archiwum, a z czasem całkowicie go usunąć wraz ze wszystkimi historycznymi raportami.
 
 ![Diagram stanów - Harmonogram](etap1/img/sd_schedule.png)
 
