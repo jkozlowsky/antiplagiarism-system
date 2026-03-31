@@ -63,6 +63,11 @@ centralnego składowiska kodów źródłowych (repozytoriów) przesyłanych prze
 System komunikuje się z Gitea, aby na podstawie danych z harmonogramu automatycznie pobierać
 wersje projektów oznaczone odpowiednim znacznikiem (tagiem) do dalszego przetwarzania przez silnik JPlag.
 
+**Prowadzący dodatkowy** — użytkownik posiadający rolę Teacher, przypisany do konkretnego przedmiotu
+z ograniczonym zakresem uprawnień (brak przywileju modyfikacji). Użytkownik ten posiada wgląd w listy studentów,
+repozytoria oraz wygenerowane raporty, jednak nie ma uprawnień do edycji zestawu reguł ani modyfikowania
+harmonogramu.
+
 **Wskaźnik podobieństwa** — procentowa wartość określająca stopień podobieństwa między porównywanymi kodami źródłowymi.
 
 **Analiza prywatna** – proces weryfikacji kodu zainicjowany bezpośrednio przez studenta przed oficjalnym terminem 
