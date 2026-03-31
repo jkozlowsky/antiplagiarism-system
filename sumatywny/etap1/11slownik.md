@@ -4,7 +4,7 @@
 
 **Konto (Account)** - centralna encja reprezentująca tożsamość użytkownika. 
 Przechowuje dane uwierzytelniające, adres e-mail oraz historię prób logowania. 
-Konto stanowi bazę, do której mogą być przypisane opcjonalne profile (Student, Nauczyciel, Administrator), 
+Konto stanowi bazę, do której mogą być przypisane opcjonalne profile (Student, Prowadzący, Administrator), 
 co umożliwia jednej osobie pełnienie wielu funkcji w systemie jednocześnie.
 
 **Profil Administratora (Admin)** - rozszerzenie konta o uprawnienia globalne, odpowiedzialne za zarządzanie 
@@ -14,7 +14,7 @@ kontami i rolami.
 oznaczonego odpowiednią Etykietą zadania. Posiada uprawnienia do podglądu własnych raportów 
 (zgodnie z poziomem raportowania) oraz wykonywania analiz prywatnych.
 
-**Profil Nauczyciela (Teacher)** - rozszerzenie konta pozwalające sprawować opiekę merytoryczną nad przedmiotem. 
+**Profil Prowadzącego (Teacher)** - rozszerzenie konta pozwalające sprawować opiekę merytoryczną nad przedmiotem. 
 Zakres jego uprawnień jest definiowany na poziomie powiązania z konkretnym przedmiotem (tabela teacher_subject) 
 za pomocą flagi przywileju modyfikacji (has_modify_privilege). W zależności od wartości tej flagi użytkownik ten może 
 mieć dostęp do edycji zestawu reguł, ustawiania dopuszczalnych etykiet zadań oraz ustalania harmonogramu przedmiotu.
