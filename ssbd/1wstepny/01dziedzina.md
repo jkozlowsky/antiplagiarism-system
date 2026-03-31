@@ -3,14 +3,6 @@
 
 **Przeznaczenie aplikacji**
 
-* Krótki opis świadczonej przez aplikację funkcjonalności, należy krótko opisać reguły biznesowe określające zasady przetwarzania danych.
-* Wśród przetwarzanych danych wskazać zasoby, dla których zachodzi konkurencja.
-* Określenie z uzasadnieniem charakterystyki aplikacji (OLTP/OLAP).
-* Sprecyzować stanowość lub bezstanowość aplikacji w warstwie logiki biznesowej i format wymiany dany pomiędzy warstwą prezentacji a warstwą logiki
-biznesowej.
-* Stos technologiczny dla warstwy logiki biznesowej.
-* Łącznie max. 15 zdań.
-
 Aplikacja służy do automatycznego wykrywania podobieństw w kodzie źródłowym poprzez integrację z usługą Gitea oraz 
 wykorzystanie silnika JPlag. Nauczyciele zarządzają przedmiotami i harmonogramami, wymuszając na studentach oznaczanie 
 wersji kodu odpowiednimi etykietami (tag) w systemie kontroli wersji. Studenci przesyłają rozwiązania do repozytoriów, 
@@ -31,9 +23,6 @@ Wymiana danych między warstwą prezentacji a logiką odbywa się w formacie **J
 Stos technologiczny dla warstwy logiki biznesowej obejmuje **język Java, framework Spring Boot oraz narzędzie Hibernate**.
 
 **Słownik nazw obiektów w modelu danych**
-* wraz z krótkim opisem i wyszczególnieniem odpowiadających im cech, których informacje posiadają swoją reprezentację w przyjętym modelu danych
-(zawartość bazy danych). Dla obiektów opisanych w słowniku należy określić cykl życia, zidentyfikować zależności, z innymi obiektami, wymienić
-ograniczenia m. in. liczności i powiązań.
 
 Tabela 1.1.1 Słownik nazw obiektów w modelu danych.
 
@@ -52,10 +41,29 @@ Tabela 1.1.1 Słownik nazw obiektów w modelu danych.
 | Rule          | Obiekt konfigurujący restrykcje analiz (poziom raportowania, limit biletów) dla przedmiotu.                                 | Tworzony automatycznie przy inicjalizacji Subject.                                                                                            | Ściśle zależny od Subject.                                          | Relacja 1:1 z obiektem Subject.                               | Atrybut studentTicketCount musi być wartością nieujemną.                    |                                                
 
 **Słownik pozostałych pojęć i obiektów**
-* Słownik wszystkich pozostałych występujących w projekcie pojęć i obiektów, które nie zostały wymienione w modelu danych. 
-* Uwagi szczegółowe dot. tworzenia OBU słowników:
-  * Forma: tabela lub lista 
-  * Przedstawiona terminologia musi być jednoznaczna i obowiązuje zarówno w dalszej części dokumentacji, nazwach tabel oraz klas w kodzie aplikacji, 
-  * czy też dokumentacji programistycznej. 
-  * Składnia identyfikatorów musi być zgodna ze składnią obowiązującą w języku programowania Java, wymagane ustalenie wielkości liter dla
-identyfikatorów oraz brak polskich znaków
+
+* **JPlag** — zewnętrzna biblioteka stosowana jako silnik analizy porównawczej kodu źródłowego z repozytoriów
+pod względem jego powtarzalności.
+
+* **Gitea** — zewnętrzna usługa hostingu systemów kontroli wersji Git, pełniąca funkcję
+centralnego składowiska kodów źródłowych (repozytoriów) przesyłanych przez studentów.
+System komunikuje się z Gitea, aby na podstawie danych z harmonogramu automatycznie pobierać
+wersje projektów oznaczone odpowiednim znacznikiem (tagiem) do dalszego przetwarzania przez silnik JPlag.
+
+* **Wskaźnik podobieństwa** — procentowa wartość określająca stopień podobieństwa między porównywanymi kodami 
+źródłowymi.
+
+* **Analiza prywatna** – proces weryfikacji kodu zainicjowany bezpośrednio przez studenta przed oficjalnym terminem
+oddania pracy. Liczba takich analiz jest ograniczona przez parametr studentTicketCount w zestawie reguł
+i pozwala studentowi na samodzielną kontrolę oryginalności swojego rozwiązania.
+
+* **similarityRate** – parametr określający zakres informacji zwrotnej prezentowanej studentowi po zakończeniu
+analizy.
+
+* **AnalysisQueue** – tymczasowa lista zadań oczekujących na przetworzenie przez silnik porównawczy.
+Pozwala na sprawne zarządzanie zasobami serwera, gdy wiele użytkowników wysyła żądanie wykonania analizy kodu
+jednocześnie.
+
+* **Postać stokenizowana** — abstrakcyjna postać kodu źródłowego, wygenerowana przez silnik JPlag.
+Kod zamieniany jest na ciąg symboli, co pozwala algorytmowi ignorować np. zmianę nazw zmiennych czy białe znaki.
+Istnieje tylko w pamięci operacyjnej podczas analizy.
