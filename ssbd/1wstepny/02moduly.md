@@ -678,6 +678,24 @@ Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
+Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
+
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.22|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
+
 **Lista modułów funkcjonalnych i przypadków użycia**
 
 - MOK.1 - Rejestracja konta użytkownika
@@ -715,4 +733,5 @@ Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
 - MPP.19 - Sprawdzenie swojego kodu
 - MPP.20 - Przeglądanie swoich raportów
 - MPP.21 - Wygeneruj raport według harmonogramu
+- MPP.22 - Zmiana kierownika przedmiotu
 
