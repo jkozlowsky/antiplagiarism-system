@@ -6,7 +6,7 @@ INFRASTRUKTURA I APLIKACJE SIECIOWE
 
 # Dane projektu
 
-Projekt Moduł Sumatywny IAS 2026 **01: "Temat projektu"**
+Projekt Moduł Sumatywny IAS 2026 **01: "System antyplagiatowy"**
 
 Zamawiający: **Marcin Kwapisz**
 
