@@ -696,6 +696,42 @@ Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
+Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.23
+
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.23|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
+
+Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.24
+
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MPP.24|
+|Przypadek użycia| |
+|Twórca| |
+|Poziom ważności| |
+|Typ przypadku użycia| |
+|Aktorzy| |
+|Krótki opis| |
+|Warunki wstępne| |
+|Warunki końcowe| |
+|Główny przepływ zdarzeń| |
+|Alternatywne przepłīwy zdarzeń| |
+|Specjalne wymagania| |
+|Notatki i kwestie| |
+
 **Lista modułów funkcjonalnych i przypadków użycia**
 
 - MOK.1 - Rejestracja konta użytkownika
@@ -716,22 +752,23 @@ Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
 - MPP.2 - Generowanie raportu na żądanie
 - MPP.3 - Przeglądanie wszystkich raportów
 - MPP.4 - Przeglądanie jednego raportu
-- MPP.5 - Przeglądanie przedmiotów
-- MPP.6 - Filtrowanie przedmiotów
-- MPP.7 - Sortowanie przedmiotów
-- MPP.8 - Usuwanie raportów
-- MPP.9 - Przeglądanie repozytoriów
-- MPP.10 - Przeglądanie kont użytkowników
-- MPP.11 - Przeglądanie harmonogramu
-- MPP.12 - Przeglądanie reguł
-- MPP.13 - Tworzenie przedmiotu
-- MPP.14 - Edycja przedmiotu
-- MPP.15 - Usuwanie przedmiotu
-- MPP.16 - Tworzenie reguł
-- MPP.17 - Edycja reguł
-- MPP.18 - Usuwanie reguł
-- MPP.19 - Sprawdzenie swojego kodu
-- MPP.20 - Przeglądanie swoich raportów
-- MPP.21 - Wygeneruj raport według harmonogramu
-- MPP.22 - Zmiana kierownika przedmiotu
-
+- MPP.5 - Usuwanie raportów
+- MPP.6 - Przeglądanie przedmiotów
+- MPP.7 - Tworzenie przedmiotu
+- MPP.8 - Edycja przedmiotu
+- MPP.9 - Usuwanie przedmiotu
+- MPP.10 - Przeglądanie reguł
+- MPP.11 - Tworzenie reguł
+- MPP.12 - Edycja reguł
+- MPP.13 - Usuwanie reguł
+- MPP.14 - Przeglądanie harmonogramu
+- MPP.15 - Tworzenie harmonogramu
+- MPP.16 - Edycja harmonogramu
+- MPP.17 - Usuwanie harmonogramu
+- MPP.18 - Przeglądanie repozytoriów
+- MPP.19 - Przeglądanie kont użytkowników
+- MPP.20 - Sprawdzenie swojego kodu
+- MPP.21 - Przeglądanie swoich raportów
+- MPP.22 - Wygeneruj raport według harmonogramu
+- MPP.23 - Obliczenie zagregowanych wartości
+- MPP.24 - Zmiana kierownika przedmiotu

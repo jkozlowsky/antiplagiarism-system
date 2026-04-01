@@ -4,7 +4,7 @@
 
 **Konto (Account)** - centralna encja reprezentująca tożsamość użytkownika. 
 Przechowuje dane uwierzytelniające, adres e-mail oraz historię prób logowania. 
-Konto stanowi bazę, do której mogą być przypisane opcjonalne profile (Student, Nauczyciel, Administrator), 
+Konto stanowi bazę, do której mogą być przypisane opcjonalne profile (Student, Prowadzący, Administrator), 
 co umożliwia jednej osobie pełnienie wielu funkcji w systemie jednocześnie.
 
 **Profil Administratora (Admin)** - rozszerzenie konta o uprawnienia globalne, odpowiedzialne za zarządzanie 
@@ -14,7 +14,7 @@ kontami i rolami.
 oznaczonego odpowiednią Etykietą zadania. Posiada uprawnienia do podglądu własnych raportów 
 (zgodnie z poziomem raportowania) oraz wykonywania analiz prywatnych.
 
-**Profil Nauczyciela (Teacher)** - rozszerzenie konta pozwalające sprawować opiekę merytoryczną nad przedmiotem. 
+**Profil Prowadzącego (Teacher)** - rozszerzenie konta pozwalające sprawować opiekę merytoryczną nad przedmiotem. 
 Zakres jego uprawnień jest definiowany na poziomie powiązania z konkretnym przedmiotem (tabela teacher_subject) 
 za pomocą flagi przywileju modyfikacji (has_modify_privilege). W zależności od wartości tej flagi użytkownik ten może 
 mieć dostęp do edycji zestawu reguł, ustawiania dopuszczalnych etykiet zadań oraz ustalania harmonogramu przedmiotu.
@@ -62,6 +62,11 @@ pod względem jego powtarzalności.
 centralnego składowiska kodów źródłowych (repozytoriów) przesyłanych przez studentów.
 System komunikuje się z Gitea, aby na podstawie danych z harmonogramu automatycznie pobierać
 wersje projektów oznaczone odpowiednim znacznikiem (tagiem) do dalszego przetwarzania przez silnik JPlag.
+
+**Prowadzący dodatkowy** — użytkownik posiadający rolę Teacher, przypisany do konkretnego przedmiotu
+z ograniczonym zakresem uprawnień (brak przywileju modyfikacji). Użytkownik ten posiada wgląd w listy studentów,
+repozytoria oraz wygenerowane raporty, jednak nie ma uprawnień do edycji zestawu reguł ani modyfikowania
+harmonogramu.
 
 **Wskaźnik podobieństwa** — procentowa wartość określająca stopień podobieństwa między porównywanymi kodami źródłowymi.
 
