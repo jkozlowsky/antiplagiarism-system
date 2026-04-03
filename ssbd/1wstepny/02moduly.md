@@ -575,18 +575,18 @@ Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.16
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MPP.16|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepływy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Edycja harmonogramu|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Średni|
+|Typ przypadku użycia|Przeciętnie istotny|
+|Aktorzy|Prowadzący|
+|Krótki opis|Przypadek użycia pozwala na edycję obecnie istniejącego harmongoramu do generowania raportów dla danego przedmiotu.|
+|Warunki wstępne|Istnieje przedmiot i Prowadzący jest jego właścicielem oraz został utworzony harmonogram dla danego przedmiotu.|
+|Warunki końcowe|Harmonogram został zaaktualizowany.|
+|Główny przepływ zdarzeń|1. Prowadzący przechodzi do danego przedmiotu, którego jest właścicielem i za razem kierownikiem.<br>2. Prowadzący wybiera opcję podglądu harmonogramu.<br>3. Wyświetla się obecnie utworzony harmonogram.<br>4. Prowadzący dokonuje żądanej edycji harmonogramu - może zmienić datę skanowania repozytoriów oraz tag zadania.<br>5. Prowadzący potwierdza zmiany w harmonogramie.<br>6. Pojawia się okno potwierdzające zmianę parametrów harmonogramu.<br>7. Zaaktualizowane dane są widoczne w formularzu z przeglądem harmonogramów.|
+|Alternatywne przepływy zdarzeń|4a. Prowadzący wprowadza nieistniejący tag lub niepoprawną datę (np. z przeszłości).<br>5a. Edycja harmonogramu nie zostanie zaakceptowana po walidacji danych.|
+|Specjalne wymagania|Brak|
+|Notatki i kwestie|Prowadzący edytuje harmonogram najczęściej przed zbliżającym się kolejnym zadaniem z uwagi na konieczność zmiany tagu zadania.|
 
 Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.17
 
@@ -629,36 +629,36 @@ Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.19
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MPP.19|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepływy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Przeglądanie kont użytkowników|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Niezbędny|
+|Aktorzy|Prowadzący, Prowadzący dodatkowy|
+|Krótki opis|Wszyscy prowadzący mają możliwość przeglądania kont wybranych użytkowników (Studentów) w celu zobaczenia ich statystyk względem przedmiotów.|
+|Warunki wstępne|Użytkownik (Prowadzący/Prowadzący dodatkowy) musi się uwierzytelnić na swoje konto oraz dostępne musi być minimum jedno konto Studenta w celu uzyskania o nim informacji.|
+|Warunki końcowe|Każdy z prowadzących ma możliwość przeglądania wybranego konta użytkownika (Studenta) - wyświetlone będą jego statystki.|
+|Główny przepływ zdarzeń|1. Prowadzący przechodzi do formularza z dostępnymi kontami w systemie.<br>2. Prowadzący wybiera konto Studenta, którego statystyki chce wyświetlić.<br>3. Po wyborze Studenta, wyświetlane są jego statystyki.|
+|Alternatywne przepływy zdarzeń|3a. Prowadzący może zobaczyć szczegóły wybranej statystyki poprzez naciśnięcie pożądanej opcji na ekranie.|
+|Specjalne wymagania|Brak|
+|Notatki i kwestie|W przypadku istnienia konta Studenta, jednocześnie z brakiem istnienia jakichkolwiek statystyk, przegląd dalej jest dostępny.|
 
 Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.20
 
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MPP.20|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepływy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Sprawdzenie swojego kodu|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Niezbędny|
+|Aktorzy|Student|
+|Krótki opis|Student w przypadku udostępnienia tej opcji przez Prowadzącego ma możliwość sprawdzenia swojego kodu względem występowania ewentualnego plagiatu w danym przedmiocie.|
+|Warunki wstępne|Student należy do danego przedmiotu oraz istnieje zbiór danych (kod innych Studentów na repozytoriach) do porównania względem ewentualnego plagiatu.|
+|Warunki końcowe|Kod Studenta zostanie sprawdzony względem ewentualnego plagiatu w porównaniu do istniejących na repozytoriach rozwiązań innych studentów (również w przypadku innych skanów testowych).|
+|Główny przepływ zdarzeń|1. Student przechodzi do formualrza z opcją sprawdzania swojego kodu.<br>2. Student sprawdza ilość dostępnych skanowań kodu (w przypadku udostępnienia przez Prowadzącego możliwości sprawdzenia swojego rozwiązania).<br>3. Student w przypadku posiadania odpowiedniej liczby dostępnych skanowań kodu wybiera zadanie którego skan ma dotyczyć.<br>4. Następnie zostanie wskazany tag testowy, z którym należy umieścić na repozytorium kod do sprawdzenia.<br>5. Student załącza swój kod z odpowiednim tagiem.<br>6. Sprawdzenie kodu studenta rozpoczyna się wraz ze stosowną informacją o tym działaniu.<br>7. Wynik skanowania wyświetla się na ekranie, w zależności od ustawionego zbioru reguł przez prowadzącego, rezultat jest odpowiednio ograniczony np. jedynie do wskaźnika podobieństwa.|
+|Alternatywne przepływy zdarzeń|2a. Przedmiot do którego należy student nie udostępnia opcji sprawdzania swojego kodu - żadne sprawdzenie nie zostanie wykonane z uwagi na ograniczony dostęp do tej opcji.<br>3b. Student wybrał złe zadanie w danym przedmiocie.<br>5b. Student oznacza zadanie nieodpowiednim tagiem.<br>6b. Skanowanie kodu zostanie uruchomione - Student traci jedno z użyć tej opcji.<br>7b. Uzyskany wynik skanowania kodu Studenta jest niemiarodajny i zaburza przyszły zbiór testowy kodu źródłowego na repozytoriach.|
+|Specjalne wymagania|Istnieje kod utworzony przez innych Studentów i udostępniony na repozytoriach, do którego Student może porównać swoją pracę. Kod musi zostać oznaczony odpowiednim tagiem testowym.|
+|Notatki i kwestie|Student ma możliwość sprawdzenia swojego kodu bez konsekwencji określoną przez Prowadzącego poprzez zestaw reguł ilość.|
 
 Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
 
@@ -701,18 +701,18 @@ Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.23
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MPP.23|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepływy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Obliczenie zagregowanych wartości|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Średni|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|System|
+|Krótki opis|Przypadek użycia polega na obliczeniu statystyk na podstawie posiadanych danych w systemie np. średni wskaźnik podobieństwa w całej historii przedmiotu, dla danego zadania.|
+|Warunki wstępne|Istnieją dane w bazie danych, na podstawie których można dokonać ich agregacji.|
+|Warunki końcowe|Zagregowane dane zostaną zwrócone dla Prowadzącego w oknie przeglądania danego przedmiotu.|
+|Główny przepływ zdarzeń|1. Agregacja danych zostaje wywołana wraz z wywołaniem przypadku użycia "Przeglądanie przedmiotu" (MPP.6).<br>2. Pobierane są dane o przedmiocie, między innymi o współczynniku podobnieństwa.<br>3. Dane są agregowane i po tym działaniu tworzone są: histogram z rozkładem współczynnika podobieństwa, statystyki współczynnika podobieństwa względem poprzednich zadań, najczęściej występujący fragment kodu.<br>4. Dane są wyświetlane w odpowiednim miejscu formularza do przeglądania przedmiotu.|
+|Alternatywne przepływy zdarzeń|2a. Przedmiot obecnie nie posiada danych do agregacji, zwrócona zostanie informacja "Brak danych do obliczenia statystyk" zamiast żądanych statystyk.|
+|Specjalne wymagania|Brak|
+|Notatki i kwestie|W przypadku braku danych, pojawi się informacja o braku agregacji danych zamiast odpowiednich statystyk.|
 
 Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.24
 
