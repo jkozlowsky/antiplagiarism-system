@@ -40,6 +40,6 @@ public class Account extends AbstractEntity {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "surname", nullable = false, length = 50)
     private String surname;
 }

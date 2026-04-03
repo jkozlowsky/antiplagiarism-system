@@ -15,11 +15,21 @@ import java.util.List;
 @Table
 public class Repository extends AbstractEntity {
 
+    @Column(name = "repository_name", nullable = false, length = 30)
+    private String repositoryName;
+
+    @ManyToOne
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
     @ManyToMany
     @JoinTable(
             name = "repository_student",
             joinColumns = @JoinColumn(name = "repository_id"),
             inverseJoinColumns = @JoinColumn(name = "student_id")
     )
-    private List<Student> students = new ArrayList<>();
+    private List<Student> studentList = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "repositoryList")
+    private List<Report> reportList;
 }
