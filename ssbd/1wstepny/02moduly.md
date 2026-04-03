@@ -748,7 +748,7 @@ Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.24
 - MOK.12 - Edytuj dane własnego konta
 - MOK.13 - Edytuj dane konta innego użytkownika
 - MOK.14 - Wyloguj
-- MPP.1 - Generowanie raportu po ustawieniu harmonogramu
+- MPP.1 - Synchronizacja przedmiotów z Gitea
 - MPP.2 - Generowanie raportu na żądanie
 - MPP.3 - Przeglądanie wszystkich raportów
 - MPP.4 - Przeglądanie jednego raportu
