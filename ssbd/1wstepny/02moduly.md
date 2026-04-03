@@ -97,7 +97,7 @@ Tabela 1.2.4 Scenariusz dla przypadku użycia MOK.3
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -106,36 +106,36 @@ Tabela 1.2.5 Scenariusz dla przypadku użycia MOK.4
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MOK.4|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Zablokuj konto użytkownika|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|Administrator|
+|Krótki opis|Przypadek użycia pozwala na zablokowanie obecnie dostępnego konta danego użytkownika w systemie.|
+|Warunki wstępne|Istnienie niezablokowanego, aktywnego konta użytkownika którego będzie dotyczył przypadek użycia.|
+|Warunki końcowe|Dostęp do systemu z poziomu wybranego konta użytkownika zostanie zablokowany. Wszystkie aktywne sesje użytkownika zostaną unieważnione.|
+|Główny przepływ zdarzeń|1. Administrator przechodzi do odpowiedniego formularza w systemie.<br>2. Administrator znajduje odpowiednie konto użytkownika.<br>3. Administrator wybiera opcję "Zablokuj" w ramach konta danego użytkownika.<br>4. Administrator potwierdza chęć zablokowania konta użytkownika.<br>5. Pojawia się okno z potwierdzeniem poprawnej akcji Administratora, której celem było zablokowanie konta użytkownika w systemie.<br>6. Konto zostaje zablokowane, a jego status w bazie danych oraz dostępnych formularzach zostaje zaaktualizowane.<br>7. Wszystkie aktywne sesje użytkownika, którego konto zostało zablokowane zostaną unieważnione.|
+|Alternatywne przepływy zdarzeń|2a. Brak kont użytkowników w systemie - nie można wykonać kolejnych akcji.<br>7b. Użytkownik nie ma aktywnych sesji w systemie.|
+|Specjalne wymagania|Zablokowanie każdego konta musi zostać odnotowane poprzez wpis w dzienniku zdarzeń.|
+|Notatki i kwestie|Uprzednio zablokowane konto użytkownika może zostać odblokowane (MOK.5).|
 
 Tabela 1.2.6 Scenariusz dla przypadku użycia MOK.5
 
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MOK.5|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Odblokuj konto użytkownika|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|Administrator|
+|Krótki opis|Przypadek użycia pozwala na odblokowanie obecnie dostępnego w systemie zablokowanego konta danego użytkownika.|
+|Warunki wstępne|Istnienie zablokowanego konta użytkownika w systemie.|
+|Warunki końcowe|Dostęp do systemu dla danego użytkownika zostanie odblokowany.|
+|Główny przepływ zdarzeń|1. Administrator przechodzi do odpowiedniego formularza w systemie.<br>2. Administrator znajduje odpowiednie konto użytkownika.<br>3. Administrator wybiera opcję "Odblokuj" w ramach konta danego użytkownika.<br>4. Administrator potwierdza chęć odblokowania konta użytkownika.<br>5. Pojawia się okno z potwierdzeniem poprawnej akcji Administratora, której celem było odblokowanie konta użytkownika w systemie.<br>6. Konto zostaje odblokowane, a jego status w bazie danych oraz dostępnych formularzach zostaje zaaktualizowane.|
+|Alternatywne przepływy zdarzeń|2a. Brak kont użytkowników w systemie - nie można wykonać kolejnych akcji.|
+|Specjalne wymagania|Odblokowanie każdego konta musi zostać odnotowane poprzez wpis w dzienniku zdarzeń.|
+|Notatki i kwestie|Po odblokowaniu konta użytkownika, możliwe jest wykonywanie dowolnych akcji z uprzednio nadanym poziomem dostępu przed zablokowaniem konta.|
 
 Tabela 1.2.7 Scenariusz dla przypadku użycia MOK.6
 
@@ -151,7 +151,7 @@ Tabela 1.2.7 Scenariusz dla przypadku użycia MOK.6
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -169,7 +169,7 @@ Tabela 1.2.8 Scenariusz dla przypadku użycia MOK.7
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -187,7 +187,7 @@ Tabela 1.2.9 Scenariusz dla przypadku użycia MOK.8
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -205,7 +205,7 @@ Tabela 1.2.10 Scenariusz dla przypadku użycia MOK.9
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -214,18 +214,18 @@ Tabela 1.2.11 Scenariusz dla przypadku użycia MOK.10
 |Pole|Treść|
 |--|--|
 |Oznaczenie|MOK.10|
-|Przypadek użycia| |
-|Twórca| |
-|Poziom ważności| |
-|Typ przypadku użycia| |
-|Aktorzy| |
-|Krótki opis| |
-|Warunki wstępne| |
-|Warunki końcowe| |
-|Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
-|Specjalne wymagania| |
-|Notatki i kwestie| |
+|Przypadek użycia|Zmień adres e-mail własnego konta|
+|Twórca|Paweł Rajnert|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|Administrator, Prowadzący, Prowadzący dodatkowy, Student|
+|Krótki opis|Przypadek użycia pozwala na zmianę adresu e-mail dla wybranego z aktorów - są to użytkownicy uwierzytelnieni w systemie.|
+|Warunki wstępne|Użytkownik uwierzytelnił się w systemie i jego konto jest aktywne.|
+|Warunki końcowe|Adres e-mail danego użytkownika został zmieniony. Wszystkie aktywne sesje użytkownika zostaną unieważnione, kolejne uwierzytelnienie będzie wymagało nowego adresu e-mail.|
+|Główny przepływ zdarzeń|1. Wybrany użytkownik uwierzytelniony przechodzi do formularza zawierającego dane o swoim koncie.<br>2. Użytkownik wybiera opcję "Zmień adres e-mail".<br>3. W nowootwartym oknie użytkownik wprowadza nowy adres e-mail.<br>4. Użytkownik potwierdza chęć zmiany adresu e-mail.<br>5. Użytkownik potwierdza swoją tożsamość poświadczeniem w postaci hasła.<br>6. Pojawia się okno z potwierdzeniem poprawnej zmiany adresu e-mail.<br>7. Adres e-mail w formularzu zawierającym dane o swoim koncie został zaaktualizowany.<br>7. Wszystkie aktywne sesje użytkownika zostaną unieważnione.|
+|Alternatywne przepływy zdarzeń|4a. Wprowadzony adres e-mail już istnieje w systemie - walidacja została przeprowadzona i zmiana nie jest możliwa.<br>5b. Użytkownik wprowadził niepoprawne hasło i należy ponowić akcję.|
+|Specjalne wymagania|Nowy adres e-mail musi być unikalny.|
+|Notatki i kwestie|W przypadku zmiany adresu e-mail na inny unikalny, użytkownik ma możliwość do późniejszego powrótu do poprzedniego adresu e-mail po ponownym wykonaniu akcji zmiany własnego adresu e-mail.|
 
 Tabela 1.2.12 Scenariusz dla przypadku użycia MOK.11
 
@@ -241,7 +241,7 @@ Tabela 1.2.12 Scenariusz dla przypadku użycia MOK.11
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -259,7 +259,7 @@ Tabela 1.2.13 Scenariusz dla przypadku użycia MOK.12
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -277,7 +277,7 @@ Tabela 1.2.14 Scenariusz dla przypadku użycia MOK.13
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -295,7 +295,7 @@ Tabela 1.2.15 Scenariusz dla przypadku użycia MOK.14
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -313,7 +313,7 @@ Tabela 1.2.16 Scenariusz dla przypadku użycia MPP.1
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -331,7 +331,7 @@ Tabela 1.2.17 Scenariusz dla przypadku użycia MPP.2
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -349,7 +349,7 @@ Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.3
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -386,7 +386,7 @@ Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.5
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -404,7 +404,7 @@ Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.6
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -422,7 +422,7 @@ Tabela 1.2.22 Scenariusz dla przypadku użycia MPP.7
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -440,7 +440,7 @@ Tabela 1.2.23 Scenariusz dla przypadku użycia MPP.8
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -476,7 +476,7 @@ Tabela 1.2.25 Scenariusz dla przypadku użycia MPP.10
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -494,7 +494,7 @@ Tabela 1.2.26 Scenariusz dla przypadku użycia MPP.11
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -512,7 +512,7 @@ Tabela 1.2.27 Scenariusz dla przypadku użycia MPP.12
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -548,7 +548,7 @@ Tabela 1.2.29 Scenariusz dla przypadku użycia MPP.14
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -566,7 +566,7 @@ Tabela 1.2.30 Scenariusz dla przypadku użycia MPP.15
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -584,7 +584,7 @@ Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.16
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -602,7 +602,7 @@ Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.17
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -620,7 +620,7 @@ Tabela 1.2.33 Scenariusz dla przypadku użycia MPP.18
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -638,7 +638,7 @@ Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.19
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -656,7 +656,7 @@ Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.20
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -692,7 +692,7 @@ Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -710,7 +710,7 @@ Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.23
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
@@ -728,7 +728,7 @@ Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.24
 |Warunki wstępne| |
 |Warunki końcowe| |
 |Główny przepływ zdarzeń| |
-|Alternatywne przepłīwy zdarzeń| |
+|Alternatywne przepływy zdarzeń| |
 |Specjalne wymagania| |
 |Notatki i kwestie| |
 
