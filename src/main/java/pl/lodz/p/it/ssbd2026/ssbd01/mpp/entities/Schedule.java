@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.TagConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.entities.AbstractEntity;
 
 
@@ -17,7 +18,7 @@ public class Schedule extends AbstractEntity {
     @Column(name = "schedule_date_time", nullable = false)
     private LocalDateTime scheduleDateTime;
 
-    @Column(name = "tag", nullable = false, length = 64)
+    @Column(name = "tag", nullable = false, length = TagConsts.TAG_LENGTH)
     private String tag;
 
     @ManyToOne

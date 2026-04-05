@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 @Table(name = "access_level")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class AccessLevel extends AbstractEntity {
+    @Enumerated(EnumType.STRING)
     @Column(name = "access_level_name", nullable = false)
     private AccessLevelEnum accessLevelName;
 

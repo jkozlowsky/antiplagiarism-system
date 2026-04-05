@@ -10,11 +10,11 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "rule_preset")
 public class RulePreset extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "raport_level", nullable = false, length = 32)
+    @Column(name = "raport_level", nullable = false)
     private RaportLevelEnum raportLevel;
 
     @Column(name = "student_ticket_count", nullable = false)
@@ -23,11 +23,11 @@ public class RulePreset extends AbstractEntity {
     @Column(name = "is_preset", nullable = false)
     private Boolean isPreset;
 
-    @OneToMany(mappedBy = "rulePreset")
+    @OneToMany(mappedBy = "rulePreset", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<Schedule> scheduleList;
 
     @OneToOne
-    @JoinColumn(name = "subject_id")
+    @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
 
 
