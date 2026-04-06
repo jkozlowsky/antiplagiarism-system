@@ -10,6 +10,7 @@
 **Lista poziomów dostępu (aktorów)**
 
 Tabela 1.2.1 Przedstawienie poziomów dostępu systemu
+
 |Poziom dostępu (Aktor)|Opis danego poziomu dostępu|Sekwencja czynności prowadząca do utworzenia funkcjonującego konta o wskazanym poziomie dostępu|
 |-|-|-|
 |Gość|Użytkownik nieuwierzytelniony, aby skorzystać z funkcjonalnośći aplikacji należy zarejestrować się lub zalogować się na obecnie istniejące konto z innym poziomem dostępu.|Nie dotyczy|
@@ -390,7 +391,6 @@ Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.5
 | Alternatywne przepływy zdarzeń | 3a. Użytkownik rezygnuje z tej czynności.<br>1. System nie dokonuje akcji usuwania i wyświetla ponownie listę raportów.<br>5a. Dany raport już usunięto z systemu.<br>1. System wyświetla komunikat o takim zdarzeniu i odświeża listę.                                                                                                                                                                                                                          |
 | Specjalne wymagania            | brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Notatki i kwestie              | brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-
 
 Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.6
 
