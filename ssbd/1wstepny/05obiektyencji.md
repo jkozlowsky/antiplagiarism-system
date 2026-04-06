@@ -180,7 +180,7 @@
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
 **Związki między obiektami klas encji**
 
-Tabela 5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
+Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
 
 | **Encja A (Wiersz) \ Encja B (Kolumna)** | **Account**          | **AccessLevel**         | **Subject**          | **Repository**             | **Report**                 | **RulePreset**             | **Schedule**               | **Teacher**          | **Student**          | **SubjectAssignment** |
 | ---------------------------------------- | -------------------- | ----------------------- | -------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------- | -------------------- | --------------------- |
