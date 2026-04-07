@@ -35,9 +35,6 @@
 	        - `@Column(name = "last_login_failure_date_time")`
         - `lastLoginSuccessDateTime`: LocalDateTime
 	        - `@Column(name = "last_login_success_date_time")`
-        - `languageVersion`: LanguageEnum
-            - `@Enumerated(EnumType.STRING)`
-            - `@Column(name = "language_version")`
         - `isBlocked`: Boolean
 	        - `@Column(name = "is_blocked", nullable = false)`
         - `name`: String
@@ -45,15 +42,19 @@
         - `surname`: String
             - `@Column(name = "surname", nullable = false, length = AccountConsts.SURNAME_LENGTH)`
     - **Zależności:**
-        - `accessLevelList`: `@OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE})`
+        - `accessLevelList`: List\<AccessLevel> 
+			-  `@OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE})`
+        - `languageVersion`: LanguageEnum
+            - `@ManyToOne`
+            - `@JoinColumn(name = "language_versoin_id", nullable = false)`
 - **Encja: AccessLevel**
     - **Tabela**: access_level
     - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
     - **Pola i ograniczenia:**
-        - `accessLevelName`: AccessLevelEnum
-            - `@Enumerated(EnumType.STRING)`
-            - `@Column(name = "access_level_name", nullable = false)`
     - **Zależności:**
+	    - `accessLevelName`: AccessLevelDict
+            - `@JoinColumn(name = "access_level_id", nullable = false)`
+            - `@ManyToOne`
         - `account`: Account
 	        - `@ManyToOne`
 	        - `@JoinColumn(name="account_id")`
@@ -75,6 +76,18 @@
     - **Zależności:**
         - `subjectAssignmentList`: List\<SubjectAssignment>
 	        - `@OneToMany(mappedBy = "teacher")`
+- **Encja: AccessLevelDict**
+	- **Tabela**: access_level_dict
+    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Pola i ograniczenia:**
+	    - `accessLevelName`: String
+		    - `@Column(name = "access_level_name", nullable = false, unique = true)`
+- **Encja: LanguageDict**
+	- **Tabela**: language_dict
+    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Pola i ograniczenia:**
+	    - `language`: String
+		    - `@Column(name = "language", nullable = false, unique = true)`
 ### 3. Moduł MPP (Moduł Poszukiwania Plagiatu)
 
 - **Encja: Subject**
@@ -130,8 +143,8 @@
 	        - `@ManyToMany`, 
 	        - ` @JoinTable(` 
 		        `name = "report_repository", ` 
-		        `joinColumns = @JoinColumn(name = "report_id", updatable = false),  `
-		        `inverseJoinColumns = @JoinColumn(name = "repository_id", updatable = false) ` 
+		        `joinColumns = @JoinColumn(name = "report_id"),  `
+		        `inverseJoinColumns = @JoinColumn(name = "repository_id") ` 
 				`)`
         - `subject`: Subject
 	        - `@ManyToOne`
@@ -140,14 +153,14 @@
 	- Tabela: rule_preset
     - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)  
     - **Pola i ograniczenia:**
-        - `raportLevel`: RaportLevelEnum
-            - `@Enumerated(EnumType.STRING)`
-            - `@Column(name = "raport_level", nullable = false)`
         - `studentTicketCount`: Integer
             - `@Column(name = "student_ticket_count", nullable = false)`
         - `isPreset`: Boolean
             - `@Column(name = "is_preset", nullable = false)`
     - **Zależności:**
+        - `raportLevel`: RaportLevelDict
+            - `@ManyToOne`
+            - `@JoinColumn(name = "raport_level_id", nullable = false)`
         - `scheduleList`: List\<Schedule>
 	        - `@OneToMany(mappedBy = "rulePreset", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})`
         - `subject`: Subject
@@ -178,22 +191,31 @@
         - `subject`: Subject
 	        - `@ManyToOne`
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
+- **Encja: RaportLevelDict
+	- **Tabela**: raport_level_dict
+    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Pola i ograniczenia:**
+	    - `name`: String
+		    - `@Column(name = "name", nullable = false, unique = true)`
 **Związki między obiektami klas encji**
 
 Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
 
-| **Encja A (Wiersz) \ Encja B (Kolumna)** | **Account**          | **AccessLevel**         | **Subject**          | **Repository**             | **Report**                 | **RulePreset**             | **Schedule**               | **Teacher**          | **Student**          | **SubjectAssignment** |
-| ---------------------------------------- | -------------------- | ----------------------- | -------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------- | -------------------- | --------------------- |
-| **Account**                              | -                    | BI, MA, 1:N, C(P, M), M | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     |
-| **AccessLevel**                          | BI, OW, N:1, Brak, M | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     |
-| **Subject**                              | -                    | -                       | -                    | BI, MA, 1:N, C(P, M, R), I | BI, MA, 1:N, C(P, M, R), I | BI, MA, 1:1, C(P, M, R), I | -                          | -                    | -                    | BI, MA, 1:N, Brak, I  |
-| **Repository**                           | -                    | -                       | BI, OW, N:1, Brak, I | -                          | BI, MA, N:M, Brak, I       | -                          | -                          | -                    | BI, OW, N:M, Brak, M | -                     |
-| **Report**                               | -                    | -                       | BI, OW, N:1, Brak, I | BI, OW, N:M, Brak, I       | -                          | -                          | -                          | -                    | -                    | -                     |
-| **RulePreset**                           | -                    | -                       | BI, OW, 1:1, Brak, I | -                          | -                          | -                          | BI, MA, 1:N, C(P, M, R), M | -                    | -                    | -                     |
-| **Schedule**                             | -                    | -                       | -                    | -                          | -                          | BI, OW, N:1, Brak, M       | -                          | -                    | -                    | -                     |
-| **Teacher**                              | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | BI, MA, 1:N, Brak, I  |
-| **Student**                              | -                    | -                       | -                    | BI, MA, N:M, Brak, M       | -                          | -                          | -                          | -                    | -                    | -                     |
-| **SubjectAssignment**                    | -                    | -                       | BI, OW, N:1, Brak, I | -                          | -                          | -                          | -                          | BI, OW, N:1, Brak, I | -                    | -                     |
+| **Encja A (Wiersz) \ Encja B (Kolumna)** | **Account**          | **AccessLevel**         | **Subject**          | **Repository**             | **Report**                 | **RulePreset**             | **Schedule**               | **Teacher**          | **Student**          | **SubjectAssignment** | AccessLevelDict | LanguageDict    | RaportLevelDict |
+| ---------------------------------------- | -------------------- | ----------------------- | -------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- | -------------------- | -------------------- | --------------------- | --------------- | --------------- | --------------- |
+| **Account**                              | -                    | BI, MA, 1:N, C(P, M), M | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | U,OW,N:1,Brak,I | -               |
+| **AccessLevel**                          | BI, OW, N:1, Brak, M | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | U,OW,N:1,Brak,I | -               | -               |
+| **Subject**                              | -                    | -                       | -                    | BI, MA, 1:N, C(P, M, R), I | BI, MA, 1:N, C(P, M, R), I | BI, MA, 1:1, C(P, M, R), I | -                          | -                    | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               |
+| **Repository**                           | -                    | -                       | BI, OW, N:1, Brak, I | -                          | BI, MA, N:M, Brak, I       | -                          | -                          | -                    | BI, OW, N:M, Brak, M | -                     | -               | -               | -               |
+| **Report**                               | -                    | -                       | BI, OW, N:1, Brak, I | BI, OW, N:M, Brak, I       | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+| **RulePreset**                           | -                    | -                       | BI, OW, 1:1, Brak, I | -                          | -                          | -                          | BI, MA, 1:N, C(P, M, R), M | -                    | -                    | -                     | -               | -               | U,OW,N:1,Brak,I |
+| **Schedule**                             | -                    | -                       | -                    | -                          | -                          | BI, OW, N:1, Brak, M       | -                          | -                    | -                    | -                     | -               | -               | -               |
+| **Teacher**                              | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               |
+| **Student**                              | -                    | -                       | -                    | BI, MA, N:M, Brak, M       | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+| **SubjectAssignment**                    | -                    | -                       | BI, OW, N:1, Brak, I | -                          | -                          | -                          | -                          | BI, OW, N:1, Brak, I | -                    | -                     | -               | -               | -               |
+| AccessLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+| LanguageDict                             | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+| ReportLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 
 ### Legenda oznaczeń w tabeli:
 - Kierunkowość
