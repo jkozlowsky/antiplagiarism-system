@@ -13,9 +13,9 @@ import java.util.List;
 @Table(name = "rule_preset")
 public class RulePreset extends AbstractEntity {
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "raport_level", nullable = false)
-    private RaportLevelEnum raportLevel;
+    @ManyToOne
+    @JoinColumn(name = "raport_level_id", nullable = false)
+    private RaportLevelDict raportLevel;
 
     @Column(name = "student_ticket_count", nullable = false)
     private Integer studentTicketCount;

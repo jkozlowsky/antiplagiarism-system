@@ -20,8 +20,8 @@ public class Report extends AbstractEntity {
     @ManyToMany
     @JoinTable(
             name = "report_repository",
-            joinColumns = @JoinColumn(name = "report_id", updatable = false),
-            inverseJoinColumns = @JoinColumn(name = "repository_id", updatable = false)
+            joinColumns = @JoinColumn(name = "report_id"),
+            inverseJoinColumns = @JoinColumn(name = "repository_id")
     )
     private List<Repository> repositoryList;
 

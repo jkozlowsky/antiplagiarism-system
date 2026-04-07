@@ -35,9 +35,9 @@ public class Account extends AbstractEntity {
     @Column(name = "last_failed_login_ip", length = AccountConsts.IP_LENGTH)
     private String lastFailedLoginIp;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "language_version")
-    private LanguageEnum languageVersion;
+    @ManyToOne
+    @JoinColumn(name = "language_versoin_id", nullable = false)
+    private LanguageDict languageVersion;
 
     @Column(name = "failed_attempts")
     private Integer failedAttempts;
