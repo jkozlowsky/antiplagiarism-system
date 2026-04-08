@@ -15,6 +15,21 @@
 	    - `version`: Integer
 		    - `@Version`  
 			- `@Column(name = "version", nullable = false)`
+		- `createdAt`: LocalDateTime
+			- `@CreatedDate`
+			- `@Column(name = "created_at", nullable = false, updatable = false)`
+		- `updatedAt`: LocalDateTime
+			- `@UpdateTimestamp`
+			- `@Column(name = "updated_at")`
+	- **Zależności:**
+		- `createdBy`: Account
+			- `@CreatedBy`
+			- `@ManyToOne(fetch = FetchType.LAZY)`
+			- `@JoinColumn(name = "created_by", updatable = false)`
+		- `modifiedBy`: Account
+			- `@LastModifiedBy`
+			- `@ManyToOne(fetch = FetchType.LAZY)`
+			- `@JoinColumn(name = "modified_by")`
 ### 2. Moduł MOK (Moduł Obsługi Kont)
 
 - **Encja: Account**
@@ -45,8 +60,8 @@
         - `accessLevelList`: List\<AccessLevel> 
 			-  `@OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE})`
         - `languageVersion`: LanguageEnum
-            - `@ManyToOne`
-            - `@JoinColumn(name = "language_versoin_id", nullable = false)`
+            - `@ManyToOne(fetch = FetchType.LAZY)`
+            - `@JoinColumn(name = "language_version_id", nullable = false)`
 - **Encja: AccessLevel**
     - **Tabela**: access_level
     - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
@@ -54,9 +69,9 @@
     - **Zależności:**
 	    - `accessLevelName`: AccessLevelDict
             - `@JoinColumn(name = "access_level_id", nullable = false)`
-            - `@ManyToOne`
+            - `@ManyToOne(fetch = FetchType.LAZY)`
         - `account`: Account
-	        - `@ManyToOne`
+	        - `@ManyToOne(fetch = FetchType.LAZY)`
 	        - `@JoinColumn(name="account_id")`
         - Dziedziczenie:
 	        - `@Inheritance(strategy = InheritanceType.JOINED)`
@@ -78,16 +93,30 @@
 	        - `@OneToMany(mappedBy = "teacher")`
 - **Encja: AccessLevelDict**
 	- **Tabela**: access_level_dict
-    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Klucz główny:** 
+	    - `id`: UUID
+		    - `@Id`
+		    - `@GeneratedValue(strategy = GenerationType.UUID)`
+		    - `@Column(name = "id", updatable = false, nullable = false)`
     - **Pola i ograniczenia:**
 	    - `accessLevelName`: String
 		    - `@Column(name = "access_level_name", nullable = false, unique = true)`
+	    - `version`: Integer
+		    - `@Column(name = "version", nullable = false)`
+		    - `@Version`
 - **Encja: LanguageDict**
 	- **Tabela**: language_dict
-    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Klucz główny:** 
+	    - `id`: UUID
+		    - `@Id`
+		    - `@GeneratedValue(strategy = GenerationType.UUID)`
+		    - `@Column(name = "id", updatable = false, nullable = false)`
     - **Pola i ograniczenia:**
 	    - `language`: String
 		    - `@Column(name = "language", nullable = false, unique = true)`
+	    - `version`: Integer
+		    - `@Column(name = "version", nullable = false)`
+		    - `@Version`
 ### 3. Moduł MPP (Moduł Poszukiwania Plagiatu)
 
 - **Encja: Subject**
@@ -121,14 +150,18 @@
             - `@Column(name = "repository_name", nullable = false, length = RepositoryContsts.REPOSITORY_NAME_LENGTH)`
     - **Zależności:**
         - `subject`:  Subject
-	        - `@ManyToOne`
+	        - `@ManyToOne(fetch = FetchType.LAZY)`
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
         - `studentList`: List\<Student>
-	        - `@ManyToMany` 
+	        - `@ManyToMany(fetch = FetchType.LAZY)` 
 	        - ` @JoinTable(` 
 		        `name = "repository_student", ` 
 		        `joinColumns = @JoinColumn(name = "repository_id"),  `
-		        `inverseJoinColumns = @JoinColumn(name = "student_id") ` 
+		        `inverseJoinColumns = @JoinColumn(name = "student_id"),
+		        `indexes = { ` 
+		        `@Index(name = "idx_repository_student_repository_id", columnList = "repository_id"),`  
+		         ` @Index(name = "idx_repository_student_student_id", columnList  = "student_id") ` 
+				}` 
 				`)`
         - `reportList`: List\<Report>
 	        - `@ManyToMany(mappedBy = "repositoryList")`
@@ -140,14 +173,14 @@
             - `@Column(name = "path_to_report", nullable = false, length = ReportConsts.PATH_LENGTH)`
     - **Zależności:**
         - `repositoryList`: List\<Repository>
-	        - `@ManyToMany`, 
+	        - `@ManyToMany(fetch = FetchType.LAZY)`
 	        - ` @JoinTable(` 
 		        `name = "report_repository", ` 
 		        `joinColumns = @JoinColumn(name = "report_id"),  `
 		        `inverseJoinColumns = @JoinColumn(name = "repository_id") ` 
 				`)`
         - `subject`: Subject
-	        - `@ManyToOne`
+	        - `@ManyToOne(fetch = FetchType.LAZY)`
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
 - **Encja: RulePreset**
 	- Tabela: rule_preset
@@ -159,12 +192,12 @@
             - `@Column(name = "is_preset", nullable = false)`
     - **Zależności:**
         - `raportLevel`: RaportLevelDict
-            - `@ManyToOne`
+            - `@ManyToOne(fetch = FetchType.LAZY)`
             - `@JoinColumn(name = "raport_level_id", nullable = false)`
         - `scheduleList`: List\<Schedule>
 	        - `@OneToMany(mappedBy = "rulePreset", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})`
         - `subject`: Subject
-	        - `@OneToOne`,
+	        - `@OneToOne(fetch = FetchType.LAZY)`,
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
 - **Encja: Schedule**
 	- Tabela: schedule
@@ -176,7 +209,7 @@
             - `@Column(name = "tag", nullable = false, length = TagConsts.TAG_LENGTH)`
     - **Zależności:**
         - `rulePreset`: RulePreset
-	        - `@ManyToOne`
+	        - `@ManyToOne(fetch = FetchType.LAZY)`
 	        - `@JoinColumn(name = "rule_preset_id")`
 - **Encja: SubjectAssignment**
 	- Tabela: subject_assignment
@@ -193,10 +226,17 @@
 	        - `@JoinColumn(name = "subject_id", updatable = false)`
 - **Encja: RaportLevelDict
 	- **Tabela**: raport_level_dict
-    - **Klucz główny:** Dziedziczony z `AbstractEntity` (`id`: UUID)
+    - **Klucz główny:** 
+	    - `id`: UUID
+		    - `@Id`
+		    - `@GeneratedValue(strategy = GenerationType.UUID)`
+		    - `@Column(name = "id", updatable = false, nullable = false)`
     - **Pola i ograniczenia:**
 	    - `name`: String
 		    - `@Column(name = "name", nullable = false, unique = true)`
+	    - `version`: Integer
+		    - `@Column(name = "version", nullable = false)`
+		    - `@Version`
 **Związki między obiektami klas encji**
 
 Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
