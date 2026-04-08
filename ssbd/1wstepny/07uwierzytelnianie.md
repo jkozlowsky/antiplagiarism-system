@@ -53,7 +53,7 @@ modyfikuje krotki w relacyjnej bazie danych:
     * Zadanie wykonywane automatycznie przez system w tle, czyszczące bazę z kont, które nie zostały zweryfikowane.
     * **Zmiana w bazie danych:** Operacja `DELETE` usuwająca powiązane krotki z tabeli `AccessLevel` (w tym tabele
       dziedziczące), a następnie krotki z tabeli `Account`, dla których status wynosi *Nieaktywne* i minął zdefiniowany
-      limit czasu (10 minut od utworzenia konta).
+      limit czasu (24 godziny od zarejestrowania konta).
 
 4. **Blokowanie i odblokowywanie konta:**
     * Blokowanie może nastąpić **automatycznie** (w przypadku przekroczenia limitu błędnych logowań) lub **ręcznie**
