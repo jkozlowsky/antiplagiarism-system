@@ -23,27 +23,27 @@ Uwaga! W jednym przedmiocie dana osoba nie może być jednocześnie Prowadzącym
 
 **Diagramy przypadków użycia**
 
-![alt text](img/uc_gosc.png)
+![alt text](1wstepny/img/uc_gosc.png)
 
 Rysunek 1.2.1 Diagram przypadków użycia dla aktora Gość
 
-![alt text](img/uc_system.png)
+![alt text](1wstepny/img/uc_system.png)
 
 Rysunek 1.2.2 Diagram przypadków użycia dla aktora System
 
-![alt text](img/uc_admin.png)
+![alt text](1wstepny/img/uc_admin.png)
 
 Rysunek 1.2.3 Diagram przypadków użycia dla aktora Administrator
 
-![alt text](img/uc_pro.png)
+![alt text](1wstepny/img/uc_pro.png)
 
 Rysunek 1.2.4 Diagram przypadków użycia dla aktora Prowadzący
 
-![alt text](img/uc_prodod.png)
+![alt text](1wstepny/img/uc_prodod.png)
 
 Rysunek 1.2.5 Diagram przypadków użycia dla aktora Prowadzący dodatkowy
 
-![alt text](img/uc_student.png)
+![alt text](1wstepny/img/uc_student.png)
 
 Rysunek 1.2.6 Diagram przypadków użycia dla aktora Student
 
