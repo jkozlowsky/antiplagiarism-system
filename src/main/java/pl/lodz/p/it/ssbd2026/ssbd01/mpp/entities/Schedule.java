@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(name = "schedule", indexes = {
+        @Index(name = "idx_schedule_rule_preset_id", columnList = "rule_preset_id"),
+        @Index(name = "idx_schedule_created_by", columnList = "created_by"),
+        @Index(name = "idx_schedule_modified_by", columnList = "modified_by")
+})
 public class Schedule extends AbstractEntity {
 
     @Column(name = "schedule_date_time", nullable = false)
@@ -21,7 +25,7 @@ public class Schedule extends AbstractEntity {
     @Column(name = "tag", nullable = false, length = TagConsts.TAG_LENGTH)
     private String tag;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_preset_id")
     private RulePreset rulePreset;
 }

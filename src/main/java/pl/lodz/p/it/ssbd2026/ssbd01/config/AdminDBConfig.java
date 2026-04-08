@@ -2,6 +2,8 @@ package pl.lodz.p.it.ssbd2026.ssbd01.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+//import org.springframework.boot.flyway.autoconfigure.FlywayDataSource;
+import org.springframework.boot.flyway.autoconfigure.FlywayDataSource;
 import org.springframework.boot.hibernate.autoconfigure.HibernateProperties;
 import org.springframework.boot.hibernate.autoconfigure.HibernateSettings;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
@@ -35,6 +37,7 @@ public class AdminDBConfig {
 
     @Primary
     @Bean
+    @FlywayDataSource
     public DataSource adminDataSource() {
         return adminDataSourceProperties()
                 .initializeDataSourceBuilder()
@@ -58,12 +61,12 @@ public class AdminDBConfig {
 
 
         Map<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "create-drop");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("jakarta.persistence.schema-generation.scripts.action", "drop-and-create");
-        properties.put("jakarta.persistence.schema-generation.scripts.create-target", "create-schema.sql");
-        properties.put("jakarta.persistence.schema-generation.scripts.drop-target", "drop-schema.sql");
-        properties.put("jakarta.persistence.schema-generation.scripts.create-source", "metadata");
+//        properties.put("hibernate.hbm2ddl.auto", "create-drop");
+//        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+//        properties.put("jakarta.persistence.schema-generation.scripts.action", "drop-and-create");
+//        properties.put("jakarta.persistence.schema-generation.scripts.create-target", "V1__create-schema.sql");
+//        properties.put("jakarta.persistence.schema-generation.scripts.drop-target", "drop-schema.sql");
+//        properties.put("jakarta.persistence.schema-generation.scripts.create-source", "metadata");
 
         em.setJpaPropertyMap(properties);
 

@@ -27,7 +27,6 @@ public class MokDBConfig {
         return new DataSourceProperties();
     }
 
-    @Primary
     @Bean
     public DataSource mokDataSource() {
         return mokDataSourceProperties()
@@ -35,7 +34,6 @@ public class MokDBConfig {
                 .build();
     }
 
-    @Primary
     @Bean(name="mokEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean mokEntityManagerFactory(
             @Qualifier("mokDataSource") DataSource dataSource) {

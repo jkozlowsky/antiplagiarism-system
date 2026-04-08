@@ -1,10 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.UUID;
 
 /**
  * dictionary table that can contain one of these values:
@@ -16,7 +16,15 @@ import lombok.Setter;
 @Table(name = "language_dict")
 @Getter
 @Setter
-public class LanguageDict extends AbstractEntity {
+public class LanguageDict{
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version;
 
     @Column(name = "language", nullable = false, unique = true)
     private String language;
