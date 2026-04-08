@@ -11,7 +11,8 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(indexes = {
+@Table(name="subject",
+        indexes = {
         @Index(name = "idx_subject_created_by", columnList = "created_by"),
         @Index(name = "idx_subject_modified_by", columnList = "modified_by")
 })

@@ -25,7 +25,11 @@ public class Report extends AbstractEntity {
     @JoinTable(
             name = "report_repository",
             joinColumns = @JoinColumn(name = "report_id"),
-            inverseJoinColumns = @JoinColumn(name = "repository_id")
+            inverseJoinColumns = @JoinColumn(name = "repository_id"),
+            indexes = {
+                    @Index(name = "idx_report_repository_report_id", columnList = "report_id"),
+                    @Index(name = "idx_report_repository_repository_id", columnList = "repository_id")
+            }
     )
     private List<Repository> repositoryList;
 
