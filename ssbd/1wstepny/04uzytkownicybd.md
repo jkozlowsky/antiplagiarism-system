@@ -37,11 +37,24 @@ Tabela 1.4.1 Tabela uprawnień dla użytkowników bazodanowych
 | report_repository  | S,I,U,D     | -         | S,I,U,D   |
 
 
+**Legenda**
+
+Tabela 1.4.2 Legenda oznaczeń dla Tabeli 1.4.1
+
+|Skrót| S      | U      | I      | D      |
+|---|--------|--------|--------|--------|
+|Nazwa| SELECT | UPDATE | INSERT | DELETE | 
+
+
 
 ```sql
--- =================================================================
--- UPRAWNIENIA (Role RBAC bazodanowego dla MOK i MPP)
--- =================================================================
+CREATE USER ssbd01mok WITH PASSWORD 'MokPass123!';
+CREATE USER ssbd01mpp WITH PASSWORD 'MppPass123!';
+CREATE DATABASE ssbd01_db OWNER ssbd01admin;
+```
+Listing 1.4.1 Plik init.sql, w którym tworzeni są użytkownicy bazodanowi.
+
+```sql
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.account TO ssbd01mok;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.access_level TO ssbd01mok;
 GRANT SELECT, INSERT, UPDATE ON public.admin TO ssbd01mok;
@@ -62,18 +75,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.repository_student TO ssbd01mpp;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.report TO ssbd01mpp;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.report_repository TO ssbd01mpp;
 
--- Słowniki (Tylko odczyt)
 GRANT SELECT ON public.access_level_dict TO ssbd01mok, ssbd01mpp;
 GRANT SELECT ON public.language_dict TO ssbd01mok, ssbd01mpp;
 GRANT SELECT ON public.raport_level_dict TO ssbd01mpp;
 ```
 
-Listing 1.4.1 Plik V2_Grant-privileges.sql określający uprawnienia dla użytkowników bazodanowych
-
-**Legenda**
-
-Tabela 1.4.2 Legenda oznaczeń dla Tabeli 1.4.1
-
-|Skrót| S      | U      | I      | D      |
-|---|--------|--------|--------|--------|
-|Nazwa| SELECT | UPDATE | INSERT | DELETE | 
+Listing 1.4.2 Plik V2_Grant-privileges.sql określający uprawnienia dla użytkowników bazodanowych
