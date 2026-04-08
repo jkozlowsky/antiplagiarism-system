@@ -11,7 +11,10 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(indexes = {
+        @Index(name = "idx_subject_created_by", columnList = "created_by"),
+        @Index(name = "idx_subject_modified_by", columnList = "modified_by")
+})
 public class Subject extends AbstractEntity {
 
     @Column(name = "name", nullable = false, length = SubjectConsts.SUBJECT_NAME_LENGTH)

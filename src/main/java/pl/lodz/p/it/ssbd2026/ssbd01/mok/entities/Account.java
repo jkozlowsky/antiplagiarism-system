@@ -10,7 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "account")
+@Table(name = "account", indexes = {
+        @Index(name = "idx_account_language_version_id", columnList = "language_version_id"),
+        @Index(name = "idx_account_created_by", columnList = "created_by"),
+        @Index(name = "idx_account_modified_by", columnList = "modified_by")
+})
 @Getter
 @Setter
 public class Account extends AbstractEntity {
@@ -35,8 +39,8 @@ public class Account extends AbstractEntity {
     @Column(name = "last_failed_login_ip", length = AccountConsts.IP_LENGTH)
     private String lastFailedLoginIp;
 
-    @ManyToOne
-    @JoinColumn(name = "language_versoin_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "language_version_id", nullable = false)
     private LanguageDict languageVersion;
 
     @Column(name = "failed_attempts")

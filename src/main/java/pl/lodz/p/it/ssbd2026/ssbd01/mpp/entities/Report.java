@@ -11,13 +11,17 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "report")
+@Table(name = "report", indexes = {
+        @Index(name = "idx_report_subject_id", columnList = "subject_id"),
+        @Index(name = "idx_report_created_by", columnList = "created_by"),
+        @Index(name = "idx_report_modified_by", columnList = "modified_by")
+})
 public class Report extends AbstractEntity {
 
     @Column(name = "path_to_report", nullable = false, length = ReportConsts.PATH_LENGTH)
     private String pathToReport;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "report_repository",
             joinColumns = @JoinColumn(name = "report_id"),
@@ -25,7 +29,7 @@ public class Report extends AbstractEntity {
     )
     private List<Repository> repositoryList;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
 }

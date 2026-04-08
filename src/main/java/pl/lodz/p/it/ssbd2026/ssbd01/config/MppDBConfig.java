@@ -27,7 +27,6 @@ public class MppDBConfig {
         return new DataSourceProperties();
     }
 
-    @Primary
     @Bean
     public DataSource mppDataSource() {
         return mppDataSourceProperties()
@@ -35,7 +34,6 @@ public class MppDBConfig {
                 .build();
     }
 
-    @Primary
     @Bean(name="mppEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean mppEntityManagerFactory(
             @Qualifier("mppDataSource") DataSource dataSource) {

@@ -10,10 +10,15 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "rule_preset")
+@Table(name = "rule_preset", indexes = {
+        @Index(name = "idx_rule_preset_raport_level_id", columnList = "raport_level_id"),
+        @Index(name = "idx_rule_preset_subject_id", columnList = "subject_id"),
+        @Index(name = "idx_rule_preset_created_by", columnList = "created_by"),
+        @Index(name = "idx_rule_preset_modified_by", columnList = "modified_by")
+})
 public class RulePreset extends AbstractEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "raport_level_id", nullable = false)
     private RaportLevelDict raportLevel;
 
@@ -26,7 +31,7 @@ public class RulePreset extends AbstractEntity {
     @OneToMany(mappedBy = "rulePreset", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<Schedule> scheduleList;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
 
