@@ -157,8 +157,8 @@
 	        - ` @JoinTable(` 
 		        `name = "repository_student", ` 
 		        `joinColumns = @JoinColumn(name = "repository_id"),  `
-		        `inverseJoinColumns = @JoinColumn(name = "student_id"),
-		        `indexes = { ` 
+		        `inverseJoinColumns = @JoinColumn(name = "student_id"),`
+			        `indexes = { ` 
 		        `@Index(name = "idx_repository_student_repository_id", columnList = "repository_id"),`  
 		         ` @Index(name = "idx_repository_student_student_id", columnList  = "student_id") ` 
 				}` 
@@ -237,6 +237,8 @@
 	    - `version`: Integer
 		    - `@Column(name = "version", nullable = false)`
 		    - `@Version`
+
+
 **Związki między obiektami klas encji**
 
 Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
@@ -256,6 +258,26 @@ Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
 | AccessLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 | LanguageDict                             | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 | ReportLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+
+
+Tabela 1.5.2. Kontynuacja macierzy krzyżowej związków między obiektami klas encyjnych.
+
+| **Encja A (Wiersz) \ Encja B (Kolumna)** | **Student**          | **SubjectAssignment** | AccessLevelDict | LanguageDict    | RaportLevelDict |
+| ---------------------------------------- | -------------------- | --------------------- | --------------- | --------------- | --------------- |
+| **Account**                              | -                    | -                     | -               | U,OW,N:1,Brak,I | -               |
+| **AccessLevel**                          | -                    | -                     | U,OW,N:1,Brak,I | -               | -               |
+| **Subject**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               |
+| **Repository**                           | BI, OW, N:M, Brak, M | -                     | -               | -               | -               |
+| **Report**                               | -                    | -                     | -               | -               | -               |
+| **RulePreset**                           | -                    | -                     | -               | -               | U,OW,N:1,Brak,I |
+| **Schedule**                             | -                    | -                     | -               | -               | -               |
+| **Teacher**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               |
+| **Student**                              | -                    | -                     | -               | -               | -               |
+| **SubjectAssignment**                    | -                    | -                     | -               | -               | -               |
+| AccessLevelDict                          | -                    | -                     | -               | -               | -               |
+| LanguageDict                             | -                    | -                     | -               | -               | -               |
+| ReportLevelDict                          | -                    | -                     | -               | -               | -               |
+
 
 ### Legenda oznaczeń w tabeli:
 - Kierunkowość
