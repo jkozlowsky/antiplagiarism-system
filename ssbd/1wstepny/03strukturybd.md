@@ -259,27 +259,170 @@ Plik migracji: V1__create-schema.sql (DDL - Struktury)
 -- =================================================================
 -- SŁOWNIKI
 -- =================================================================
-create table access_level_dict (version integer not null, id uuid not null, access_level_name varchar(255) not null unique, primary key (id));
-create table language_dict (version integer not null, id uuid not null, language varchar(255) not null unique, primary key (id));
-create table raport_level_dict (version integer not null, id uuid not null, name varchar(255) not null unique, primary key (id));
+create table access_level_dict  
+(  
+    version           integer      not null,  
+    id                uuid         not null,  
+    access_level_name varchar(255) not null unique,  
+    primary key (id)  
+);
+create table language_dict  
+(  
+    version  integer      not null,  
+    id       uuid         not null,  
+    language varchar(255) not null unique,  
+    primary key (id)  
+);  
+create table raport_level_dict  
+(  
+    version integer      not null,  
+    id      uuid         not null,  
+    name    varchar(255) not null unique,  
+    primary key (id)  
+);
 
 -- =================================================================
 -- STRUKTURY BIZNESOWE (MOK i MPP)
 -- =================================================================
-create table access_level (version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), access_level_id uuid not null, account_id uuid, created_by uuid, id uuid not null, modified_by uuid, primary key (id));
-create table account (failed_attempts integer, is_blocked boolean not null, version integer not null, created_at timestamp(6) not null, last_login_failure_date_time timestamp(6), last_login_success_date_time timestamp(6), updated_at timestamp(6), created_by uuid, id uuid not null, language_version_id uuid not null, modified_by uuid, last_failed_login_ip varchar(45), last_successful_login_ip varchar(45), email varchar(50) not null unique, login varchar(50) not null unique, name varchar(50) not null, surname varchar(50) not null, password_hash varchar(64) not null, primary key (id));
-create table admin (id uuid not null, primary key (id));
-create table report (version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), created_by uuid, id uuid not null, modified_by uuid, subject_id uuid, path_to_report varchar(512) not null, primary key (id));
-create table report_repository (report_id uuid not null, repository_id uuid not null);
-create table repository (version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), created_by uuid, id uuid not null, modified_by uuid, subject_id uuid, repository_name varchar(50) not null, ticket_count varchar(255) not null, primary key (id));
-create table repository_student (repository_id uuid not null, student_id uuid not null);
-create table rule_preset (is_preset boolean not null, student_ticket_count integer not null, version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), created_by uuid, id uuid not null, modified_by uuid, raport_level_id uuid not null, subject_id uuid unique, primary key (id));
-create table schedule (version integer not null, created_at timestamp(6) not null, schedule_date_time timestamp(6) not null, updated_at timestamp(6), created_by uuid, id uuid not null, modified_by uuid, rule_preset_id uuid, tag varchar(16) not null, primary key (id));
-create table student (id uuid not null, primary key (id));
-create table subject (archived boolean not null, version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), created_by uuid, edition varchar(16) not null, id uuid not null, modified_by uuid, name varchar(64) not null, gitea_url varchar(512) not null, subject_description varchar(1000), primary key (id));
-create table subject_assignment (has_edit_permissions boolean not null, version integer not null, created_at timestamp(6) not null, updated_at timestamp(6), created_by uuid, id uuid not null, modified_by uuid, subject_id uuid, teacher_id uuid, primary key (id));
-create table teacher (id uuid not null, primary key (id));
-
+create table access_level  
+(  
+    version         integer      not null,  
+    created_at      timestamp(6) not null,  
+    updated_at      timestamp(6),  
+    access_level_id uuid         not null,  
+    account_id      uuid,  
+    created_by      uuid,  
+    id              uuid         not null,  
+    modified_by     uuid,  
+    primary key (id)  
+);
+create table account  
+(  
+    failed_attempts              integer,  
+    is_blocked                   boolean      not null,  
+    version                      integer      not null,  
+    created_at                   timestamp(6) not null,  
+    last_login_failure_date_time timestamp(6),  
+    last_login_success_date_time timestamp(6),  
+    updated_at                   timestamp(6),  
+    created_by                   uuid,  
+    id                           uuid         not null,  
+    language_version_id          uuid         not null,  
+    modified_by                  uuid,  
+    last_failed_login_ip         varchar(45),  
+    last_successful_login_ip     varchar(45),  
+    email                        varchar(50)  not null unique,  
+    login                        varchar(50)  not null unique,  
+    name                         varchar(50)  not null,  
+    surname                      varchar(50)  not null,  
+    password_hash                varchar(64)  not null,  
+    primary key (id)  
+);
+create table admin  
+(  
+    id uuid not null,  
+    primary key (id)  
+);
+create table report  
+(  
+    version        integer      not null,  
+    created_at     timestamp(6) not null,  
+    updated_at     timestamp(6),  
+    created_by     uuid,  
+    id             uuid         not null,  
+    modified_by    uuid,  
+    subject_id     uuid,  
+    path_to_report varchar(512) not null,  
+    primary key (id)  
+);  
+create table report_repository  
+(  
+    report_id     uuid not null,  
+    repository_id uuid not null  
+);  
+create table repository  
+(  
+    version         integer      not null,  
+    created_at      timestamp(6) not null,  
+    updated_at      timestamp(6),  
+    created_by      uuid,  
+    id              uuid         not null,  
+    modified_by     uuid,  
+    subject_id      uuid,  
+    repository_name varchar(50)  not null,  
+    ticket_count    varchar(255) not null,  
+    primary key (id)  
+);  
+create table repository_student  
+(  
+    repository_id uuid not null,  
+    student_id    uuid not null  
+);  
+create table rule_preset  
+(  
+    is_preset            boolean      not null,  
+    student_ticket_count integer      not null,  
+    version              integer      not null,  
+    created_at           timestamp(6) not null,  
+    updated_at           timestamp(6),  
+    created_by           uuid,  
+    id                   uuid         not null,  
+    modified_by          uuid,  
+    raport_level_id      uuid         not null,  
+    subject_id           uuid unique,  
+    primary key (id)  
+);  
+create table schedule  
+(  
+    version            integer      not null,  
+    created_at         timestamp(6) not null,  
+    schedule_date_time timestamp(6) not null,  
+    updated_at         timestamp(6),  
+    created_by         uuid,  
+    id                 uuid         not null,  
+    modified_by        uuid,  
+    rule_preset_id     uuid,  
+    tag                varchar(16)  not null,  
+    primary key (id)  
+);  
+create table student  
+(  
+    id uuid not null,  
+    primary key (id)  
+);  
+create table Subject  
+(  
+    archived            boolean      not null,  
+    version             integer      not null,  
+    created_at          timestamp(6) not null,  
+    updated_at          timestamp(6),  
+    created_by          uuid,  
+    edition             varchar(16)  not null,  
+    id                  uuid         not null,  
+    modified_by         uuid,  
+    name                varchar(64)  not null,  
+    gitea_url           varchar(512) not null,  
+    subject_description varchar(1000),  
+    primary key (id)  
+);  
+create table subject_assignment  
+(  
+    has_edit_permissions boolean      not null,  
+    version              integer      not null,  
+    created_at           timestamp(6) not null,  
+    updated_at           timestamp(6),  
+    created_by           uuid,  
+    id                   uuid         not null,  
+    modified_by          uuid,  
+    subject_id           uuid,  
+    teacher_id           uuid,  
+    primary key (id)  
+);  
+create table teacher  
+(  
+    id uuid not null,  
+    primary key (id)  
+);
 -- =================================================================
 -- INDEKSY DLA KLUCZY OBCYCH
 -- =================================================================
@@ -317,108 +460,156 @@ create index idx_subject_assignment_modified_by on subject_assignment (modified_
 -- =================================================================
 -- RELACJE I WIĘZY INTEGRALNOŚCI
 -- =================================================================
-alter table if exists access_level add constraint FKof8x67v6rlo4uqhjr3k1csaoo foreign key (created_by) references account;
-alter table if exists access_level add constraint FK73174ufy7xjp6vtev9tr6igsr foreign key (modified_by) references account;
-alter table if exists access_level add constraint FKfwnr16liua1xlmegeroxjpjgm foreign key (access_level_id) references access_level_dict;
-alter table if exists access_level add constraint FKl6ljrvl5w8nhxvrrqt0pu4uou foreign key (account_id) references account;
-alter table if exists account add constraint FKatwoepbie7ousm3au0cp7hira foreign key (created_by) references account;
-alter table if exists account add constraint FKamhcror3cllccnl64tog77g63 foreign key (modified_by) references account;
-alter table if exists account add constraint FK2v4wsury86sg66iwigxcnemur foreign key (language_version_id) references language_dict;
-alter table if exists admin add constraint FKoattn78xgq9lfyf4aqta45t2g foreign key (id) references access_level;
-alter table if exists report add constraint FKtabrqbv4a2qpd7svtm4j2fmbi foreign key (created_by) references account;
-alter table if exists report add constraint FKd493pslr7i7s38afe9smeuspj foreign key (modified_by) references account;
-alter table if exists report add constraint FKpoktbhs862mi55mmkyrhghicn foreign key (subject_id) references subject;
-alter table if exists report_repository add constraint FKn3nnvnmu3pjohdx4ertor9l14 foreign key (repository_id) references repository;
-alter table if exists report_repository add constraint FKjoyicyakroqqnq643wj4x9172 foreign key (report_id) references report;
-alter table if exists repository add constraint FKle9b5p7a6321xq7ubhcl9ko4i foreign key (created_by) references account;
-alter table if exists repository add constraint FKtql9cw6i0walo49vsi5djsep6 foreign key (modified_by) references account;
-alter table if exists repository add constraint FKawknd2f17lcrfsgxd7k2yghmb foreign key (subject_id) references subject;
-alter table if exists repository_student add constraint FKn2e3iler0nx4t2ceea55umflt foreign key (student_id) references student;
-alter table if exists repository_student add constraint FK85w0wmqpemm6gh9thi4ox3vi2 foreign key (repository_id) references repository;
-alter table if exists rule_preset add constraint FKofpcwoi34pt9d85jjp6th61o8 foreign key (created_by) references account;
-alter table if exists rule_preset add constraint FK4s3ud9n5jhfpt8xdy642swoum foreign key (modified_by) references account;
-alter table if exists rule_preset add constraint FK3qdb95ypmn1s55wlcr8slycwl foreign key (raport_level_id) references raport_level_dict;
-alter table if exists rule_preset add constraint FK4neg3d5mhugn257y5l4m0omps foreign key (subject_id) references subject;
-alter table if exists schedule add constraint FKjb826iva7idpl3lnkuj6jbab1 foreign key (created_by) references account;
-alter table if exists schedule add constraint FKop4s18vy50g7nrwo6y8kq2nge foreign key (modified_by) references account;
-alter table if exists schedule add constraint FKk7b7145vnsrqm7qp8bsrgvv5c foreign key (rule_preset_id) references rule_preset;
-alter table if exists student add constraint FK4tmav461awf0040phhbp9b33 foreign key (id) references access_level;
-alter table if exists subject add constraint FK81v3e3ofl29ivy47fu87wf2vx foreign key (created_by) references account;
-alter table if exists subject add constraint FK4ppt1q7rbioqruy16uu1fvtpm foreign key (modified_by) references account;
-alter table if exists subject_assignment add constraint FK5c3a1htdcdtctpvbrg0gum1b8 foreign key (created_by) references account;
-alter table if exists subject_assignment add constraint FKl4e5w9fsbanhdt55f5chrhshh foreign key (modified_by) references account;
-alter table if exists subject_assignment add constraint FKoo00eu0c4uy1fbfuslx7htbxd foreign key (subject_id) references subject;
-alter table if exists subject_assignment add constraint FKjvousvwbu0p39th35dryscg44 foreign key (teacher_id) references teacher;
-alter table if exists teacher add constraint FKgnb2jmlqrk5860w55vclmx1eo foreign key (id) references access_level;
+alter table if exists access_level  
+    add constraint FKof8x67v6rlo4uqhjr3k1csaoo foreign key (created_by) references account;  
+alter table if exists access_level  
+    add constraint FK73174ufy7xjp6vtev9tr6igsr foreign key (modified_by) references account;  
+alter table if exists access_level  
+    add constraint FKfwnr16liua1xlmegeroxjpjgm foreign key (access_level_id) references access_level_dict;  
+alter table if exists access_level  
+    add constraint FKl6ljrvl5w8nhxvrrqt0pu4uou foreign key (account_id) references account;  
+alter table if exists account  
+    add constraint FKatwoepbie7ousm3au0cp7hira foreign key (created_by) references account;  
+alter table if exists account  
+    add constraint FKamhcror3cllccnl64tog77g63 foreign key (modified_by) references account;  
+alter table if exists account  
+    add constraint FK2v4wsury86sg66iwigxcnemur foreign key (language_version_id) references language_dict;  
+alter table if exists admin  
+    add constraint FKoattn78xgq9lfyf4aqta45t2g foreign key (id) references access_level;  
+alter table if exists report  
+    add constraint FKtabrqbv4a2qpd7svtm4j2fmbi foreign key (created_by) references account;  
+alter table if exists report  
+    add constraint FKd493pslr7i7s38afe9smeuspj foreign key (modified_by) references account;  
+alter table if exists report  
+    add constraint FKpoktbhs862mi55mmkyrhghicn foreign key (subject_id) references Subject;  
+alter table if exists report_repository  
+    add constraint FKn3nnvnmu3pjohdx4ertor9l14 foreign key (repository_id) references repository;  
+alter table if exists report_repository  
+    add constraint FKjoyicyakroqqnq643wj4x9172 foreign key (report_id) references report;  
+alter table if exists repository  
+    add constraint FKle9b5p7a6321xq7ubhcl9ko4i foreign key (created_by) references account;  
+alter table if exists repository  
+    add constraint FKtql9cw6i0walo49vsi5djsep6 foreign key (modified_by) references account;  
+alter table if exists repository  
+    add constraint FKawknd2f17lcrfsgxd7k2yghmb foreign key (subject_id) references Subject;  
+alter table if exists repository_student  
+    add constraint FKn2e3iler0nx4t2ceea55umflt foreign key (student_id) references student;  
+alter table if exists repository_student  
+    add constraint FK85w0wmqpemm6gh9thi4ox3vi2 foreign key (repository_id) references repository;  
+alter table if exists rule_preset  
+    add constraint FKofpcwoi34pt9d85jjp6th61o8 foreign key (created_by) references account;  
+alter table if exists rule_preset  
+    add constraint FK4s3ud9n5jhfpt8xdy642swoum foreign key (modified_by) references account;  
+alter table if exists rule_preset  
+    add constraint FK3qdb95ypmn1s55wlcr8slycwl foreign key (raport_level_id) references raport_level_dict;  
+alter table if exists rule_preset  
+    add constraint FK4neg3d5mhugn257y5l4m0omps foreign key (subject_id) references Subject;  
+alter table if exists schedule  
+    add constraint FKjb826iva7idpl3lnkuj6jbab1 foreign key (created_by) references account;  
+alter table if exists schedule  
+    add constraint FKop4s18vy50g7nrwo6y8kq2nge foreign key (modified_by) references account;  
+alter table if exists schedule  
+    add constraint FKk7b7145vnsrqm7qp8bsrgvv5c foreign key (rule_preset_id) references rule_preset;  
+alter table if exists student  
+    add constraint FK4tmav461awf0040phhbp9b33 foreign key (id) references access_level;  
+alter table if exists Subject  
+    add constraint FK81v3e3ofl29ivy47fu87wf2vx foreign key (created_by) references account;  
+alter table if exists Subject  
+    add constraint FK4ppt1q7rbioqruy16uu1fvtpm foreign key (modified_by) references account;  
+alter table if exists subject_assignment  
+    add constraint FK5c3a1htdcdtctpvbrg0gum1b8 foreign key (created_by) references account;  
+alter table if exists subject_assignment  
+    add constraint FKl4e5w9fsbanhdt55f5chrhshh foreign key (modified_by) references account;  
+alter table if exists subject_assignment  
+    add constraint FKoo00eu0c4uy1fbfuslx7htbxd foreign key (subject_id) references Subject;  
+alter table if exists subject_assignment  
+    add constraint FKjvousvwbu0p39th35dryscg44 foreign key (teacher_id) references teacher;  
+alter table if exists teacher  
+    add constraint FKgnb2jmlqrk5860w55vclmx1eo foreign key (id) references access_level;
 ```
 
 Plik migracji: V3__insert-values.sql (DML - Dane inicjujące)
 ```postgresql
-DO $$
-    DECLARE
-        admin_id UUID := gen_random_uuid();
-        teacher_id UUID := gen_random_uuid();
-        student_id UUID := gen_random_uuid();
-
-        -- Słowniki
-        lang_pl_id UUID := gen_random_uuid();
-        lang_en_id UUID := gen_random_uuid();
-
-        role_admin_id UUID := gen_random_uuid();
-        role_teacher_id UUID := gen_random_uuid();
-        role_student_id UUID := gen_random_uuid();
-
-        rep_level_id UUID := gen_random_uuid();
-
-        -- Elementy MPP
-        sub_id UUID := gen_random_uuid();
-        al_admin_id UUID := gen_random_uuid();
-        al_teacher_id UUID := gen_random_uuid();
-        al_student_id UUID := gen_random_uuid();
-
-        czas_obecny TIMESTAMP := NOW();
-    BEGIN
-        -- SŁOWNIKI
-        INSERT INTO public.language_dict (id, language, version) VALUES (lang_pl_id, 'pl', 0), (lang_en_id, 'en', 0);
-        INSERT INTO public.access_level_dict (id, access_level_name, version) VALUES
-                                                                                  (role_admin_id, 'ADMIN', 0),
-                                                                                  (role_teacher_id, 'TEACHER', 0),
-                                                                                  (role_student_id, 'STUDENT', 0);
-        INSERT INTO public.raport_level_dict (id, name, version) VALUES
-                                                                     (rep_level_id, 'PEŁNY_WGLĄD', 0), (gen_random_uuid(), 'TYLKO_PROCENTY', 0), (gen_random_uuid(), 'BRAK_WGLĄDU', 0);
-
-        -- 1. KONTO ADMINA
-        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked, version, created_by, created_at)
-        VALUES (admin_id, 'admin', 'admin@ssbd.edu.pl', '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Adam', 'Root', lang_pl_id, false, 0, admin_id, czas_obecny);
-
-        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)
-        VALUES (al_admin_id, admin_id, role_admin_id, 0, admin_id, czas_obecny);
-        INSERT INTO public.admin (id) VALUES (al_admin_id);
-
-        -- 2. KONTO PROWADZĄCEGO
-        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked, version, created_by, created_at)
-        VALUES (teacher_id, 'jkowalski', 'jkowalski@ssbd.edu.pl', '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Jan', 'Kowalski', lang_pl_id, false, 0, admin_id, czas_obecny);
-
-        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)
-        VALUES (al_teacher_id, teacher_id, role_teacher_id, 0, admin_id, czas_obecny);
-        INSERT INTO public.teacher (id) VALUES (al_teacher_id);
-
-        -- 3. KONTO STUDENTA
-        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked, version, created_by, created_at)
-        VALUES (student_id, 'anowak', 'anowak@ssbd.edu.pl', '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Anna', 'Nowak', lang_pl_id, false, 0, admin_id, czas_obecny);
-
-        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)
-        VALUES (al_student_id, student_id, role_student_id, 0, admin_id, czas_obecny);
-        INSERT INTO public.student (id) VALUES (al_student_id);
-
-        -- 4. INICJALIZACJA MPP
-        INSERT INTO public.subject (id, name, edition, gitea_url, archived, version, created_by, created_at)
-        VALUES (sub_id, 'SSBD', '2026', 'https://repo.it.p.lodz.pl/ssbd_2026', false, 0, teacher_id, czas_obecny);
-
-        INSERT INTO public.subject_assignment (id, teacher_id, subject_id, has_edit_permissions, version, created_by, created_at)
-        VALUES (gen_random_uuid(), al_teacher_id, sub_id, true, 0, teacher_id, czas_obecny);
-
-        INSERT INTO public.rule_preset (id, subject_id, raport_level_id, student_ticket_count, is_preset, version, created_by, created_at)
-        VALUES (gen_random_uuid(), sub_id, rep_level_id, 3, true, 0, teacher_id, czas_obecny);
-    END $$;
+DO  
+$$  
+    DECLARE  
+        admin_id        UUID      := gen_random_uuid();  
+        teacher_id      UUID      := gen_random_uuid();  
+        student_id      UUID      := gen_random_uuid();  
+  
+        -- Słowniki  
+        lang_pl_id      UUID      := gen_random_uuid();  
+        lang_en_id      UUID      := gen_random_uuid();  
+        role_admin_id   UUID      := gen_random_uuid();  
+        role_teacher_id UUID      := gen_random_uuid();  
+        role_student_id UUID      := gen_random_uuid();  
+        rep_level_id    UUID      := gen_random_uuid();  
+  
+        -- Elementy MPP  
+        sub_id          UUID      := gen_random_uuid();  
+        al_admin_id     UUID      := gen_random_uuid();  
+        al_teacher_id   UUID      := gen_random_uuid();  
+        al_student_id   UUID      := gen_random_uuid();  
+        czas_obecny     TIMESTAMP := NOW();  
+    BEGIN  
+        -- SŁOWNIKI (Dostosowane do braku pól audytowych)  
+        INSERT INTO public.language_dict (id, language, version) VALUES (lang_pl_id, 'pl', 0), (lang_en_id, 'en', 0);  
+        INSERT INTO public.access_level_dict (id, access_level_name, version)  
+        VALUES (role_admin_id, 'ADMIN', 0),  
+               (role_teacher_id, 'TEACHER', 0),  
+               (role_student_id, 'STUDENT', 0);  
+        INSERT INTO public.raport_level_dict (id, name, version)  
+        VALUES (rep_level_id, 'PEŁNY_WGLĄD', 0),  
+               (gen_random_uuid(), 'TYLKO_PROCENTY', 0),  
+               (gen_random_uuid(), 'BRAK_WGLĄDU', 0);  
+  
+        -- 1. KONTO ADMINA  
+        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked,  
+                                    version, created_by, created_at)  
+        VALUES (admin_id, 'admin', 'admin@ssbd.edu.pl', '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e',  
+                'Adam', 'Root', lang_pl_id, false, 0, admin_id, czas_obecny);  
+  
+        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)  
+        VALUES (al_admin_id, admin_id, role_admin_id, 0, admin_id, czas_obecny);  
+        INSERT INTO public.admin (id) VALUES (al_admin_id);  
+  
+        -- 2. KONTO PROWADZĄCEGO / ADMINA 
+        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked,  
+                                    version, created_by, created_at)  
+        VALUES (teacher_id, 'jkowalski', 'jkowalski@ssbd.edu.pl',  
+                '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Jan', 'Kowalski', lang_pl_id, false, 0,  
+                admin_id, czas_obecny);  
+  
+        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)  
+        VALUES (al_teacher_id, teacher_id, role_teacher_id, 0, admin_id, czas_obecny);  
+        INSERT INTO public.teacher (id) VALUES (al_teacher_id);  
+  
+        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)  
+        VALUES (al_teacher_id, teacher_id, role_admin_id, 0, admin_id, czas_obecny);  
+        INSERT INTO public.teacher (id) VALUES (al_teacher_id);  
+  
+        -- 3. KONTO STUDENTA  
+        INSERT INTO public.account (id, login, email, password_hash, name, surname, language_version_id, is_blocked,  
+                                    version, created_by, created_at)  
+        VALUES (student_id, 'anowak', 'anowak@ssbd.edu.pl',  
+                '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Anna', 'Nowak', lang_pl_id, false, 0,  
+                admin_id, czas_obecny);  
+  
+        INSERT INTO public.access_level (id, account_id, access_level_id, version, created_by, created_at)  
+        VALUES (al_student_id, student_id, role_student_id, 0, admin_id, czas_obecny);  
+        INSERT INTO public.student (id) VALUES (al_student_id);  
+  
+        -- 4. INICJALIZACJA MPP  
+        INSERT INTO public.Subject (id, name, edition, gitea_url, archived, version, created_by, created_at)  
+        VALUES (sub_id, 'Algorytmy', '2026', 'https://gitea.it.p.lodz.pl/asd_2026', false, 0, teacher_id, czas_obecny);  
+  
+        INSERT INTO public.subject_assignment (id, teacher_id, subject_id, has_edit_permissions, version, created_by,  
+                                               created_at)  
+        VALUES (gen_random_uuid(), al_teacher_id, sub_id, true, 0, teacher_id, czas_obecny);  
+  
+        INSERT INTO public.rule_preset (id, subject_id, raport_level_id, student_ticket_count, is_preset, version,  
+                                        created_by, created_at)  
+        VALUES (gen_random_uuid(), sub_id, rep_level_id, 3, true, 0, teacher_id, czas_obecny);  
+    END  
+$$;
 ```
