@@ -1,10 +1,10 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities;
+package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.ReportConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.entities.AbstractEntity;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.AbstractEntity;
 
 import java.util.List;
 
