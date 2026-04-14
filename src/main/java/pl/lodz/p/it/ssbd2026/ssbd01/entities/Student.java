@@ -1,12 +1,11 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mok.entities;
+package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities.Repository;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mok.entities;
+package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
 

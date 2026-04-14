@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mok.entities;
+package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,16 +7,15 @@ import lombok.Setter;
 import java.util.UUID;
 
 /**
- * dictionary table that can contain one of these values:
- * PL,
- * EN,
- * UK
+ * STUDENT,
+ * TEACHER,
+ * ADMINISTRATOR
  **/
 @Entity
-@Table(name = "language_dict")
+@Table(name = "access_level_dict")
 @Getter
 @Setter
-public class LanguageDict{
+public class AccessLevelDict {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -26,6 +25,6 @@ public class LanguageDict{
     @Column(name = "version", nullable = false)
     private Integer version;
 
-    @Column(name = "language", nullable = false, unique = true)
-    private String language;
+    @Column(name = "access_level_name", nullable = false, unique = true)
+    private String accessLevelName;
 }

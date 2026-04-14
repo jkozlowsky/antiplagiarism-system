@@ -1,25 +1,22 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities;
+package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.entities.AbstractEntity;
 
 import java.util.UUID;
 
 /**
  * dictionary table that can contain one of these values:
- * FULL_VIEW,
- * ONLY_PERCENTAGES,
- * ONLY_HIGHEST_PERCENT,
- * NOTHING
+ * PL,
+ * EN,
+ * UK
  **/
 @Entity
-@Table(name = "raport_level_dict")
+@Table(name = "language_dict")
 @Getter
 @Setter
-public class RaportLevelDict{
-
+public class LanguageDict{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -29,6 +26,6 @@ public class RaportLevelDict{
     @Column(name = "version", nullable = false)
     private Integer version;
 
-    @Column(name = "name", nullable = false, unique = true)
-    private String name;
+    @Column(name = "language", nullable = false, unique = true)
+    private String language;
 }
