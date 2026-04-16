@@ -46,3 +46,4 @@ buildNumber.properties
 bin/
 
 .env
+secrets/
