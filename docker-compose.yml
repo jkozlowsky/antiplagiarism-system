@@ -25,6 +25,7 @@ services:
     build:
       context: .
     environment:
+      - TZ=Europe/Warsaw
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=${PG_DATABASE}
@@ -36,7 +37,7 @@ services:
       - mok_password
       - mpp_password
     volumes:
-      - ./logs:/var/log/spring-app
+      - ../logs:/app/logs
     networks:
       - proxy-backend
       - backend-db
