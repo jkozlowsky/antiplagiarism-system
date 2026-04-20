@@ -34,6 +34,6 @@ deploy-backend:
     - cd /opt/api
     - git pull origin main
     - docker compose -f docker-compose.prod.yml pull backend
-    - docker compose -f docker-compose.prod.yml up -d backend
+    - docker compose -f docker-compose.prod.yml up -d
   only:
     - main
