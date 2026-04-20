@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication()
 public class Ssbd01api {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(Ssbd01api.class, args);
     }
 }

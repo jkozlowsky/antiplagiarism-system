@@ -2,13 +2,8 @@ package pl.lodz.p.it.ssbd2026.ssbd01.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-//import org.springframework.boot.flyway.autoconfigure.FlywayDataSource;
 import org.springframework.boot.flyway.autoconfigure.FlywayDataSource;
-import org.springframework.boot.hibernate.autoconfigure.HibernateProperties;
-import org.springframework.boot.hibernate.autoconfigure.HibernateSettings;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
-import org.springframework.boot.jpa.EntityManagerFactoryBuilder;
-import org.springframework.boot.jpa.autoconfigure.JpaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -45,7 +40,7 @@ public class AdminDBConfig {
     }
 
     @Primary
-    @Bean(name="adminEntityManagerFactory")
+    @Bean(name = "adminEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean adminEntityManagerFactory(
             @Qualifier("adminDataSource") DataSource dataSource) {
 
@@ -57,7 +52,6 @@ public class AdminDBConfig {
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
-
 
 
         Map<String, Object> properties = new HashMap<>();
