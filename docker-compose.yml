@@ -36,6 +36,7 @@ services:
       - pg_password
       - mok_password
       - mpp_password
+      - jwt_secret
     volumes:
       - ../logs:/app/logs
     networks:
@@ -82,3 +83,5 @@ secrets:
     file: ./secrets/mok_password.txt
   mpp_password:
     file: ./secrets/mpp_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
