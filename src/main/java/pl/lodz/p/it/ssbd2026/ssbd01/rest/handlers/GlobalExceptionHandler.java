@@ -125,7 +125,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleAuthorizationException(AuthorizationDeniedException exception, WebRequest request) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body("Brak uprawnień: " + exception.getMessage());
+                .body("No access: " + exception.getMessage());
     }
 
     /**
@@ -138,6 +138,6 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleAllUncaughtException(RuntimeException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Wyjątek: " + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Exception: " + exception.getMessage());
     }
 }
