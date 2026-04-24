@@ -8,11 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
+@Import(RestSetupInit.class)
+@EnableJpaRepositories(
+        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories",
+        entityManagerFactoryRef = "adminEntityManagerFactory",
+        transactionManagerRef = "adminTransactionManager")
 public abstract class BaseTestSetup extends TestContainersSetupInit {
 
     @Autowired

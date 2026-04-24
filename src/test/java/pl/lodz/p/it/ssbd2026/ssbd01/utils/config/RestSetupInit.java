@@ -22,10 +22,10 @@ public class RestSetupInit {
     @Value("${oauth.password}")
     private String oauthPassword;
 
-    @Value("${oauth.clientId}")
+    @Value("${oauth.client-id}")
     private String oauthclientId;
 
-    @Value("${oauth.clientSecret}")
+    @Value("${oauth.client-secret}")
     private String oauthclientSecret;
 
     public RequestSpecification initRequestSpec() {
