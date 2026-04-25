@@ -213,6 +213,10 @@
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!--Poczta-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
 
         <!--Validation-->
         <dependency>
