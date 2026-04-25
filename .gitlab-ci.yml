@@ -6,7 +6,20 @@ stages:
 test-backend:
   stage: test
   image: maven:3.9.14-eclipse-temurin-25-alpine
+  services:
+    - docker:29.4.0-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: "tcp://docker:2375"
   script:
+    - echo "PG_DATABASE=$CI_PG_DATABASE" >> .env
+    - echo "PG_USERNAME=$CI_PG_USERNAME" >> .env
+    - echo "MOK_USER=$CI_MOK_USER" >> .env
+    - echo "MPP_USER=$CI_MPP_USER" >> .env
+    - mkdir -p secrets
+    - echo "$CI_PG_PASSWORD" > secrets/pg_password.txt
+    - echo "$CI_MOK_PASSWORD" > secrets/mok_password.txt
+    - echo "$CI_MPP_PASSWORD" > secrets/mpp_password.txt
     - mvn test
 
 build-backend:

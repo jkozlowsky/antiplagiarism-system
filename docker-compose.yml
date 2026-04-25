@@ -11,8 +11,10 @@ services:
       - proxy-frontend
       - proxy-backend
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
 
   frontend:
     build:
@@ -20,6 +22,12 @@ services:
     networks:
       - proxy-frontend
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:80/ || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   backend:
     build:
@@ -35,6 +43,9 @@ services:
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+      - MANAGEMENT_SERVER_PORT=8082
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
     secrets:
       - pg_password
       - mok_password
@@ -47,7 +58,12 @@ services:
       - proxy-backend
       - backend-db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 40s
 
   db:
     image: postgres:18.3
@@ -57,10 +73,12 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
       MOK_USER: ${MOK_USER}
       MPP_USER: ${MPP_USER}
+
     secrets:
       - pg_password
       - mok_password
       - mpp_password
+      - jwt_secret
     ports:
       - 5434:5432
     volumes:
@@ -68,6 +86,12 @@ services:
       - db_data:/var/lib/postgresql
     networks:
       - backend-db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   proxy-frontend:

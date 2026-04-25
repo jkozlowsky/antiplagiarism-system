@@ -11,14 +11,21 @@ services:
       - proxy-frontend
       - proxy-backend
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
 
   frontend:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/web:latest
     networks:
       - proxy-frontend
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:80/ || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   backend:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
@@ -33,18 +40,27 @@ services:
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+      - MANAGEMENT_SERVER_PORT=8082
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
     secrets:
       - pg_password
       - mok_password
       - mpp_password
       - mail_password
+      - jwt_secret
     volumes:
       - ../logs:/app/logs
     networks:
       - proxy-backend
       - backend-db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 40s
 
   db:
     image: postgres:18.3
@@ -63,6 +79,12 @@ services:
       - db_data:/var/lib/postgresql
     networks:
       - backend-db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   proxy-frontend:
@@ -84,3 +106,5 @@ secrets:
     file: ./secrets/mpp_password.txt
   mail_password:
     file: ./secrets/mail_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
