@@ -12,6 +12,10 @@ test-backend:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
   script:
+    - echo "MAIL_HOST=localhost" >> .env
+    - echo "MAIL_PORT=1025" >> .env
+    - echo "MAIL_USERNAME=test" >> .env
+    - echo "test_mail_password" > secrets/mail_password.txt
     - echo "PG_DATABASE=$CI_PG_DATABASE" >> .env
     - echo "PG_USERNAME=$CI_PG_USERNAME" >> .env
     - echo "MOK_USER=$CI_MOK_USER" >> .env
