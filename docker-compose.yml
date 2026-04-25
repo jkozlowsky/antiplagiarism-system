@@ -50,6 +50,7 @@ services:
       - pg_password
       - mok_password
       - mpp_password
+      - mail_password
       - jwt_secret
       - mail_password
     volumes:
@@ -111,7 +112,7 @@ secrets:
     file: ./secrets/mok_password.txt
   mpp_password:
     file: ./secrets/mpp_password.txt
-  jwt_secret:
-    file: ./secrets/jwt_secret.txt
   mail_password:
     file: ./secrets/mail_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt

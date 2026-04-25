@@ -74,6 +74,7 @@ services:
       - pg_password
       - mok_password
       - mpp_password
+      - jwt_secret
     volumes:
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
       - db_data:/var/lib/postgresql
