@@ -14,6 +14,8 @@ RUN mvn clean package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:25-jre-alpine
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
 COPY --from=builder /app/target/*.jar app.jar

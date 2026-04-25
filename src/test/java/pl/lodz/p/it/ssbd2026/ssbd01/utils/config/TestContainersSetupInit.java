@@ -5,25 +5,45 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public abstract class TestContainersSetupInit {
 
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
+    private static String readSecret(String filePath) {
+        try {
+            return Files.readString(Paths.get(filePath)).trim();
+        } catch (Exception e) {
+            throw new RuntimeException("Nie można odczytać pliku z hasłem: " + filePath, e);
+        }
+    }
+
+    private static final String PG_DB = dotenv.get("PG_DATABASE");
+    private static final String PG_USER = dotenv.get("PG_USERNAME");
+    private static final String MOK_USER = dotenv.get("MOK_USER");
+    private static final String MPP_USER = dotenv.get("MPP_USER");
+
+    private static final String PG_PASS = readSecret("secrets/pg_password.txt");
+    private static final String MOK_PASS = readSecret("secrets/mok_password.txt");
+    private static final String MPP_PASS = readSecret("secrets/mpp_password.txt");
+
     public static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:18.3")
-            .withDatabaseName(dotenv.get("PG_DATABASE"))
-            .withUsername(dotenv.get("PG_USERNAME"))
-            .withPassword(dotenv.get("PG_PASSWORD"));
+            .withDatabaseName(PG_DB)
+            .withUsername(PG_USER)
+            .withPassword(PG_PASS);
 
     static {
         postgreSQLContainer.start();
         try {
             postgreSQLContainer.execInContainer(
-                    "psql", "-U", dotenv.get("PG_USERNAME"), "-d", dotenv.get("PG_DATABASE"),
-                    "-c", "CREATE ROLE " + dotenv.get("MOK_USERNAME") + " WITH LOGIN PASSWORD '" + dotenv.get("MOK_PASSWORD") + "';"
+                    "psql", "-U", PG_USER, "-d", PG_DB,
+                    "-c", "CREATE ROLE " + MOK_USER + " WITH LOGIN PASSWORD '" + MOK_PASS + "';"
             );
             postgreSQLContainer.execInContainer(
-                    "psql", "-U", dotenv.get("PG_USERNAME"), "-d", dotenv.get("PG_DATABASE"),
-                    "-c", "CREATE ROLE " + dotenv.get("MPP_USERNAME") + " WITH LOGIN PASSWORD '" + dotenv.get("MPP_PASSWORD") + "';"
+                    "psql", "-U", PG_USER, "-d", PG_DB,
+                    "-c", "CREATE ROLE " + MPP_USER + " WITH LOGIN PASSWORD '" + MPP_PASS + "';"
             );
         } catch (Exception e) {
             throw new RuntimeException("Błąd podczas uruchamiania Testcontainers: ", e);
@@ -35,19 +55,19 @@ public abstract class TestContainersSetupInit {
         String jdbcUrl = postgreSQLContainer.getJdbcUrl();
 
         registry.add("spring.flyway.url", () -> jdbcUrl);
-        registry.add("spring.flyway.user", () -> dotenv.get("PG_USERNAME"));
-        registry.add("spring.flyway.password", () -> dotenv.get("PG_PASSWORD"));
+        registry.add("spring.flyway.user", () -> PG_USER);
+        registry.add("spring.flyway.password", () -> PG_PASS);
 
         registry.add("spring.datasource.admin.url", () -> jdbcUrl);
-        registry.add("spring.datasource.admin.username", () -> dotenv.get("PG_USERNAME"));
-        registry.add("spring.datasource.admin.password", () -> dotenv.get("PG_PASSWORD"));
+        registry.add("spring.datasource.admin.username", () -> PG_USER);
+        registry.add("spring.datasource.admin.password", () -> PG_PASS);
 
         registry.add("spring.datasource.mok.url", () -> jdbcUrl);
-        registry.add("spring.datasource.mok.username", () -> dotenv.get("MOK_USERNAME"));
-        registry.add("spring.datasource.mok.password", () -> dotenv.get("MOK_PASSWORD"));
+        registry.add("spring.datasource.mok.username", () -> MOK_USER);
+        registry.add("spring.datasource.mok.password", () -> MOK_PASS);
 
         registry.add("spring.datasource.mpp.url", () -> jdbcUrl);
-        registry.add("spring.datasource.mpp.username", () -> dotenv.get("MPP_USERNAME"));
-        registry.add("spring.datasource.mpp.password", () -> dotenv.get("MPP_PASSWORD"));
+        registry.add("spring.datasource.mpp.username", () -> MPP_USER);
+        registry.add("spring.datasource.mpp.password", () -> MPP_PASS);
     }
 }
