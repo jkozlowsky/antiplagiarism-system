@@ -116,5 +116,3 @@ secrets:
     file: ./secrets/mail_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
-  mail_password:
-    file: ./secrets/mail_password.txt
