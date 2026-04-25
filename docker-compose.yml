@@ -32,11 +32,15 @@ services:
       - ADMIN_USER=${PG_USERNAME}
       - MOK_USER=${MOK_USER}
       - MPP_USER=${MPP_USER}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
     secrets:
       - pg_password
       - mok_password
       - mpp_password
       - jwt_secret
+      - mail_password
     volumes:
       - ../logs:/app/logs
     networks:
@@ -85,3 +89,5 @@ secrets:
     file: ./secrets/mpp_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
+  mail_password:
+    file: ./secrets/mail_password.txt
