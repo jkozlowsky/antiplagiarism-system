@@ -18,6 +18,10 @@ import java.util.List;
 @Getter
 @Setter
 public class Account extends AbstractEntity {
+
+    public static final String UNIQUE_LOGIN_INDEX_NAME = "account_login_key";
+    public static final String UNIQUE_EMAIL_INDEX_NAME = "account_email_key";
+
     @Column(name = "login", nullable = false, unique = true, updatable = false, length = AccountConsts.LOGIN_LENGTH)
     private String login;
 
