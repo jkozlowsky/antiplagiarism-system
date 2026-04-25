@@ -52,6 +52,7 @@ services:
       - mpp_password
       - mail_password
       - jwt_secret
+      - mail_password
     volumes:
       - ../logs:/app/logs
     networks:
@@ -115,3 +116,5 @@ secrets:
     file: ./secrets/mail_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
+  mail_password:
+    file: ./secrets/mail_password.txt
