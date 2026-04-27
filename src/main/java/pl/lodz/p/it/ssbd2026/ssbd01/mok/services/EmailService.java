@@ -13,13 +13,13 @@ public class EmailService {
     }
 
     public void sendEmail(String toAddress, String subject, String content){
-        SimpleMailMessage massage = new SimpleMailMessage();
-        massage.setFrom("no-reply@team-1.proj-sum.it.p.lodz.pl");
-        massage.setTo(toAddress);
-        massage.setSubject(subject);
-        massage.setText(content);
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("252929@edu.p.lodz.pl");
+        message.setTo(toAddress);
+        message.setSubject(subject);
+        message.setText(content);
 
-        mailSender.send(massage);
+        mailSender.send(message);
     }
 
 }
