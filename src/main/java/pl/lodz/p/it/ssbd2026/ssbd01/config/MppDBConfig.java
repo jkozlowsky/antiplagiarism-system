@@ -1,19 +1,27 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.config;
 
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Configuration
+@EnableJpaRepositories(
+        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories",
+        entityManagerFactoryRef = "mppEntityManagerFactory",
+        transactionManagerRef = "mppTransactionManager"
+)
 public class MppDBConfig {
 
     @Bean
@@ -35,8 +43,7 @@ public class MppDBConfig {
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities",
-                "pl.lodz.p.it.ssbd2026.ssbd01.mok.entities");
+        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.entities");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -47,5 +54,10 @@ public class MppDBConfig {
 
         return em;
     }
-}
 
+    @Bean(name="mppTransactionManager")
+    public PlatformTransactionManager mppTransactionManager(
+            @Qualifier("mppEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
+        return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactory.getObject()));
+    }
+}

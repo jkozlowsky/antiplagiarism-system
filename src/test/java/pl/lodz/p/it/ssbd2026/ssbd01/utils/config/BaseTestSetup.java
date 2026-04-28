@@ -20,7 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
         basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories",
         entityManagerFactoryRef = "adminEntityManagerFactory",
         transactionManagerRef = "adminTransactionManager")
-public abstract class                       BaseTestSetup extends TestContainersSetupInit {
+public abstract class BaseTestSetup extends TestContainersSetupInit {
 
     @Autowired
     private RestSetupInit restSetup;
