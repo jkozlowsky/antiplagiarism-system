@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.config;
+package pl.lodz.p.it.ssbd2026.ssbd01.config.db;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
