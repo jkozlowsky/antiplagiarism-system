@@ -2,7 +2,6 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -43,14 +42,17 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final AccessLevelRepository accessLevelRepository;
-    private final DataSourceTransactionManager transactionManager;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     public Account getAccountWithAccessLevels(UUID id) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        account.getAccessLevelList().isEmpty(); // Pobiera pełną listę ról, które są przypisane do konta
+        account.getAccessLevelList().forEach(accessLevel -> {
+            if (accessLevel.getAccessLevelDict() != null) {
+                accessLevel.getAccessLevelDict().getAccessLevelName();
+            }
+        });
 
         return account;
     }

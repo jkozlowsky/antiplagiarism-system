@@ -44,7 +44,7 @@ public class MokDBConfig {
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.mpp.entities",
+        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.entities",
                 "pl.lodz.p.it.ssbd2026.ssbd01.mok.entities");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
