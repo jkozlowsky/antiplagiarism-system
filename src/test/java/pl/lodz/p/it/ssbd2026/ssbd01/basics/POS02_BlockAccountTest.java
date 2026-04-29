@@ -8,7 +8,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepositoryTest;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class POS02_BlockAccountTest extends BaseTestSetup {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountRepositoryTest accountRepositoryTest;
 
     @BeforeEach
     public void setup() {
@@ -29,7 +29,7 @@ public class POS02_BlockAccountTest extends BaseTestSetup {
     @Test
     @DisplayName("Verify if existing account can be successfully blocked")
     public void POS02_BlockAccountTest() {
-        Account adminUser = accountRepository.findByLogin("admin").get();
+        Account adminUser = accountRepositoryTest.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
 
         Account newAccount = new Account();
@@ -44,13 +44,13 @@ public class POS02_BlockAccountTest extends BaseTestSetup {
         ReflectionTestUtils.setField(newAccount, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(newAccount, "version", 0);
 
-        accountRepository.save(newAccount);
+        accountRepositoryTest.save(newAccount);
 
-        Account accountToBlock = accountRepository.findByLogin("userToBlock").get();
+        Account accountToBlock = accountRepositoryTest.findByLogin("userToBlock").get();
         accountToBlock.setIsBlocked(true);
-        accountRepository.save(accountToBlock);
+        accountRepositoryTest.save(accountToBlock);
 
-        Account blockedAccount = accountRepository.findByLogin("userToBlock").get();
+        Account blockedAccount = accountRepositoryTest.findByLogin("userToBlock").get();
         assertAll(
                 () -> assertNotNull(blockedAccount),
                 () -> assertTrue(blockedAccount.getIsBlocked(), "Konto powinno mieć flagę isBlocked = true")

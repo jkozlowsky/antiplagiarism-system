@@ -4,7 +4,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 import java.util.Optional;
 
-public interface AccountRepository extends BaseRepository<Account> {
+public interface AccountRepositoryTest extends BaseRepository<Account> {
     Optional<Account> findByEmail(String email);
 
     Optional<Account> findByLogin(String login);

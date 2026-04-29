@@ -9,6 +9,6 @@ public class OneTimeTokenInvalidException extends AppBaseException {
         super(HttpStatus.CONFLICT, reason);
     }
     public OneTimeTokenInvalidException(HttpStatusCode status, String reason, Throwable cause) {
-        super(status, reason, cause);
+        super(HttpStatus.CONFLICT, reason, cause);
     }
 }

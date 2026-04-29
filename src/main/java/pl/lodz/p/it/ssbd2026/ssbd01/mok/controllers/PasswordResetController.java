@@ -25,7 +25,7 @@ public class PasswordResetController {
 
     @PostMapping("/confirm")
     public ResponseEntity<String> confirmReset(@RequestBody ConfirmResetDto request) {
-        passwordResetService.resolvePasswordReset(request.token(), request.newPasswordHash());
+        passwordResetService.resolvePasswordReset(request.token(), request.newPassword());
         return ResponseEntity.ok("Password successfully changed.");
     }
 }

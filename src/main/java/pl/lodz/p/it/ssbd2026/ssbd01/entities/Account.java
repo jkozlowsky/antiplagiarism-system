@@ -61,4 +61,14 @@ public class Account extends AbstractEntity {
 
     @Column(name = "surname", nullable = false, length = AccountConsts.SURNAME_LENGTH)
     private String surname;
+
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion;
+
+    @PrePersist
+    protected void onCreate(){
+        if (tokenVersion == null){
+            tokenVersion = 1;
+        }
+    }
 }

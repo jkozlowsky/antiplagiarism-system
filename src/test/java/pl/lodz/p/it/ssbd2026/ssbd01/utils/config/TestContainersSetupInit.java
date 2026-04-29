@@ -69,5 +69,8 @@ public abstract class TestContainersSetupInit {
         registry.add("spring.datasource.mpp.url", () -> jdbcUrl);
         registry.add("spring.datasource.mpp.username", () -> MPP_USER);
         registry.add("spring.datasource.mpp.password", () -> MPP_PASS);
+
+        registry.add("spring.main.allow-bean-definition-overriding", () -> "true");
+        registry.add("spring.datasource.mok.hikari.maximum-pool-size", () -> "10");
     }
 }
