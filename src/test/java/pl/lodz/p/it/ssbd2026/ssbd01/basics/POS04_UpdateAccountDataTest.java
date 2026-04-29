@@ -8,7 +8,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepositoryTest;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class POS04_UpdateAccountDataTest extends BaseTestSetup {
 
     @Autowired
-    private AccountRepositoryTest accountRepositoryTest;
+    private AccountTestRepository accountTestRepository;
 
     @BeforeEach
     public void setup() {
@@ -30,7 +30,7 @@ public class POS04_UpdateAccountDataTest extends BaseTestSetup {
     @DisplayName("Verify if an account's personal data can be successfully updated")
     public void POS04_UpdateAccountDataTest() {
 
-        Account adminUser = accountRepositoryTest.findByLogin("admin").get();
+        Account adminUser = accountTestRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
 
         Account newAccount = new Account();
@@ -45,14 +45,14 @@ public class POS04_UpdateAccountDataTest extends BaseTestSetup {
         ReflectionTestUtils.setField(newAccount, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(newAccount, "version", 0);
 
-        accountRepositoryTest.save(newAccount);
+        accountTestRepository.save(newAccount);
 
-        Account accountToUpdate = accountRepositoryTest.findByLogin("updateTestUser").get();
+        Account accountToUpdate = accountTestRepository.findByLogin("updateTestUser").get();
         accountToUpdate.setEmail("brand_new_email@user.pl");
         accountToUpdate.setSurname("Nowy");
-        accountRepositoryTest.save(accountToUpdate);
+        accountTestRepository.save(accountToUpdate);
 
-        Account updatedAccount = accountRepositoryTest.findByLogin("updateTestUser").get();
+        Account updatedAccount = accountTestRepository.findByLogin("updateTestUser").get();
         assertAll(
                 () -> assertEquals("brand_new_email@user.pl", updatedAccount.getEmail(), "Adres email powinien zostać zaktualizowany"),
                 () -> assertEquals("Nowy", updatedAccount.getSurname(), "Nazwisko powinno zostać zaktualizowane")

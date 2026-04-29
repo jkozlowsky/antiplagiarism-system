@@ -39,6 +39,7 @@ public class RestSetupInit {
 
     public void initRestAssured(int port) {
         RestAssured.baseURI = TestConsts.BASE_ENDPOINT.getKeyName();
+        RestAssured.basePath = "/api";
         RestAssured.requestSpecification = initRequestSpec(port);
         RestAssured.filters(new CredentialsFilter());
     }

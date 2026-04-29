@@ -8,7 +8,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepositoryTest;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class POS01_CreateNewAccountTest extends BaseTestSetup {
 
     @Autowired
-    private AccountRepositoryTest accountRepositoryTest;
+    private AccountTestRepository accountTestRepository;
 
     @BeforeEach
     public void setup() {
@@ -31,7 +31,7 @@ public class POS01_CreateNewAccountTest extends BaseTestSetup {
     @DisplayName("Basic test to verify if database works - create new user")
     public void POS01_CreateNewAccountTest() {
 
-        Account adminUser = accountRepositoryTest.findByLogin("admin").get();
+        Account adminUser = accountTestRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
 
         Account newAccount = new Account();
@@ -46,12 +46,12 @@ public class POS01_CreateNewAccountTest extends BaseTestSetup {
         ReflectionTestUtils.setField(newAccount, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(newAccount, "version", 0);
 
-        UUID uuidHolder = (accountRepositoryTest.save(newAccount)).getId();
+        UUID uuidHolder = (accountTestRepository.save(newAccount)).getId();
 
         assertAll(
-                () -> assertNotNull(accountRepositoryTest.findByLogin("testNewUser")),
-                () -> assertNotNull(accountRepositoryTest.findByEmail("new@user.pl")),
-                () -> assertEquals(uuidHolder, accountRepositoryTest.findByLogin("testNewUser").get().getId())
+                () -> assertNotNull(accountTestRepository.findByLogin("testNewUser")),
+                () -> assertNotNull(accountTestRepository.findByEmail("new@user.pl")),
+                () -> assertEquals(uuidHolder, accountTestRepository.findByLogin("testNewUser").get().getId())
         );
     }
 }

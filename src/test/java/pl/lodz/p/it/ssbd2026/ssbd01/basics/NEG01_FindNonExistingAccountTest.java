@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepositoryTest;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.util.Optional;
 
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NEG01_FindNonExistingAccountTest extends BaseTestSetup {
 
     @Autowired
-    private AccountRepositoryTest accountRepositoryTest;
+    private AccountTestRepository accountTestRepository;
 
     @BeforeEach
     public void setup() {
@@ -28,7 +28,7 @@ public class NEG01_FindNonExistingAccountTest extends BaseTestSetup {
     @DisplayName("Verify that finding a non-existing user returns an empty Optional")
     public void NEG01_FindNonExistingAccountTest() {
 
-        Optional<Account> missingAccount = accountRepositoryTest.findByLogin("some_fake_login_123");
+        Optional<Account> missingAccount = accountTestRepository.findByLogin("some_fake_login_123");
 
         assertTrue(missingAccount.isEmpty(), "System powinien zwrócić pusty wynik dla nieistniejącego loginu");
     }

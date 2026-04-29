@@ -5,7 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -24,16 +27,15 @@ public class GlobalExceptionHandler {
 
     /**
      * Obsługuje działanie wyjątków bazowych aplikacji (AppBaseException).
-     * Tych, które będą zdefiniowane przez nas w pakiecie "exception".
-     * Przepuszcza je no bo one mają własną logikę obsługi statusu wewnątrz
-     * klasy wyjątku przez ResponseStatusException — patrz AppBaseException.
+     * Zwraca bezpośrednio ResponseEntity, co jest dobrą praktyką, ponieważ
+     * eliminuje wewnętrzne przekierowania do /error i unika problemów ze Spring Security (403 Forbidden).
      *
      * @param exception Przechwycony wyjątek aplikacyjny.
-     * @param request Obiekt żądania webowego.
+     * @return Odpowiedź HTTP z odpowiednim statusem i komunikatem z wyjątku.
      */
     @ExceptionHandler(AppBaseException.class)
-    public void passThroughAppExceptions(AppBaseException exception, WebRequest request) {
-        throw exception;
+    public ResponseEntity<String> handleAppBaseException(AppBaseException exception) {
+        return ResponseEntity.status(exception.getStatusCode()).body(exception.getReason());
     }
 
     /**
@@ -123,6 +125,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<Object> handleAuthorizationException(AuthorizationDeniedException exception, WebRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: " + exception.getMessage());
+        }
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body("No access: " + exception.getMessage());

@@ -20,10 +20,12 @@ import java.util.Map;
 
 @Configuration
 @EnableJpaRepositories(
+        basePackages = {
+                "pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.admin",
+                "pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.admin"
+        },
         entityManagerFactoryRef = "adminEntityManagerFactory",
-        transactionManagerRef = "adminTransactionManager",
-        basePackages = {"pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories",
-                "pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories"}
+        transactionManagerRef = "adminTransactionManager"
 )
 public class AdminDBConfig {
 
