@@ -34,4 +34,17 @@ public class AccountController {
 
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
     }
+
+    @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO revokeAccessLevel(
+            @PathVariable UUID id,
+            @PathVariable String accessLevelName,
+            @RequestBody AccountDTO accountDTO) {
+
+        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.version());
+        Account updatedAccount = accountService.getAccountWithAccessLevels(id);
+
+        return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+    }
 }

@@ -11,10 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelAlreadyAssignedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelDictNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
@@ -48,6 +45,8 @@ public class AccountService {
         Account account = accountRepository.findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
+        // account.getAccessLevelList().isEmpty();
+        // To jednak nie wystarcza do wymuszenia pobrania całej listy więc musi być to, co jest niżej:
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -88,6 +87,36 @@ public class AccountService {
         newAccessLevel.setAccount(account);
 
         account.getAccessLevelList().add(newAccessLevel);
+        accountRepository.saveAndFlush(account);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public void revokeAccessLevel(UUID uuid, String accessLevelName, Integer sourceVersion) {
+        Account account = accountRepository.findById(uuid)
+                .orElseThrow(AccountNotFoundException::new);
+
+        if (!account.getVersion().equals(sourceVersion)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        AccessLevelDict accessLevelDict = accessLevelDictRepository.findByAccessLevelName(accessLevelName)
+                .orElseThrow(AccessLevelDictNotFoundException::new);
+
+        AccessLevel accessLevelToRemove = account.getAccessLevelList().stream()
+                .filter(al -> al.getAccessLevelDict() != null &&
+                        al.getAccessLevelDict().getId().equals(accessLevelDict.getId()))
+                .findFirst()
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
+        account.getAccessLevelList().remove(accessLevelToRemove);
+        accessLevelToRemove.setAccount(null);
+
         accountRepository.saveAndFlush(account);
     }
 

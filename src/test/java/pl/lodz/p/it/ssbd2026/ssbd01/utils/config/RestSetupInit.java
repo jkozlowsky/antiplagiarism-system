@@ -28,19 +28,20 @@ public class RestSetupInit {
     @Value("${oauth.client-secret}")
     private String oauthclientSecret;
 
-    public RequestSpecification initRequestSpec() {
+    public RequestSpecification initRequestSpec(int port) {
         RequestSpecBuilder builder = new RequestSpecBuilder();
 
         builder.setContentType(ContentType.JSON);
         builder.setAccept(ContentType.JSON);
+        builder.setPort(port);
 
         return builder.build();
     }
 
-    public void initRestAssured() {
+    public void initRestAssured(int port) {
         RestAssured.baseURI = TestConsts.BASE_ENDPOINT.getKeyName();
         RestAssured.basePath = "/api";
-        RestAssured.requestSpecification = initRequestSpec();
+        RestAssured.requestSpecification = initRequestSpec(port);
         RestAssured.filters(new CredentialsFilter());
     }
 

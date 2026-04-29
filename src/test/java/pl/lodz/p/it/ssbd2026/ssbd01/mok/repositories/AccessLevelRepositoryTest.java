@@ -15,8 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AccessLevelRepositoryTest extends BaseTestSetup {
 
@@ -55,8 +54,10 @@ public class AccessLevelRepositoryTest extends BaseTestSetup {
 
         Optional<AccessLevel> found = accessLevelRepository.findByAccessLevelDictAndAccount(dict, account);
 
-        assertTrue(found.isPresent());
-        assertTrue(found.get() instanceof Teacher);
+        assertAll(
+                () -> assertTrue(found.isPresent()),
+                () -> assertInstanceOf(Teacher.class, found.get())
+        );
     }
 
     @Test

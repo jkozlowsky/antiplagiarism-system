@@ -21,8 +21,10 @@ public class AccessLevelModelTest {
         teacher.setAccount(account);
         teacher.setAccessLevelDict(dict);
 
-        assertEquals("modelTest", teacher.getAccount().getLogin());
-        assertEquals(AccountConsts.ROLE_TEACHER, teacher.getAccessLevelDict().getAccessLevelName());
+        assertAll(
+                () -> assertEquals("modelTest", teacher.getAccount().getLogin()),
+                () -> assertEquals(AccountConsts.ROLE_TEACHER, teacher.getAccessLevelDict().getAccessLevelName())
+        );
     }
 
     @Test
@@ -39,7 +41,9 @@ public class AccessLevelModelTest {
         Student student = new Student();
         Admin admin = new Admin();
 
-        assertNotEquals(teacher.getClass(), student.getClass());
-        assertNotEquals(student.getClass(), admin.getClass());
+        assertAll(
+                () -> assertNotEquals(teacher.getClass(), student.getClass()),
+                () -> assertNotEquals(student.getClass(), admin.getClass())
+        );
     }
 }
