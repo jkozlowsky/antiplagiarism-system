@@ -21,7 +21,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepositoryTest;
 
 import java.time.LocalDateTime;
 
@@ -74,7 +73,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 jsonBody,
                 200,
-                "/api/auth/ott/request",
+                "/auth/ott/request",
                 new Headers()
         );
 
@@ -90,7 +89,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(requestDto),
                 200,
-                "/api/auth/ott/request",
+                "/auth/ott/request",
                 new Headers()
         );
 
@@ -106,7 +105,7 @@ public class PasswordResetIT extends BaseTestSetup {
         String responseBody = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(confirmDto),
                 200,
-                "/api/auth/ott/confirm",
+                "/auth/ott/confirm",
                 new Headers()
         );
         assertEquals("Password successfully changed.", responseBody);

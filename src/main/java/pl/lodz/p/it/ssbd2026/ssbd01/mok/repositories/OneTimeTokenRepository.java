@@ -4,6 +4,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 @Repository
 @Component
-@Transactional
+@Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
 public interface OneTimeTokenRepository extends AbstractRepository<OneTimeTokenEnt> {
     Optional<OneTimeTokenEnt> findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(String token, LocalDateTime now);
 

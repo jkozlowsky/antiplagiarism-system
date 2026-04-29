@@ -37,8 +37,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
-        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
-        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
+        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"), 1);
+        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"),1);
 
         adminRequestSpec = new RequestSpecBuilder()
                 .setBaseUri("http://localhost")

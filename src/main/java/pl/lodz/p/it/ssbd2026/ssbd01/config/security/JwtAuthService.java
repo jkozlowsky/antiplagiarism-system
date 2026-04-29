@@ -12,6 +12,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
@@ -91,6 +93,7 @@ public class JwtAuthService {
         return extractClaim(token, claims -> claims.get("token_version", Integer.class));
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     public boolean checkTokenVersion(String token){
         try {
             Integer tokenVersion = extractTokenVersion(token);
