@@ -89,7 +89,7 @@ class ResolvePasswordResetTest{
                 )
         );
 
-        verify(tokenService).burnToken(tokenEntity);
+        assertTrue(tokenEntity.isUsed());
     }
 
     @Test
@@ -100,7 +100,11 @@ class ResolvePasswordResetTest{
 
         OneTimeTokenEnt tokenEntity = new OneTimeTokenEnt();
         tokenEntity.setUsername(email);
+        tokenEntity.setUsed(false);
+
         Account account = new Account();
+        account.setTokenVersion(1);
+        account.setEmail(email);
 
         when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
                 .thenReturn(Optional.of(tokenEntity));
@@ -112,11 +116,10 @@ class ResolvePasswordResetTest{
                 rawPassword
         );
 
-        verify(tokenService).burnToken(tokenEntity);
+        assertTrue(tokenEntity.isUsed(), "Token should be marked as used");
 
-        verify(accountRepository).saveAndFlush(accountCaptor.capture());
-        Account savedAccount = accountCaptor.getValue();
-        assertEquals(hashedPassword, savedAccount.getPasswordHash());
+        assertEquals(hashedPassword, account.getPasswordHash(), "Password should be updated");
+        assertEquals(2, account.getTokenVersion(), "Token version should have been incremented");
     }
 
 }
