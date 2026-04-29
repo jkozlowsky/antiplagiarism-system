@@ -5,11 +5,16 @@ import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidOldPasswordException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordSameAsOldException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +23,12 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
 
+
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = AppBaseException.class
+    )
     public void changeOwnPassword (String login, String oldPassword, String newPassword ,String ifMatch){
 
         Account account = accountRepository.findByLogin(login)
@@ -35,7 +46,7 @@ public class AccountService {
         }
 
         //to wgl potrzebne??
-        if (!passwordEncoder.matches(newPassword, account.getPasswordHash())){
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())){
             throw new PasswordSameAsOldException()  ;
         }
 

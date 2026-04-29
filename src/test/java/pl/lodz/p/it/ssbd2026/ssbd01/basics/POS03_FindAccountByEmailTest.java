@@ -8,7 +8,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class POS03_FindAccountByEmailTest extends BaseTestSetup {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountTestRepository accountTestRepository;
 
     @BeforeEach
     public void setup() {
@@ -30,7 +30,7 @@ public class POS03_FindAccountByEmailTest extends BaseTestSetup {
     @DisplayName("Verify if an existing account can be found using its email address")
     public void POS03_FindAccountByEmailTest() {
 
-        Account adminUser = accountRepository.findByLogin("admin").get();
+        Account adminUser = accountTestRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
 
         Account newAccount = new Account();
@@ -45,9 +45,9 @@ public class POS03_FindAccountByEmailTest extends BaseTestSetup {
         ReflectionTestUtils.setField(newAccount, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(newAccount, "version", 0);
 
-        accountRepository.save(newAccount);
+        accountTestRepository.save(newAccount);
 
-        var foundAccount = accountRepository.findByEmail("search_me@user.pl");
+        var foundAccount = accountTestRepository.findByEmail("search_me@user.pl");
 
         assertAll(
                 () -> assertTrue(foundAccount.isPresent(), "Konto powinno zostać znalezione po adresie email"),
