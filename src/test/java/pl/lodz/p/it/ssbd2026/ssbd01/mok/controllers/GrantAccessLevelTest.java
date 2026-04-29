@@ -1,24 +1,25 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
+import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GrantAccessLevelTest extends BaseTestSetup {
 
@@ -28,40 +29,21 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     @Autowired
     private JwtAuthService jwtAuthService;
 
-    @LocalServerPort
-    private int port;
-
-    private RequestSpecification adminRequestSpec;
-    private RequestSpecification studentRequestSpec;
-    private RequestSpecification unauthenticatedRequestSpec;
+    private RequestFunctions requestFunctions;
+    private Headers adminHeaders;
+    private Headers studentHeaders;
+    private Headers unauthenticatedHeaders;
 
     @BeforeEach
-    public void setUpRestAssuredAndAuth() {
+    public void setUpAuth() {
+        requestFunctions = new RequestFunctions();
+
         String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
         String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
 
-        adminRequestSpec = new RequestSpecBuilder()
-                .setBaseUri("http://localhost")
-                .setPort(port)
-                .setBasePath("/api")
-                .setContentType(ContentType.JSON)
-                .addHeader("Authorization", "Bearer " + adminToken)
-                .build();
-
-        studentRequestSpec = new RequestSpecBuilder()
-                .setBaseUri("http://localhost")
-                .setPort(port)
-                .setBasePath("/api")
-                .setContentType(ContentType.JSON)
-                .addHeader("Authorization", "Bearer " + studentToken)
-                .build();
-
-        unauthenticatedRequestSpec = new RequestSpecBuilder()
-                .setBaseUri("http://localhost")
-                .setPort(port)
-                .setBasePath("/api")
-                .setContentType(ContentType.JSON)
-                .build();
+        adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
+        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
+        unauthenticatedHeaders = new Headers();
     }
 
     private Account createTestAccount(String prefix) {
@@ -86,16 +68,43 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldGrantAccessLevelSuccessfully() {
         Account testAccount = createTestAccount("user");
         UUID accountId = testAccount.getId();
-        Integer currentVersion = testAccount.getVersion();
-        String requestBody = "{\"version\": " + currentVersion + "}";
+        String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "TEACHER")
-                .then()
-                .statusCode(200)
-                .body("account.login", equalTo(testAccount.getLogin()));
+        String responseBody = requestFunctions.sendPostRequest(
+                requestBody,
+                200,
+                "/account/" + accountId + "/access-levels/TEACHER/grant",
+                adminHeaders
+        );
+
+        String returnedLogin = JsonPath.from(responseBody).getString("account.login");
+        List<Boolean> activeFlags = JsonPath.from(responseBody).getList("accessLevels.active", Boolean.class);
+
+        assertAll(
+                () -> assertEquals(testAccount.getLogin(), returnedLogin),
+                () -> assertTrue(activeFlags.contains(true))
+        );
+    }
+
+    @Test
+    @DisplayName("Pomyślne ponowne nadanie uprawnień, które zostały wcześniej odebrane (aktywacja flagi)")
+    public void shouldReactivateRevokedAccessLevelSuccessfully() {
+        Account testAccount = createTestAccount("regrant");
+        UUID accountId = testAccount.getId();
+
+        String reqGrant1 = "{\"version\": " + testAccount.getVersion() + "}";
+        requestFunctions.sendPostRequest(reqGrant1, 200, "/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
+
+        Account accAfterGrant = accountRepository.findById(accountId).get();
+        String reqRevoke = "{\"version\": " + accAfterGrant.getVersion() + "}";
+        requestFunctions.sendPostRequest(reqRevoke, 200, "/account/" + accountId + "/access-levels/TEACHER/revoke", adminHeaders);
+
+        Account accAfterRevoke = accountRepository.findById(accountId).get();
+        String reqGrant2 = "{\"version\": " + accAfterRevoke.getVersion() + "}";
+        String responseBody = requestFunctions.sendPostRequest(reqGrant2, 200, "/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
+
+        List<Boolean> activeFlags = JsonPath.from(responseBody).getList("accessLevels.active", Boolean.class);
+        assertTrue(activeFlags.contains(true));
     }
 
     @Test
@@ -104,12 +113,12 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         UUID nonExistentId = UUID.randomUUID();
         String requestBody = "{\"version\": 0}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", nonExistentId, "STUDENT")
-                .then()
-                .statusCode(404);
+        requestFunctions.sendPostRequest(
+                requestBody,
+                404,
+                "/account/" + nonExistentId + "/access-levels/STUDENT/grant",
+                adminHeaders
+        );
     }
 
     @Test
@@ -120,12 +129,12 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         Integer wrongVersion = testAccount.getVersion() + 1;
         String requestBody = "{\"version\": " + wrongVersion + "}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "ADMINISTRATOR")
-                .then()
-                .statusCode(409);
+        requestFunctions.sendPostRequest(
+                requestBody,
+                409,
+                "/account/" + accountId + "/access-levels/ADMINISTRATOR/grant",
+                adminHeaders
+        );
     }
 
     @Test
@@ -135,12 +144,12 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         UUID accountId = testAccount.getId();
         String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
 
-        RestAssured.given(unauthenticatedRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "TEACHER")
-                .then()
-                .statusCode(403);
+        requestFunctions.sendPostRequest(
+                requestBody,
+                403,
+                "/account/" + accountId + "/access-levels/TEACHER/grant",
+                unauthenticatedHeaders
+        );
     }
 
     @Test
@@ -150,38 +159,37 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         UUID accountId = testAccount.getId();
         String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
 
-        RestAssured.given(studentRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "TEACHER")
-                .then()
-                .statusCode(403);
+        requestFunctions.sendPostRequest(
+                requestBody,
+                403,
+                "/account/" + accountId + "/access-levels/TEACHER/grant",
+                studentHeaders
+        );
     }
 
     @Test
-    @DisplayName("Odrzucenie próby przypisania poziomu dostępu, który użytkownik już posiada")
+    @DisplayName("Odrzucenie próby przypisania poziomu dostępu, który użytkownik już posiada jako aktywny")
     public void shouldFailWhenRoleAlreadyAssigned() {
         Account testAccount = createTestAccount("dup");
         UUID accountId = testAccount.getId();
-        Integer currentVersion = testAccount.getVersion();
-        String requestBody1 = "{\"version\": " + currentVersion + "}";
+        String requestBody1 = "{\"version\": " + testAccount.getVersion() + "}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody1)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "TEACHER")
-                .then()
-                .statusCode(200);
+        requestFunctions.sendPostRequest(
+                requestBody1,
+                200,
+                "/account/" + accountId + "/access-levels/TEACHER/grant",
+                adminHeaders
+        );
 
         Account updatedAccount = accountRepository.findById(accountId).get();
         String requestBody2 = "{\"version\": " + updatedAccount.getVersion() + "}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody2)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "TEACHER")
-                .then()
-                .statusCode(409);
+        requestFunctions.sendPostRequest(
+                requestBody2,
+                409,
+                "/account/" + accountId + "/access-levels/TEACHER/grant",
+                adminHeaders
+        );
     }
 
     @Test
@@ -191,11 +199,11 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         UUID accountId = testAccount.getId();
         String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
 
-        RestAssured.given(adminRequestSpec)
-                .body(requestBody)
-                .when()
-                .post("/account/{id}/access-levels/{accessLevelName}", accountId, "SUPER_HERO")
-                .then()
-                .statusCode(not(200));
+        requestFunctions.sendPostRequest(
+                requestBody,
+                409,
+                "/account/" + accountId + "/access-levels/SUPER_HERO/grant",
+                adminHeaders
+        );
     }
 }

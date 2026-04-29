@@ -9,15 +9,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelAlreadyAssignedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelDictNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AccountServiceTest {
+public class AccountServiceGrantAccessTest {
 
     @Mock
     private AccountRepository accountRepository;
@@ -36,14 +36,12 @@ public class AccountServiceTest {
     @Mock
     private AccessLevelDictRepository accessLevelDictRepository;
 
-    @Mock
-    private AccessLevelRepository accessLevelRepository;
-
     @InjectMocks
     private AccountService accountService;
 
     private Account account;
     private AccessLevelDict accessLevelDict;
+    private AccessLevel accessLevel;
     private UUID accountId;
 
     @BeforeEach
@@ -52,24 +50,50 @@ public class AccountServiceTest {
         account = new Account();
 
         ReflectionTestUtils.setField(account, "version", 0);
-
         account.setAccessLevelList(new ArrayList<>());
 
         accessLevelDict = new AccessLevelDict();
+        ReflectionTestUtils.setField(accessLevelDict, "id", UUID.randomUUID());
+        accessLevelDict.setAccessLevelName(AccountConsts.ROLE_TEACHER);
+
+        accessLevel = new Teacher();
+        accessLevel.setAccount(account);
+        accessLevel.setAccessLevelDict(accessLevelDict);
+        accessLevel.setActive(true);
     }
 
     @Test
-    @DisplayName("Pomyślne dodanie nowej roli dostępu do wybranego konta użytkownika")
+    @DisplayName("Pomyślne dodanie nowej roli dostępu do wybranego konta użytkownika (gdy lista jest pusta)")
     void shouldGrantAccessLevelSuccessfully() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
-        when(accessLevelRepository.findByAccessLevelDictAndAccount(accessLevelDict, account)).thenReturn(Optional.empty());
 
         accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0);
 
-        verify(accountRepository, times(1)).saveAndFlush(account);
-        assertEquals(1, account.getAccessLevelList().size());
-        assertInstanceOf(Teacher.class, account.getAccessLevelList().getFirst());
+        assertAll(
+                () -> verify(accountRepository, times(1)).saveAndFlush(account),
+                () -> assertEquals(1, account.getAccessLevelList().size()),
+                () -> assertInstanceOf(Teacher.class, account.getAccessLevelList().getFirst()),
+                () -> assertTrue(account.getAccessLevelList().getFirst().getActive())
+        );
+    }
+
+    @Test
+    @DisplayName("Pomyślna aktywacja roli, która była wcześniej przypisana ale dezaktywowana")
+    void shouldReactivateRevokedAccessLevelSuccessfully() {
+        accessLevel.setActive(false);
+        account.getAccessLevelList().add(accessLevel);
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
+
+        accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0);
+
+        assertAll(
+                () -> verify(accountRepository, times(1)).saveAndFlush(account),
+                () -> assertEquals(1, account.getAccessLevelList().size()),
+                () -> assertTrue(account.getAccessLevelList().getFirst().getActive())
+        );
     }
 
     @Test
@@ -101,11 +125,12 @@ public class AccountServiceTest {
     }
 
     @Test
-    @DisplayName("Wyrzucenie błędu AccessLevelAlreadyAssignedException, gdy konto posiada już przypisywaną rolę")
+    @DisplayName("Wyrzucenie błędu AccessLevelAlreadyAssignedException, gdy konto posiada już przypisywaną rolę jako aktywną")
     void shouldThrowAccessLevelAlreadyAssignedException() {
+        account.getAccessLevelList().add(accessLevel);
+
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
-        when(accessLevelRepository.findByAccessLevelDictAndAccount(accessLevelDict, account)).thenReturn(Optional.of(new Teacher()));
 
         assertThrows(AccessLevelAlreadyAssignedException.class, () ->
                 accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0));

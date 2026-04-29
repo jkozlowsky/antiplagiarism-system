@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccessLevelModelTest {
 
     @Test
-    @DisplayName("Poprawne przypisanie konta i słownika dla nowej roli Teacher")
+    @DisplayName("Poprawne przypisanie konta i słownika dla nowej roli Teacher z domyślną flagą isActive na true")
     void shouldCorrectlyAssignAccountAndDictToTeacher() {
         Account account = new Account();
         account.setLogin("modelTest");
@@ -23,7 +23,8 @@ public class AccessLevelModelTest {
 
         assertAll(
                 () -> assertEquals("modelTest", teacher.getAccount().getLogin()),
-                () -> assertEquals(AccountConsts.ROLE_TEACHER, teacher.getAccessLevelDict().getAccessLevelName())
+                () -> assertEquals(AccountConsts.ROLE_TEACHER, teacher.getAccessLevelDict().getAccessLevelName()),
+                () -> assertTrue(teacher.getActive())
         );
     }
 

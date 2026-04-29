@@ -22,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RevokeAccessLevelTest extends BaseTestSetup {
@@ -75,6 +76,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
             Teacher accessLevel = new Teacher();
             accessLevel.setAccount(testAccount);
             accessLevel.setAccessLevelDict(dict);
+            accessLevel.setActive(true);
             accessLevelRepository.save(accessLevel);
         }
 
@@ -82,7 +84,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Pomyślne odebranie uprawnień dla konta posiadającego daną rolę")
+    @DisplayName("Pomyślne miękkie usunięcie uprawnień dla konta posiadającego daną rolę")
     public void shouldRevokeAccessLevelSuccessfully() {
         Account testAccount = createTestAccountWithRole("user_rev", AccountConsts.ROLE_TEACHER);
         UUID accountId = testAccount.getId();
@@ -95,8 +97,24 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<Object> accessLevels = JsonPath.from(responseBody).getList("accessLevels");
-        assertTrue(accessLevels.isEmpty());
+        List<Boolean> activeFlags = JsonPath.from(responseBody).getList("accessLevels.active", Boolean.class);
+        assertTrue(activeFlags.contains(false));
+        assertFalse(activeFlags.contains(true));
+    }
+
+    @Test
+    @DisplayName("Odrzucenie próby odebrania poziomu dostępu, który został już wyłączony")
+    public void shouldFailWhenRoleAlreadyRevoked() {
+        Account testAccount = createTestAccountWithRole("twice_rev", AccountConsts.ROLE_TEACHER);
+        UUID accountId = testAccount.getId();
+
+        String requestBody1 = "{\"version\": " + testAccount.getVersion() + "}";
+        requestFunctions.sendPostRequest(requestBody1, 200, "/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke", adminHeaders);
+
+        Account updatedAccount = accountRepository.findById(accountId).get();
+        String requestBody2 = "{\"version\": " + updatedAccount.getVersion() + "}";
+
+        requestFunctions.sendPostRequest(requestBody2, 409, "/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke", adminHeaders);
     }
 
     @Test
@@ -118,7 +136,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     public void shouldFailForWrongVersion() {
         Account testAccount = createTestAccountWithRole("ver_rev", AccountConsts.ROLE_TEACHER);
         UUID accountId = testAccount.getId();
-        Integer wrongVersion = testAccount.getVersion() + 1;
+        int wrongVersion = testAccount.getVersion() + 1;
         String requestBody = "{\"version\": " + wrongVersion + "}";
 
         requestFunctions.sendPostRequest(
@@ -160,8 +178,8 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Odrzucenie próby odebrania poziomu dostępu, którego użytkownik nie posiada")
-    public void shouldFailWhenRoleNotAssigned() {
+    @DisplayName("Odrzucenie próby odebrania poziomu dostępu, którego użytkownik nigdy nie posiadał")
+    public void shouldFailWhenRoleNeverAssigned() {
         Account testAccount = createTestAccountWithRole("none_rev", null);
         UUID accountId = testAccount.getId();
         String requestBody = "{\"version\": " + testAccount.getVersion() + "}";

@@ -1,7 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -12,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyRevokedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
@@ -38,15 +41,12 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
-    private final AccessLevelRepository accessLevelRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     public Account getAccountWithAccessLevels(UUID id) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        // account.getAccessLevelList().isEmpty();
-        // To jednak nie wystarcza do wymuszenia pobrania całej listy więc musi być to, co jest niżej:
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -56,10 +56,7 @@ public class AccountService {
         return account;
     }
 
-    /**
-     * Nadaje poziom dostępu do konta na podstawie UUID konta i nazwy poziomu dostępu.
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
@@ -77,20 +74,38 @@ public class AccountService {
         AccessLevelDict accessLevelDict = accessLevelDictRepository.findByAccessLevelName(accessLevelName)
                 .orElseThrow(AccessLevelDictNotFoundException::new);
 
-        if (accessLevelRepository.findByAccessLevelDictAndAccount(accessLevelDict, account).isPresent()) {
-            throw new AccessLevelAlreadyAssignedException();
+        var existingAccessLevelOpt = account.getAccessLevelList().stream()
+                .filter(al -> al.getAccessLevelDict() != null &&
+                        al.getAccessLevelDict().getId().equals(accessLevelDict.getId()))
+                .findFirst();
+
+        if (existingAccessLevelOpt.isPresent()) {
+            AccessLevel existingAccessLevel = existingAccessLevelOpt.get();
+            if (existingAccessLevel.getActive()) {
+                throw new AccessLevelAlreadyAssignedException();
+            } else {
+                existingAccessLevel.setActive(true);
+                accountRepository.saveAndFlush(account);
+                return;
+            }
         }
 
-        AccessLevel newAccessLevel = createAccessLevel(accessLevelName);
+        AccessLevel newAccessLevel = switch (accessLevelName) {
+            case AccountConsts.ROLE_ADMIN -> new Admin();
+            case AccountConsts.ROLE_STUDENT -> new Student();
+            case AccountConsts.ROLE_TEACHER -> new Teacher();
+            default -> throw new AccessLevelDictNotFoundException();
+        };
 
         newAccessLevel.setAccessLevelDict(accessLevelDict);
         newAccessLevel.setAccount(account);
+        newAccessLevel.setActive(true);
 
         account.getAccessLevelList().add(newAccessLevel);
         accountRepository.saveAndFlush(account);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
@@ -108,24 +123,18 @@ public class AccountService {
         AccessLevelDict accessLevelDict = accessLevelDictRepository.findByAccessLevelName(accessLevelName)
                 .orElseThrow(AccessLevelDictNotFoundException::new);
 
-        AccessLevel accessLevelToRemove = account.getAccessLevelList().stream()
+        AccessLevel accessLevelToRevoke = account.getAccessLevelList().stream()
                 .filter(al -> al.getAccessLevelDict() != null &&
                         al.getAccessLevelDict().getId().equals(accessLevelDict.getId()))
                 .findFirst()
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        account.getAccessLevelList().remove(accessLevelToRemove);
-        accessLevelToRemove.setAccount(null);
+        if (!accessLevelToRevoke.getActive()) {
+            throw new AccessLevelAlreadyRevokedException();
+        }
+
+        accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
-    }
-
-    private static @NonNull AccessLevel createAccessLevel(String accessLevelName) {
-        return switch (accessLevelName) {
-            case AccountConsts.ROLE_ADMIN -> new Admin();
-            case AccountConsts.ROLE_STUDENT -> new Student();
-            case AccountConsts.ROLE_TEACHER -> new Teacher();
-            default -> throw new AccessLevelDictNotFoundException();
-        };
     }
 }

@@ -13,12 +13,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelDictNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelNotAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyRevokedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.ArrayList;
@@ -36,9 +36,6 @@ public class AccountServiceRevokeAccessTest {
 
     @Mock
     private AccessLevelDictRepository accessLevelDictRepository;
-
-    @Mock
-    private AccessLevelRepository accessLevelRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -63,10 +60,11 @@ public class AccountServiceRevokeAccessTest {
         accessLevel = new Teacher();
         accessLevel.setAccount(account);
         accessLevel.setAccessLevelDict(accessLevelDict);
+        accessLevel.setActive(true);
     }
 
     @Test
-    @DisplayName("Pomyślne usunięcie roli dostępu z wybranego konta użytkownika")
+    @DisplayName("Pomyślne miękkie usunięcie roli dostępu (dezaktywacja)")
     void shouldRevokeAccessLevelSuccessfully() {
         account.getAccessLevelList().add(accessLevel);
 
@@ -77,8 +75,22 @@ public class AccountServiceRevokeAccessTest {
 
         assertAll(
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
-                () -> assertTrue(account.getAccessLevelList().isEmpty())
+                () -> assertEquals(1, account.getAccessLevelList().size()),
+                () -> assertFalse(account.getAccessLevelList().getFirst().getActive())
         );
+    }
+
+    @Test
+    @DisplayName("Wyrzucenie błędu AccessLevelAlreadyRevokedException, gdy rola jest już dezaktywowana")
+    void shouldThrowAccessLevelAlreadyRevokedException() {
+        accessLevel.setActive(false);
+        account.getAccessLevelList().add(accessLevel);
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
+
+        assertThrows(AccessLevelAlreadyRevokedException.class, () ->
+                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0));
     }
 
     @Test
@@ -110,7 +122,7 @@ public class AccountServiceRevokeAccessTest {
     }
 
     @Test
-    @DisplayName("Wyrzucenie błędu AccessLevelNotAssignedException, gdy konto nie posiada danej roli")
+    @DisplayName("Wyrzucenie błędu AccessLevelNotAssignedException, gdy konto w ogóle nie posiada danej roli (pusta lista)")
     void shouldThrowAccessLevelNotAssignedException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
