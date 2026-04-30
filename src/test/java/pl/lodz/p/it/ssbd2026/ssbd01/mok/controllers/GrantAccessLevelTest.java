@@ -41,6 +41,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();
+        requestFunctions = new RequestFunctions();
     }
 
     private Account createTestAccount(String prefix) {
