@@ -50,7 +50,7 @@ public class RestSetupInit {
     }
 
     public void generateToken() {
-        String tokenString = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"), 1);
+        String tokenString = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR", "STUDENT", "TEACHER"), 1);
         RestAssured.requestSpecification.header("Authorization", "Bearer " + tokenString);
     }
 
