@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
@@ -18,7 +19,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.UUID;
@@ -41,6 +41,8 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
+    private final EmailService emailService;
+    private final PostCommitTransactionManager postCommitTransactionManager;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -142,5 +144,35 @@ public class AccountService {
         accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
+    }
+
+    @PreAuthorize("hasAuthority('" + AccountConsts.ROLE_ADMIN + "')")
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            readOnly = false,
+            transactionManager = "mokTransactionManager"
+    )
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public Account adminChangeAccountEmail(UUID targetAccountId, String newEmail)
+            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
+    {
+        Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+        String oldEmail = account.getEmail();
+        account.setEmail(newEmail);
+
+        String mailSubject = "Your email address has been changed by administrator.";
+        String mailBody = "Dear " + account.getName() +
+                ",\n\nWe are writing to inform you that an administrator has updated your email address.\n" +
+                "If you did not request this change, please contact the administrator immediately.\n\n" +
+                "Best regards,\n"; //+ "Donose60"
+
+        postCommitTransactionManager.register(() -> emailService.sendEmail(oldEmail, mailSubject, mailBody));
+
+        accountRepository.saveAndFlush(account);
+        return account;
     }
 }
