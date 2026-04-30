@@ -1,4 +1,5 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.config;
+package pl.lodz.p.it.ssbd2026.ssbd01.config.db;
+
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -54,6 +55,7 @@ public class MppDBConfig {
 
         return em;
     }
+
 
     @Bean(name="mppTransactionManager")
     public PlatformTransactionManager mppTransactionManager(
