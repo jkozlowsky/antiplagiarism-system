@@ -22,6 +22,14 @@ public class AccountController {
     private final AccountService accountService;
     private final AccountMapper accountMapper;
 
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO getAccount(@PathVariable UUID id) {
+
+        Account account = accountService.getAccountWithAccessLevels(id);
+        return accountMapper.toAccountWithAccessLevelsDTO(account);
+    }
+
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO grantAccessLevel(
