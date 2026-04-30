@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
 public class AccountNotFoundException extends AppBaseException {
+
     public AccountNotFoundException(String reason) {
         super(HttpStatus.NOT_FOUND, reason);
     }

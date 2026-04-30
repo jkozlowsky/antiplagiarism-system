@@ -22,7 +22,15 @@ public class AccountController {
     private final AccountService accountService;
     private final AccountMapper accountMapper;
 
-    @PostMapping("/{id}/access-levels/{accessLevelName}")
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO getAccount(@PathVariable UUID id) {
+
+        Account account = accountService.getAccountWithAccessLevels(id);
+        return accountMapper.toAccountWithAccessLevelsDTO(account);
+    }
+
+    @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO grantAccessLevel(
             @PathVariable UUID id,
@@ -30,6 +38,19 @@ public class AccountController {
             @RequestBody AccountDTO accountDTO) {
 
         accountService.grantAccessLevel(id, accessLevelName, accountDTO.version());
+        Account updatedAccount = accountService.getAccountWithAccessLevels(id);
+
+        return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+    }
+
+    @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO revokeAccessLevel(
+            @PathVariable UUID id,
+            @PathVariable String accessLevelName,
+            @RequestBody AccountDTO accountDTO) {
+
+        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.version());
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);

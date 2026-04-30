@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.utils.config;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,7 +36,7 @@ public abstract class BaseTestSetup extends TestContainersSetupInit {
     @LocalServerPort
     private int port;
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
         restSetup.initRestAssured(port);
         RestAssured.port = port;
