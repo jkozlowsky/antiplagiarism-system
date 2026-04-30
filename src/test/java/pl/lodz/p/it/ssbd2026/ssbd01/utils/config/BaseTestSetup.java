@@ -13,12 +13,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+        "spring.web.error.include-message=always",
+        "spring.web.error.include-stacktrace=always",
+        "spring.main.allow-bean-definition-overriding=true"
+        })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
 @Import(RestSetupInit.class)
 @EnableJpaRepositories(
-        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories",
+        basePackages = {
+                "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories"
+        },
         entityManagerFactoryRef = "adminEntityManagerFactory",
         transactionManagerRef = "adminTransactionManager")
 public abstract class BaseTestSetup extends TestContainersSetupInit {
@@ -32,6 +39,7 @@ public abstract class BaseTestSetup extends TestContainersSetupInit {
     @BeforeEach
     public void setUp() {
         restSetup.initRestAssured(port);
+        RestAssured.port = port;
         //restSetup.generateToken();
         // dopóki nie mamy gotowego uwierzytelniania, pozostaje zakomentowane
     }

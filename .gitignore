@@ -47,3 +47,5 @@ bin/
 
 .env
 secrets/
+
+*.http

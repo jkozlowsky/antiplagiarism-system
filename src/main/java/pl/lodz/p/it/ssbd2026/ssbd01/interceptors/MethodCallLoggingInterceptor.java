@@ -38,7 +38,7 @@ public class MethodCallLoggingInterceptor {
         Object result;
         try {
             try {
-                message.append("| ").append(joinPoint.getSignature().toLongString())
+                message.append("| ").append(joinPoint.getSignature().toShortString())
                         .append(":").append(Thread.currentThread().threadId());
                 message.append(" | User: ").append(username);
                 message.append(" | Args: ");
@@ -53,12 +53,17 @@ public class MethodCallLoggingInterceptor {
             result = joinPoint.proceed();
 
         } catch (Throwable t) {
-            message.append(" | Thrown exception: ").append(t.toString());
+            message.append(" | Thrown exception: ").append(t.toString()).append(" - ").append(t.getMessage());;
             log.warn(message.toString(), t);
             throw t;
         }
 
-        message.append(" | Returned: ").append(result);
+        if (result != null) {
+            message.append(" | Returned type: ").append(result.getClass().getSimpleName());
+            // message.append(" | Returned: ").append(result); // AVOID THIS FOR ENTITIES
+        } else {
+            message.append(" | Returned: null");
+        }
         log.info(message.toString());
 
         return result;

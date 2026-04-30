@@ -53,6 +53,7 @@ services:
       - mail_password
       - jwt_secret
       - mail_password
+      - frontend_url
     volumes:
       - ../logs:/app/logs
     networks:
@@ -116,3 +117,5 @@ secrets:
     file: ./secrets/mail_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
+  frontend_url:
+    file: ./secrets/frontend_url.txt
