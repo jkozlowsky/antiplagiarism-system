@@ -153,26 +153,22 @@ public class AccountService {
             transactionManager = "mokTransactionManager"
     )
     @Retryable(
-            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            retryFor = {JpaSystemException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Account adminChangeAccountEmail(UUID targetAccountId, String newEmail)
+    public Account adminChangeAccountEmail(UUID targetAccountId, String newEmail, Integer sourceVersion)
             throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
     {
         Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+        if (!account.getVersion().equals(sourceVersion)) {
+            throw new ConcurrentUpdateException();
+        }
         String oldEmail = account.getEmail();
         account.setEmail(newEmail);
 
-        String mailSubject = "Your email address has been changed by administrator.";
-        String mailBody = "Dear " + account.getName() +
-                ",\n\nWe are writing to inform you that an administrator has updated your email address.\n" +
-                "If you did not request this change, please contact the administrator immediately.\n\n" +
-                "Best regards,\n"; //+ "Donose60"
+        postCommitTransactionManager.register(() -> emailService.sendEmailChangedNotification(oldEmail, account));
 
-        postCommitTransactionManager.register(() -> emailService.sendEmail(oldEmail, mailSubject, mailBody));
-
-        accountRepository.saveAndFlush(account);
-        return account;
+        return accountRepository.saveAndFlush(account);
     }
 }
