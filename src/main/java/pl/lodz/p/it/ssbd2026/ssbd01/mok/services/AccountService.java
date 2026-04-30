@@ -10,7 +10,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsBlockedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFound;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyRevokedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
@@ -18,7 +21,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.UUID;
@@ -41,6 +43,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
+    private final EmailService emailService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -142,5 +145,21 @@ public class AccountService {
         accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void blockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        }
+
+        account.setIsBlocked(true);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
     }
 }

@@ -3,10 +3,12 @@ package pl.lodz.p.it.ssbd2026.ssbd01.utils.functions;
 import io.restassured.RestAssured;
 import io.restassured.http.Headers;
 import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 @NoArgsConstructor
+@Component
 public class RequestFunctions {
 
     public String sendPostRequest(String body, int expectedStatusCode, String url, Headers headers) {

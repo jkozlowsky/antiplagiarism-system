@@ -22,4 +22,13 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendAccountIsBlockedInfo(String toAddress, String login) {
+        String subject = "Notification - Your account has been blocked";
+        String content = String.format(
+                "Hello %s,\n\nYour account has been blocked. For more information contact administrator.",
+                login
+        );
+
+        sendEmail(toAddress, subject, content);
+    }
 }
