@@ -1,17 +1,21 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
+import java.security.Principal;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -67,6 +71,24 @@ public class AccountController {
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+    }
+
+
+    @PostMapping("/security/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeOwnPassword(
+            @Valid @RequestBody ChangeOwnPasswordDto dto,
+            @RequestHeader("If-Match") String ifMatch,
+            Principal principal) {
+
+        String login = principal.getName();
+
+        accountService.changeOwnPassword(
+                login,
+                dto.getOldPassword(),
+                dto.getNewPassword(),
+                ifMatch
+        );
     }
 
     @MethodCallLogged

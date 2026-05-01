@@ -39,7 +39,7 @@ public class RestSetupInit {
         builder.setPort(port);
         builder.setContentType(ContentType.JSON);
         builder.setAccept(ContentType.JSON);
-
+        builder.setPort(port);
         return builder.build();
     }
 

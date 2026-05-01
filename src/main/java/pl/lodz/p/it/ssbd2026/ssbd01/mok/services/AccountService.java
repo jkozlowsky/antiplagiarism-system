@@ -1,11 +1,13 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
@@ -18,6 +20,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.List;
@@ -41,7 +47,9 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
+    private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -168,6 +176,33 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @Transactional(propagation = Propagation.MANDATORY)
+    @Retryable(
+            retryFor = {ConcurrentUpdateException.class},
+            backoff = @Backoff(delay = 1000)
+    )
+    @MethodCallLogged
+    public void changeOwnPassword(String login, String oldPassword, String newPassword, String ifMatch) {
+
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(AccountNotFoundException::new);
+
+        if (!account.getVersion().toString().equals(ifMatch)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
+            throw new InvalidOldPasswordException();
+        }
+
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        accountRepository.saveAndFlush(account);
+    }
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
