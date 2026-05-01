@@ -44,7 +44,7 @@ public class Account extends AbstractEntity {
     private String lastFailedLoginIp;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "language_version_id", nullable = false)
+    @JoinColumn(name = "language_version_id",  nullable = false)
     private LanguageDict languageVersion;
 
     @Column(name = "failed_attempts")
@@ -53,7 +53,7 @@ public class Account extends AbstractEntity {
     @Column(name = "is_blocked", nullable = false)
     private Boolean isBlocked;
 
-    @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 
     @Column(name = "name", nullable = false, length = AccountConsts.NAME_LENGTH)
@@ -61,4 +61,14 @@ public class Account extends AbstractEntity {
 
     @Column(name = "surname", nullable = false, length = AccountConsts.SURNAME_LENGTH)
     private String surname;
+
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion;
+
+    @PrePersist
+    protected void onCreate(){
+        if (tokenVersion == null){
+            tokenVersion = 1;
+        }
+    }
 }

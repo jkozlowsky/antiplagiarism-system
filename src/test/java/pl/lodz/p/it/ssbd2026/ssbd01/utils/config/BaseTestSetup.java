@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.utils.config;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,15 +13,22 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+        "spring.web.error.include-message=always",
+        "spring.web.error.include-stacktrace=always",
+        "spring.main.allow-bean-definition-overriding=true"
+        })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
 @Import(RestSetupInit.class)
 @EnableJpaRepositories(
-        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories",
+        basePackages = {
+                "pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories"
+        },
         entityManagerFactoryRef = "adminEntityManagerFactory",
         transactionManagerRef = "adminTransactionManager")
-public abstract class                       BaseTestSetup extends TestContainersSetupInit {
+public abstract class BaseTestSetup extends TestContainersSetupInit {
 
     @Autowired
     private RestSetupInit restSetup;
@@ -28,9 +36,9 @@ public abstract class                       BaseTestSetup extends TestContainers
     @LocalServerPort
     private int port;
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
-        restSetup.initRestAssured();
+        restSetup.initRestAssured(port);
         RestAssured.port = port;
         //restSetup.generateToken();
         // dopóki nie mamy gotowego uwierzytelniania, pozostaje zakomentowane

@@ -1,10 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
 
-import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,10 +12,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JwtAuthServiceTest {
     private JwtAuthService jwtAuthService;
 
+    @Autowired
+    private AccountRepository accountRepository;
 
     @BeforeEach
     void setUp() {
-        jwtAuthService = new JwtAuthService();
+        jwtAuthService = new JwtAuthService(accountRepository);
 
         String testSecret = "n10rb1FUMXskFj1RV4PDQOmMvRtrhB9NBWeeGZ+fSGvCmMVIOMFqikGHy66Icdmka4pdXpmkpLtsdqSkSHQC1A==";
         ReflectionTestUtils.setField(jwtAuthService, "secret", testSecret);
@@ -29,7 +31,7 @@ public class JwtAuthServiceTest {
         String username = "user";
         List<String> roles = List.of("ADMIN");
 
-        String token = jwtAuthService.generateToken(username, roles);
+        String token = jwtAuthService.generateToken(username, roles, 1);
 
         assertNotNull(token);
         assertTrue(jwtAuthService.isTokenValid(token));
@@ -46,7 +48,7 @@ public class JwtAuthServiceTest {
         String username = "user";
         List<String> roles = List.of("ADMIN");
 
-        String token = jwtAuthService.generateToken(username, roles);
+        String token = jwtAuthService.generateToken(username, roles, 1);
         assertNotNull(token);
 
         token = token + "tamper";
@@ -59,7 +61,7 @@ public class JwtAuthServiceTest {
 
         String username = "user";
         List<String> roles = List.of("ADMIN");
-        String expiredToken = jwtAuthService.generateToken(username, roles);
+        String expiredToken = jwtAuthService.generateToken(username, roles, 1);
 
         assertFalse(jwtAuthService.isTokenValid(expiredToken));
     }
