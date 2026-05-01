@@ -157,6 +157,7 @@ public class AccountService {
     )
     @MethodCallLogged
     public void changeOwnPassword(String login, String oldPassword, String newPassword, String ifMatch) {
+
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(AccountNotFoundException::new);
 

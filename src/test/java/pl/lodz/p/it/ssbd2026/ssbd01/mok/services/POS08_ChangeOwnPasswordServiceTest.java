@@ -3,75 +3,59 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class POS08_ChangeOwnPasswordServiceTest extends BaseTestSetup {
+@ExtendWith(MockitoExtension.class)
+public class POS08_ChangeOwnPasswordServiceTest {
 
-    @Autowired
-    private AccountService accountService;
+    @Mock
+    private AccountRepository accountRepository;
 
-    @Autowired
-    private AccountTestRepository accountTestRepository;
-
-    @Autowired
+    @Mock
     private PasswordEncoder passwordEncoder;
 
+    @InjectMocks
+    private AccountService accountService;
+
+    private Account account;
+    private final String LOGIN = "passTestUser";
+    private final String OLD_PASSWORD_PLAIN = "StareHaslo123!";
+    private final String NEW_PASSWORD_PLAIN = "ZupelnieNoweHaslo321!";
+    private final String OLD_PASSWORD_HASH = "old_hashed_password";
+    private final String NEW_PASSWORD_HASH = "new_hashed_password";
+
     @BeforeEach
-    public void setup() {
-        System.out.print("\n\n\nTest POS08_ChangeOwnPasswordServiceTest\nAccount change password service test\n\n\n");
+    void setUp() {
+        account = new Account();
+        account.setLogin(LOGIN);
+        account.setPasswordHash(OLD_PASSWORD_HASH);
+        ReflectionTestUtils.setField(account, "version", 0);
     }
 
     @Test
-    @DisplayName("Verify if an account's password can be successfully changed via Service")
-    public void POS08_ChangeOwnPasswordServiceTest() {
+    void shouldChangeOwnPasswordSuccessfully() {
+        when(accountRepository.findByLogin(LOGIN)).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(OLD_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(true);
+        when(passwordEncoder.matches(NEW_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(false);
+        when(passwordEncoder.encode(NEW_PASSWORD_PLAIN)).thenReturn(NEW_PASSWORD_HASH);
 
-        Account adminUser = accountTestRepository.findByLogin("admin").get();
-        LanguageDict ld = adminUser.getLanguageVersion();
+        assertDoesNotThrow(() -> accountService.changeOwnPassword(LOGIN, OLD_PASSWORD_PLAIN, NEW_PASSWORD_PLAIN, "0"));
 
-        String oldPasswordPlain = "StareHaslo123!";
-        String newPasswordPlain = "ZupelnieNoweHaslo321!";
-
-        Account testAccount = new Account();
-        testAccount.setLogin("passTestUser");
-        testAccount.setEmail("pass_test@user.pl");
-        testAccount.setPasswordHash(passwordEncoder.encode(oldPasswordPlain));
-        testAccount.setName("Jan");
-        testAccount.setSurname("Haslo");
-        testAccount.setIsBlocked(false);
-        testAccount.setLanguageVersion(ld);
-
-        ReflectionTestUtils.setField(testAccount, "createdAt", LocalDateTime.now());
-        ReflectionTestUtils.setField(testAccount, "version", 0);
-
-        accountTestRepository.save(testAccount);
-
-        String currentVersion = String.valueOf(testAccount.getVersion());
-
-        assertDoesNotThrow(() -> {
-            accountService.changeOwnPassword(
-                    "passTestUser",
-                    oldPasswordPlain,
-                    newPasswordPlain,
-                    currentVersion
-            );
-        });
-
-        Account updatedAccount = accountTestRepository.findByLogin("passTestUser").get();
-
-        assertAll("Sprawdzenie zmiany hasła",
-                () -> assertNotNull(updatedAccount),
-                () -> assertTrue(passwordEncoder.matches(newPasswordPlain, updatedAccount.getPasswordHash()), "Nowe hasło powinno pasować do nowego hasha w bazie"),
-                () -> assertFalse(passwordEncoder.matches(oldPasswordPlain, updatedAccount.getPasswordHash()), "Stare hasło nie powinno już działać")
+        assertAll(
+                () -> assertEquals(NEW_PASSWORD_HASH, account.getPasswordHash(), "Hash hasła w obiekcie powinien zostać zaktualizowany"),
+                () -> verify(accountRepository, times(1)).saveAndFlush(account) // Sprawdza czy poleciał zapis do bazy
         );
     }
 }
