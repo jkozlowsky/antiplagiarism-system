@@ -24,6 +24,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -45,6 +48,8 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -64,6 +69,29 @@ public class AccountService {
         });
 
         return account;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public List<Account> getAllAccounts() {
+        return accountRepository.findAll();
+    }
+
+    /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public List<Account> searchAccounts(String phrase) {
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -148,7 +176,6 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
     }
 
-
     @PreAuthorize("isAuthenticated()")
     @Transactional(propagation = Propagation.MANDATORY)
     @Retryable(
@@ -175,5 +202,35 @@ public class AccountService {
 
         account.setPasswordHash(passwordEncoder.encode(newPassword));
         accountRepository.saveAndFlush(account);
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void blockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        }
+
+        account.setIsBlocked(true);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
 }

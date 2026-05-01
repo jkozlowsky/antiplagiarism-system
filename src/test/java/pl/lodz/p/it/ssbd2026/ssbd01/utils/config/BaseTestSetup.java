@@ -15,9 +15,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-        "spring.web.error.include-message=always",
-        "spring.web.error.include-stacktrace=always",
-        "spring.main.allow-bean-definition-overriding=true"
+                "spring.web.error.include-message=always",
+                "spring.web.error.include-stacktrace=always",
+                "spring.main.allow-bean-definition-overriding=true"
         })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
@@ -40,8 +40,7 @@ public abstract class BaseTestSetup extends TestContainersSetupInit {
     public void setUp() {
         restSetup.initRestAssured(port);
         RestAssured.port = port;
-        //restSetup.generateToken();
-        // dopóki nie mamy gotowego uwierzytelniania, pozostaje zakomentowane
+        restSetup.generateToken();
     }
 
     @AfterAll

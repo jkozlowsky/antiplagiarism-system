@@ -8,12 +8,16 @@ import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import java.security.Principal;
 
+
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,6 +35,16 @@ public class AccountController {
 
         Account account = accountService.getAccountWithAccessLevels(id);
         return accountMapper.toAccountWithAccessLevelsDTO(account);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<AccountDTO> getAllAccounts(@RequestParam(required = false) String phrase) {
+        if (phrase == null || phrase.trim().isEmpty()) {
+            return accountService.getAllAccounts().stream().map(accountMapper::toAccountDTO).toList();
+        } else {
+            return accountService.searchAccounts(phrase).stream().map(accountMapper::toAccountDTO).toList();
+        }
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
@@ -77,4 +91,19 @@ public class AccountController {
         );
     }
 
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/block/{id}")
+    public ResponseEntity<Void> blockUserAccount(@PathVariable UUID id) {
+        accountService.blockUserAccount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/unblock/{id}")
+    public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
+        accountService.unblockUserAccount(id);
+        return ResponseEntity.noContent().build();
+    }
 }
