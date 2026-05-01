@@ -41,6 +41,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
+    private final EmailService emailService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -165,5 +166,37 @@ public class AccountService {
         accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void blockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        }
+
+        account.setIsBlocked(true);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
 }

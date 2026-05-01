@@ -3,6 +3,8 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
@@ -65,5 +67,21 @@ public class AccountController {
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/block/{id}")
+    public ResponseEntity<Void> blockUserAccount(@PathVariable UUID id) {
+        accountService.blockUserAccount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/unblock/{id}")
+    public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
+        accountService.unblockUserAccount(id);
+        return ResponseEntity.noContent().build();
     }
 }

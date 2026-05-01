@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class POS02_BlockAccountTest extends BaseTestSetup {
 
     @Autowired
-    private AccountTestRepository accountTestRepository;
+    private AccountTestRepository accountRepository;
 
     @BeforeEach
     public void setup() {
@@ -29,7 +29,7 @@ public class POS02_BlockAccountTest extends BaseTestSetup {
     @Test
     @DisplayName("Verify if existing account can be successfully blocked")
     public void POS02_BlockAccountTest() {
-        Account adminUser = accountTestRepository.findByLogin("admin").get();
+        Account adminUser = accountRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
 
         Account newAccount = new Account();
@@ -44,13 +44,13 @@ public class POS02_BlockAccountTest extends BaseTestSetup {
         ReflectionTestUtils.setField(newAccount, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(newAccount, "version", 0);
 
-        accountTestRepository.save(newAccount);
+        accountRepository.save(newAccount);
 
-        Account accountToBlock = accountTestRepository.findByLogin("userToBlock").get();
+        Account accountToBlock = accountRepository.findByLogin("userToBlock").get();
         accountToBlock.setIsBlocked(true);
-        accountTestRepository.save(accountToBlock);
+        accountRepository.save(accountToBlock);
 
-        Account blockedAccount = accountTestRepository.findByLogin("userToBlock").get();
+        Account blockedAccount = accountRepository.findByLogin("userToBlock").get();
         assertAll(
                 () -> assertNotNull(blockedAccount),
                 () -> assertTrue(blockedAccount.getIsBlocked(), "Konto powinno mieć flagę isBlocked = true")

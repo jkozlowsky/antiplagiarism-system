@@ -3,7 +3,6 @@ package pl.lodz.p.it.ssbd2026.ssbd01.utils.config;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,9 +14,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-        "spring.web.error.include-message=always",
-        "spring.web.error.include-stacktrace=always",
-        "spring.main.allow-bean-definition-overriding=true"
+                "spring.web.error.include-message=always",
+                "spring.web.error.include-stacktrace=always",
+                "spring.main.allow-bean-definition-overriding=true"
         })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
@@ -36,12 +35,11 @@ public abstract class BaseTestSetup extends TestContainersSetupInit {
     @LocalServerPort
     private int port;
 
-    @BeforeEach
+    @BeforeAll
     public void setUp() {
         restSetup.initRestAssured(port);
         RestAssured.port = port;
-        //restSetup.generateToken();
-        // dopóki nie mamy gotowego uwierzytelniania, pozostaje zakomentowane
+        restSetup.generateToken();
     }
 
     @AfterAll
