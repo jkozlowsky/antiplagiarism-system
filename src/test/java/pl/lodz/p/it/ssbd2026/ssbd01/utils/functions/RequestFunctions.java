@@ -37,6 +37,18 @@ public class RequestFunctions {
                 .asString();
     }
 
+    public String sendGetRequest(int expectedStatusCode, String url, Headers headers) {
+        return RestAssured.given()
+                .headers(headers)
+                .when()
+                .get(url)
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .asString();
+    }
+
     public String sendPatchRequest(String body, int expectedStatusCode, String url, Headers headers) {
         return RestAssured.given()
                 .headers(headers)
