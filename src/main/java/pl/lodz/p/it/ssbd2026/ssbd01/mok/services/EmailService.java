@@ -31,4 +31,14 @@ public class EmailService {
 
         sendEmail(toAddress, subject, content);
     }
+
+    public void sendAccountIsUnblockedInfo(String toAddress, String login) {
+        String subject = "Notification - Your account has been unblocked";
+        String content = String.format(
+                "Hello %s,\n\nYour account has been unblocked. You can now log into your account again.",
+                login
+        );
+
+        sendEmail(toAddress, subject, content);
+    }
 }

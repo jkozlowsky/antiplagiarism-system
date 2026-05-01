@@ -65,4 +65,12 @@ public class AccountController {
         accountService.blockUserAccount(id);
         return ResponseEntity.noContent().build();
     }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/unblock/{id}")
+    public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
+        accountService.unblockUserAccount(id);
+        return ResponseEntity.noContent().build();
+    }
 }

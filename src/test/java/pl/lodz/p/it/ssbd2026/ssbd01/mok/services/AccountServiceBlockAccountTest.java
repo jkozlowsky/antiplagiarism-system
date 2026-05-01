@@ -39,7 +39,7 @@ public class AccountServiceBlockAccountTest {
         account = new Account();
         account.setName("Tester");
         account.setSurname("Surname");
-        account.setEmail("test@test.com");
+        account.setEmail("test@testblock.com");
         account.setLogin("block_tester");
         account.setIsBlocked(false);
         account.setPasswordHash("testcontainers_hash");

@@ -10,10 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsBlockedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFound;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyRevokedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
@@ -161,5 +158,21 @@ public class AccountService {
         account.setIsBlocked(true);
         accountRepository.saveAndFlush(account);
         emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
 }
