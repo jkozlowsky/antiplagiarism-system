@@ -202,6 +202,7 @@ public class AccountService {
 
         account.setPasswordHash(passwordEncoder.encode(newPassword));
         accountRepository.saveAndFlush(account);
+    }
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
