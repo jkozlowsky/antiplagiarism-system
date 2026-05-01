@@ -11,6 +11,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,6 +29,16 @@ public class AccountController {
 
         Account account = accountService.getAccountWithAccessLevels(id);
         return accountMapper.toAccountWithAccessLevelsDTO(account);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<AccountDTO> getAllAccounts(@RequestParam(required = false) String phrase) {
+        if (phrase == null || phrase.trim().isEmpty()) {
+            return accountService.getAllAccounts().stream().map(accountMapper::toAccountDTO).toList();
+        } else {
+            return accountService.searchAccounts(phrase).stream().map(accountMapper::toAccountDTO).toList();
+        }
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
