@@ -59,7 +59,7 @@ public class AccountController {
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
     }
 
-    @PutMapping("{id}/email")
+    @PatchMapping("/{id}/email")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO adminChangeAccountEmail(
