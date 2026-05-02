@@ -67,7 +67,7 @@ public class PasswordResetService {
         token.setUsed(false);
         tokenRepository.saveAndFlush(token);
 
-        String magicLink = frontendUrl + "/reset-password?token=" + rawToken;
+        String magicLink = frontendUrl + "reset-password?token=" + rawToken;
         log.info(magicLink);
         emailService.sendEmail(email, "Password Reset", "Click to reset: " + magicLink);
     } //TODO: i18n
@@ -94,7 +94,7 @@ public class PasswordResetService {
                 .orElseThrow(() -> new AccountNotFoundException("Account associated with that email is not found"));
 //        entityManager.refresh(account);
         account.setPasswordHash(passwordEncoder.encode(passwordHash));
-        account.setTokenVersion(account.getTokenVersion() + 1);
+//        account.setTokenVersion(account.getTokenVersion() + 1);
 //        accountRepository.save(account);
     }
 

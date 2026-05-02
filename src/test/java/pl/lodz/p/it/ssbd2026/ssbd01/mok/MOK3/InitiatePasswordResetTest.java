@@ -45,7 +45,7 @@ public class InitiatePasswordResetTest {
 
     private final CommonFunctions commonFunctions = new CommonFunctions();
 
-    private final String frontendUrl = "http://localhost:5173";
+    private final String frontendUrl = "http://localhost:5173/";
 
     @BeforeEach
     public void setUp() {
@@ -83,7 +83,7 @@ public class InitiatePasswordResetTest {
         assertFalse(savedToken.isUsed());
         assertNotNull(savedToken.getTokenValue());
 
-        verify(emailService).sendEmail(eq(email), eq("Password Reset"), contains(frontendUrl+"/reset-password?token="));
+        verify(emailService).sendEmail(eq(email), eq("Password Reset"), contains(frontendUrl+"reset-password?token="));
     }
 
     @Test

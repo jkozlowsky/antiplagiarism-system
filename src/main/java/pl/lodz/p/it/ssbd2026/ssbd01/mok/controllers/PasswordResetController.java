@@ -11,7 +11,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.reset_password.ResetPasswordDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.PasswordResetService;
 
 @RestController
-@RequestMapping("/auth/ott")
+@RequestMapping("/auth/reset")
 @RequiredArgsConstructor
 public class PasswordResetController {
 
