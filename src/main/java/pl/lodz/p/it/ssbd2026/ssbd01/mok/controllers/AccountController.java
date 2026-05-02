@@ -1,11 +1,14 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeEmailDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -54,5 +57,16 @@ public class AccountController {
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+    }
+
+    @PutMapping("{id}/email")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountDTO adminChangeAccountEmail(
+            @PathVariable UUID id,
+            @Valid @RequestBody ChangeEmailDTO changeEmailDTO) {
+
+        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), changeEmailDTO.version());
+        return accountMapper.toAccountDTO(account);
     }
 }

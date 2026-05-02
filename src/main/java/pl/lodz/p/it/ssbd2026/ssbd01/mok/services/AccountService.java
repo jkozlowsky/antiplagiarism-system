@@ -146,9 +146,9 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
     }
 
-    @PreAuthorize("hasAuthority('" + AccountConsts.ROLE_ADMIN + "')")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(
-            propagation = Propagation.REQUIRED,
+            propagation = Propagation.REQUIRES_NEW,
             readOnly = false,
             transactionManager = "mokTransactionManager"
     )
@@ -157,7 +157,7 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Account adminChangeAccountEmail(UUID targetAccountId, String newEmail, Integer sourceVersion)
+    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, Integer sourceVersion)
             throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
     {
         Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
@@ -167,7 +167,8 @@ public class AccountService {
         String oldEmail = account.getEmail();
         account.setEmail(newEmail);
 
-        postCommitTransactionManager.register(() -> emailService.sendEmailChangedNotification(oldEmail, account));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(oldEmail));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail));
 
         return accountRepository.saveAndFlush(account);
     }

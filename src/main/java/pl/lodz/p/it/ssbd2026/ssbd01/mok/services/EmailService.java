@@ -2,8 +2,8 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 @Service
 public class EmailService {
@@ -23,19 +23,14 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendEmailChangedNotification(String toAddress, Account account) {
+    @Async
+    public void sendEmailAddressChangedByAdmin(String toAddress) {
         String mailSubject = "Your email address has been changed by administrator.";
-        String mailBody = "Dear " + account.getName() +
+        String mailBody = "Hello," +
                 ",\n\nWe are writing to inform you that an administrator has updated your email address.\n" +
                 "If you did not request this change, please contact the administrator immediately.\n\n" +
                 "Best regards,\n"; //+ "Donose60"
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("252929@edu.p.lodz.pl");
-        message.setTo(toAddress);
-        message.setSubject(mailSubject);
-        message.setText(mailBody);
-
-        mailSender.send(message);
+        sendEmail(toAddress, mailSubject, mailBody);
     }
 }
