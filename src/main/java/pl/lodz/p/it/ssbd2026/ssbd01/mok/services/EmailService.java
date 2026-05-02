@@ -33,4 +33,23 @@ public class EmailService {
 
         sendEmail(toAddress, mailSubject, mailBody);
     }
+    public void sendAccountIsBlockedInfo(String toAddress, String login) {
+        String subject = "Notification - Your account has been blocked";
+        String content = String.format(
+                "Hello %s,\n\nYour account has been blocked. For more information contact administrator.",
+                login
+        );
+
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendAccountIsUnblockedInfo(String toAddress, String login) {
+        String subject = "Notification - Your account has been unblocked";
+        String content = String.format(
+                "Hello %s,\n\nYour account has been unblocked. You can now log into your account again.",
+                login
+        );
+
+        sendEmail(toAddress, subject, content);
+    }
 }

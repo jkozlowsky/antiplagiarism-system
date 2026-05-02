@@ -73,7 +73,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 jsonBody,
                 200,
-                "/auth/ott/request",
+                "/api/auth/reset/request",
                 new Headers()
         );
 
@@ -89,7 +89,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(requestDto),
                 200,
-                "/auth/ott/request",
+                "/api/auth/reset/request",
                 new Headers()
         );
 
@@ -105,7 +105,7 @@ public class PasswordResetIT extends BaseTestSetup {
         String responseBody = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(confirmDto),
                 200,
-                "/auth/ott/confirm",
+                "/api/auth/reset/confirm",
                 new Headers()
         );
         assertEquals("Password successfully changed.", responseBody);

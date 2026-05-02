@@ -19,8 +19,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -43,6 +45,8 @@ public class AccountService {
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final EmailService emailService;
     private final PostCommitTransactionManager postCommitTransactionManager;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -62,6 +66,29 @@ public class AccountService {
         });
 
         return account;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public List<Account> getAllAccounts() {
+        return accountRepository.findAll();
+    }
+
+    /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public List<Account> searchAccounts(String phrase) {
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -171,5 +198,64 @@ public class AccountService {
         postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail));
 
         return accountRepository.saveAndFlush(account);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @Transactional(propagation = Propagation.MANDATORY)
+    @Retryable(
+            retryFor = {ConcurrentUpdateException.class},
+            backoff = @Backoff(delay = 1000)
+    )
+    @MethodCallLogged
+    public void changeOwnPassword(String login, String oldPassword, String newPassword, String ifMatch) {
+
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(AccountNotFoundException::new);
+
+        if (!account.getVersion().toString().equals(ifMatch)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        if (!passwordEncoder.matches(oldPassword, account.getPasswordHash())) {
+            throw new InvalidOldPasswordException();
+        }
+
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        accountRepository.saveAndFlush(account);
+    }
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void blockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        }
+
+        account.setIsBlocked(true);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockUserAccount(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        accountRepository.saveAndFlush(account);
+        emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
 }

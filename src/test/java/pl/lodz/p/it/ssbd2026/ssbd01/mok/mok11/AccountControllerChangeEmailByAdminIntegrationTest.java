@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok11;
 
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
@@ -49,7 +50,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         String response = requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.OK.value(),
-                "/account/" + account.getId() + "/email",
+                "/api/account/" + account.getId() + "/email",
                 adminHeaders
         );
 
@@ -63,10 +64,10 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         String newEmail = "new2@edu.p.lodz.pl";
         String reqBody = createRequestBody(newEmail, account.getVersion());
 
-        requestFunctions.sendPatchRequest(
+        sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
                 HttpStatus.FORBIDDEN.value(),
-                "/account/" + account.getId() + "/email",
+                "/api/account/" + account.getId() + "/email",
                 studentHeaders
         );
     }
@@ -77,10 +78,10 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         String newEmail = "new3@edu.p.lodz.pl";
         String reqBody = createRequestBody(newEmail, account.getVersion());
 
-        requestFunctions.sendPatchRequest(
+        sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
                 HttpStatus.FORBIDDEN.value(), //TODO: UNAUTHORIZED?
-                "/account/" + account.getId() + "/email",
+                "/api/account/" + account.getId() + "/email",
                 unauthenticatedHeaders
         );
     }
@@ -94,7 +95,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.CONFLICT.value(),
-                "/account/" + account.getId() + "/email",
+                "/api/account/" + account.getId() + "/email",
                 adminHeaders
         );
     }
@@ -108,7 +109,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.NOT_FOUND.value(),
-                "/account/" + accountId + "/email",
+                "/api/account/" + accountId + "/email",
                 adminHeaders
         );
     }
@@ -122,7 +123,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.BAD_REQUEST.value(),
-                "/account/" + account.getId() + "/email",
+                "/api/account/" + account.getId() + "/email",
                 adminHeaders
         );
     }
@@ -144,5 +145,20 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         }
 
         return accountId;
+    }
+
+    public void sendPatchRequestWithoutGlobalAdminToken(String body, int expectedStatusCode, String url, Headers headers) {
+        RestAssured.given()
+                .auth().none()
+                .header("Authorization", "")
+                .headers(headers)
+                .body(body)
+                .when()
+                .patch(url)
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .asString();
     }
 }

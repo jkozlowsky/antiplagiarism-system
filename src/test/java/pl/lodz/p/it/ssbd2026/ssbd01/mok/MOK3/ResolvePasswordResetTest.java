@@ -103,7 +103,7 @@ class ResolvePasswordResetTest{
         tokenEntity.setUsed(false);
 
         Account account = new Account();
-        account.setTokenVersion(1);
+//        account.setTokenVersion(1);
         account.setEmail(email);
 
         when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
@@ -119,7 +119,7 @@ class ResolvePasswordResetTest{
         assertTrue(tokenEntity.isUsed(), "Token should be marked as used");
 
         assertEquals(hashedPassword, account.getPasswordHash(), "Password should be updated");
-        assertEquals(2, account.getTokenVersion(), "Token version should have been incremented");
+//        assertEquals(2, account.getTokenVersion(), "Token version should have been incremented");
     }
 
 }

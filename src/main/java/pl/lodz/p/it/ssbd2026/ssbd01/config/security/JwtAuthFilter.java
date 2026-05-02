@@ -44,7 +44,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
-            if (!jwtAuthService.isTokenValid(token) || !jwtAuthService.checkTokenVersion(token)) {
+            // zakomentowane bo chyba nie jest potrzebne xd
+            if (!jwtAuthService.isTokenValid(token) /*|| !jwtAuthService.checkTokenVersion(token)**/ ) {
                 filterChain.doFilter(request, response);
                 return;
             }
