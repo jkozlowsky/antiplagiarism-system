@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
@@ -11,9 +12,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+
 import java.security.Principal;
 
 
@@ -28,22 +32,42 @@ public class AccountController {
 
     private final AccountService accountService;
     private final AccountMapper accountMapper;
+    private final VersionHashService versionHashService;
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO getAccount(@PathVariable UUID id) {
 
         Account account = accountService.getAccountWithAccessLevels(id);
-        return accountMapper.toAccountWithAccessLevelsDTO(account);
+        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                account,
+                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+        );
+    }
+
+    @GetMapping("/login/{login}")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO getAccountByLogin(@PathVariable String login){
+        Account account = accountService.getAccountByLogin(login);
+        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                account,
+                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+        );
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<AccountDTO> getAllAccounts(@RequestParam(required = false) String phrase) {
         if (phrase == null || phrase.trim().isEmpty()) {
-            return accountService.getAllAccounts().stream().map(accountMapper::toAccountDTO).toList();
+            return accountService.getAllAccounts().stream().map((account) -> accountMapper.toAccountDTO(
+                    account,
+                    versionHashService.hashObjectVersion(account.getId(), account.getVersion()))
+            ).toList();
         } else {
-            return accountService.searchAccounts(phrase).stream().map(accountMapper::toAccountDTO).toList();
+            return accountService.searchAccounts(phrase).stream().map((account) -> accountMapper.toAccountDTO(
+                    account,
+                    versionHashService.hashObjectVersion(account.getId(), account.getVersion()))
+            ).toList();
         }
     }
 
@@ -57,7 +81,9 @@ public class AccountController {
         accountService.grantAccessLevel(id, accessLevelName, accountDTO.version());
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
-        return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                updatedAccount,
+                versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
@@ -70,7 +96,9 @@ public class AccountController {
         accountService.revokeAccessLevel(id, accessLevelName, accountDTO.version());
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
-        return accountMapper.toAccountWithAccessLevelsDTO(updatedAccount);
+        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                updatedAccount,
+                versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
     }
 
 
@@ -105,5 +133,17 @@ public class AccountController {
     public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
         accountService.unblockUserAccount(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(value = "/{id}")
+    public AccountWithAccessLevelsDTO updateAccount(
+            @PathVariable UUID id,
+            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO
+    ) {
+        return accountService.updateAccount(
+                id,
+                accountDTO.versionHash(),
+                accountMapper.toUpdateAccount(accountDTO)
+        );
     }
 }

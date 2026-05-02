@@ -112,3 +112,5 @@ secrets:
     file: ./secrets/jwt_secret.txt
   frontend_url:
     file: ./secrets/frontend_url.txt
+  version_hash_secret:
+    file: ./secrets/version_hash_secret.txt
