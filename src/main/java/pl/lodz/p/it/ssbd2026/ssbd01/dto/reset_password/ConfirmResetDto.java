@@ -1,4 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.dto.reset_password;
 
-public record ConfirmResetDto(String token, String newPassword) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record ConfirmResetDto(
+        @NotBlank @NotNull String token,
+        @NotBlank @NotNull String newPassword
+) {
 }

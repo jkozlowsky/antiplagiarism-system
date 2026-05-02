@@ -93,25 +93,25 @@ public class JwtAuthService {
         return extractClaim(token, claims -> claims.get("token_version", Integer.class));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
-    public boolean checkTokenVersion(String token){
-        try {
-            Integer tokenVersion = extractTokenVersion(token);
-            String username = extractUsername(token);
-
-            if (tokenVersion == null || username == null) {
-                return false;
-            }
-
-            Account account = accountRepository.findByLogin(username)
-                    .orElseThrow(() -> new AccountNotFoundException("Account not found"));
-
-            return account.getTokenVersion().equals(tokenVersion);
-
-        } catch (AccountNotFoundException | JwtException | IllegalArgumentException e) {
-            return false;
-        }
-    }
+//    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+//    public boolean checkTokenVersion(String token){
+//        try {
+//            Integer tokenVersion = extractTokenVersion(token);
+//            String username = extractUsername(token);
+//
+//            if (tokenVersion == null || username == null) {
+//                return false;
+//            }
+//
+//            Account account = accountRepository.findByLogin(username)
+//                    .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+//
+//            return account.getTokenVersion().equals(tokenVersion);
+//
+//        } catch (AccountNotFoundException | JwtException | IllegalArgumentException e) {
+//            return false;
+//        }
+//    }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
