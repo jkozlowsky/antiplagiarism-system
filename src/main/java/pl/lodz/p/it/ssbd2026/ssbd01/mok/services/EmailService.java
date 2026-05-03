@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private final JavaMailSender mailSender;
 
-    public EmailService(JavaMailSender mailSender){
+    public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    public void sendEmail(String toAddress, String subject, String content){
+    public void sendEmail(String toAddress, String subject, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("252929@edu.p.lodz.pl");
         message.setTo(toAddress);
@@ -37,6 +37,16 @@ public class EmailService {
         String content = String.format(
                 "Hello %s,\n\nYour account has been unblocked. You can now log into your account again.",
                 login
+        );
+
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendUrlToChangeOwnEmail(String toAddress, String login, String url) {
+        String subject = "Notification - You have requested an email change";
+        String content = String.format(
+                "Hello %s,\n\nYou have requested an email change.\nPlease click the link below to confirm the change:\n%s\n\n",
+                login, url
         );
 
         sendEmail(toAddress, subject, content);

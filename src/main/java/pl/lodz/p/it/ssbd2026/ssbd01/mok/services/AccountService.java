@@ -1,14 +1,17 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
@@ -19,7 +22,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -41,6 +46,11 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final EmailService emailService;
+    private final OneTimeTokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -174,5 +184,49 @@ public class AccountService {
         account.setIsBlocked(false);
         accountRepository.saveAndFlush(account);
         emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void createUrlOwnEmailChange(String login) {
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(() -> new AccountNotFoundException());
+
+        String generateUrl = UUID.randomUUID().toString();
+        OneTimeTokenEnt token = new OneTimeTokenEnt();
+
+        token.setTokenValue(generateUrl);
+        token.setUsername(login);
+        token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
+        token.setUsed(false);
+
+        tokenRepository.saveAndFlush(token);
+
+        String changeUrl = frontendUrl + "/change-email?token=" + generateUrl;
+        emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl);
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void confirmOwnEmailChange(String token, String password, String newEmail) {
+
+        OneTimeTokenEnt tokenEntity = tokenRepository
+                .findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(token, LocalDateTime.now())
+                .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(() -> new AccountNotFoundException());
+
+        if (!passwordEncoder.matches(password, account.getPasswordHash())) {
+            throw new InvalidCredentialsProvidedException();
+        }
+
+        account.setEmail(newEmail);
+        tokenEntity.setUsed(true);
+
+        accountRepository.saveAndFlush(account);
+        tokenRepository.saveAndFlush(tokenEntity);
     }
 }
