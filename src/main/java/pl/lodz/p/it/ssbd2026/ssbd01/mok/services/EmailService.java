@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +23,16 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    @Async
+    public void sendEmailAddressChangedByAdmin(String toAddress) {
+        String mailSubject = "Your email address has been changed by administrator.";
+        String mailBody = "Hello," +
+                ",\n\nWe are writing to inform you that an administrator has updated your email address.\n" +
+                "If you did not request this change, please contact the administrator immediately.\n\n" +
+                "Best regards,\n"; //+ "Donose60"
+
+        sendEmail(toAddress, mailSubject, mailBody);
+    }
     public void sendAccountIsBlockedInfo(String toAddress, String login) {
         String subject = "Notification - Your account has been blocked";
         String content = String.format(

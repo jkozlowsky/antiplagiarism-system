@@ -1,15 +1,14 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
-import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
@@ -21,9 +20,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.List;
@@ -47,8 +43,9 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
-    private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final PostCommitTransactionManager postCommitTransactionManager;
+    private final PasswordEncoder passwordEncoder;
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
@@ -174,6 +171,33 @@ public class AccountService {
         accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
+    }
+
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false,
+            transactionManager = "mokTransactionManager"
+    )
+    @Retryable(
+            retryFor = {JpaSystemException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, Integer sourceVersion)
+            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
+    {
+        Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+        if (!account.getVersion().equals(sourceVersion)) {
+            throw new ConcurrentUpdateException();
+        }
+        String oldEmail = account.getEmail();
+        account.setEmail(newEmail);
+
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(oldEmail));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail));
+
+        return accountRepository.saveAndFlush(account);
     }
 
     @PreAuthorize("isAuthenticated()")
