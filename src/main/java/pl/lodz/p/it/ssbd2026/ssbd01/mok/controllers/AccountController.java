@@ -110,7 +110,7 @@ public class AccountController {
             @Valid @RequestBody ChangeEmailDTO changeEmailDTO) {
 
         Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), changeEmailDTO.version());
-        return accountMapper.toAccountDTO(account);
+        return accountMapper.toAccountDTONoHash(account);
     }
 
 

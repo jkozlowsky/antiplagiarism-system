@@ -14,7 +14,7 @@ public interface AccountMapper {
     AccountDTO toAccountDTO(Account account, String versionHash);
 
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "versionHash", ignore = true) // ignorujemy, bo w tym scenariuszu go nie mamy
+    @Mapping(target = "versionHash", ignore = true)
     AccountDTO toAccountDTONoHash(Account account);
 
     @Mapping(target = "account", expression = "java(toAccountDTO(account, versionHash))")
