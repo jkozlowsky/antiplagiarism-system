@@ -38,4 +38,7 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict"})
     @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
     Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String login, String email, String name, String surname, Pageable pageable);
+    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
+
+    UUID id(UUID id);
 }
