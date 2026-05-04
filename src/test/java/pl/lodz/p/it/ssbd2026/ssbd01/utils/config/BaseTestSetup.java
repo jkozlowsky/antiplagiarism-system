@@ -12,7 +12,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"server.tomcat.accesslog.enabled=false"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
 @Import(RestSetupInit.class)

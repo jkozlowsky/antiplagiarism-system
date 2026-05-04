@@ -2,25 +2,26 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelAlreadyAssignedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccessLevelDictNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -40,8 +41,62 @@ import java.util.UUID;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    @Autowired
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final AccessLevelRepository accessLevelRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LanguageDictRepository languageDictRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Transactional(propagation =  Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void registerAccount(Account account) {
+        account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
+
+        account.setIsVerified(false);
+        account.setIsBlocked(false);
+        account.setActivationToken(UUID.randomUUID().toString());
+        account.setCreationDate(LocalDateTime.now());
+        account.setSecondEmailSent(false);
+        account.setFailedAttempts(0);
+
+        LanguageDict defaultLang = languageDictRepository.findByLanguage("pl")
+                .orElseThrow(LanguageDictNotFoundException::new);
+        account.setLanguageVersion(defaultLang);
+
+        AccessLevelDict studentDict = accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_STUDENT)
+                .orElseThrow(AccessLevelDictNotFoundException::new);
+
+        Student studentRole = new Student();
+        studentRole.setAccessLevelDict(studentDict);
+        studentRole.setAccount(account);
+        studentRole.setIsActive(true);
+
+        account.getAccessLevelList().add(studentRole);
+
+        accountRepository.saveAndFlush(account);
+        emailService.sendActivationEmail(account.getEmail(), account.getActivationToken());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void confirmActivation(String token) {
+        Account account = accountRepository.findByActivationToken(token)
+                .orElseThrow(AccountActivationException::new);
+
+        if (account.getCreationDate().plusHours(24).isBefore(LocalDateTime.now())) {
+            throw new AccountActivationException("error.activation.token.expired");
+        }
+
+        account.setIsBlocked(false);
+        account.setIsVerified(true);
+        account.setActivationToken(null);
+        accountRepository.saveAndFlush(account);
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     public Account getAccountWithAccessLevels(UUID id) {

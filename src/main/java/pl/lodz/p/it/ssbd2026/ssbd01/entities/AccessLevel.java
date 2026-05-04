@@ -27,4 +27,7 @@ public abstract class AccessLevel extends AbstractEntity {
     public String getAccessLevelName() {
         return this.accessLevelDict != null ? this.accessLevelDict.getAccessLevelName() : null;
     }
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
 }

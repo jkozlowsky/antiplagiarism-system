@@ -12,7 +12,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config. BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 
 import java.util.List;
