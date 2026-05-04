@@ -207,6 +207,9 @@ public class AccountService {
             } else {
                 existingAccessLevel.setActive(true);
                 accountRepository.saveAndFlush(account);
+
+                postCommitTransactionManager.register(() ->
+                        emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
                 return;
             }
         }
@@ -224,6 +227,9 @@ public class AccountService {
 
         account.getAccessLevelList().add(newAccessLevel);
         accountRepository.saveAndFlush(account);
+
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
