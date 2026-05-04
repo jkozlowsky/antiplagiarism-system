@@ -31,4 +31,6 @@ public interface AccountRepository extends AbstractRepository<Account> {
 
     @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
     List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
+
+    UUID id(UUID id);
 }

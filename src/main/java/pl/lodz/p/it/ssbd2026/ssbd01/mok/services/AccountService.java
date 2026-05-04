@@ -234,4 +234,27 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
         emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
+
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
+    public void changeOtherPassword(UUID id, String newPassword, String ifMatch){
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
+
+        if(!account.getVersion().toString().equals(ifMatch)){
+            throw new ConcurrentUpdateException();
+        }
+
+        if(passwordEncoder.matches(newPassword, account.getPasswordHash())){
+            throw new PasswordSameAsOldException();
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        accountRepository.saveAndFlush(account);
+
+    }
+
+
 }
