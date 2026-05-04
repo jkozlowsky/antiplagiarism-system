@@ -60,7 +60,6 @@ public class AccountService {
     private final MokRefreshRepository mokRefreshRepository;
     private final AccountMapper accountMapper;
     private final PostCommitTransactionManager postCommitTransactionManager;
-    private final PasswordEncoder passwordEncoder;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")

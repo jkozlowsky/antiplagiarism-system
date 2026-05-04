@@ -160,6 +160,7 @@ public class AccountController {
     public ResponseEntity<String> confirmEmailChange(@Valid @RequestBody OwnEmailChangeDTO request) {
         accountService.confirmOwnEmailChange(request.token(), request.password(), request.newEmail());
         return ResponseEntity.ok().build();
+    }
 
     @PatchMapping(value = "/{id}")
     public AccountWithAccessLevelsDTO updateAccount(
