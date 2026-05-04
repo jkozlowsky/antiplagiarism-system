@@ -7,6 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
@@ -26,7 +30,9 @@ public class AccountServiceGetAllAccountsTest {
     private AccountService accountService;
 
     private List<Account> mockAccounts;
-    private List<Account> filteredAccounts;
+    private Page<Account> mockAccountsPage;
+    private Page<Account> emptyAccountsPage;
+    private Page<Account> filteredAccountsPage;
 
     @BeforeEach
     void setUp() {
@@ -40,37 +46,40 @@ public class AccountServiceGetAllAccountsTest {
         mockAccounts.add(acc1);
         mockAccounts.add(acc2);
 
-        filteredAccounts = new ArrayList<>();
-        filteredAccounts.add(acc1);
+        mockAccountsPage = new PageImpl<>(mockAccounts, PageRequest.of(0, 10, Sort.by("login").ascending()), 2);
+        emptyAccountsPage = new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10, Sort.by("login").ascending()), 0);
+        filteredAccountsPage = new PageImpl<>(List.of(acc1), PageRequest.of(0, 10, Sort.by("login").ascending()), 1);
     }
 
     @Test
     @DisplayName("Pomyślne pobranie listy wszystkich kont")
     void shouldReturnAllAccounts() {
-        when(accountRepository.findAll()).thenReturn(mockAccounts);
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
+        when(accountRepository.findAll(pageRequest)).thenReturn(mockAccountsPage);
 
-        List<Account> result = accountService.getAllAccounts();
+        Page<Account> result = accountService.getAllAccounts(0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
-                () -> assertEquals(2, result.size()),
-                () -> assertEquals("user1", result.get(0).getLogin()),
-                () -> assertEquals("user2", result.get(1).getLogin()),
-                () -> verify(accountRepository, times(1)).findAll()
+                () -> assertEquals(2, result.getTotalElements()),
+                () -> assertEquals("user1", result.getContent().get(0).getLogin()),
+                () -> assertEquals("user2", result.getContent().get(1).getLogin()),
+                () -> verify(accountRepository, times(1)).findAll(pageRequest)
         );
     }
 
     @Test
     @DisplayName("Zwrócenie pustej listy, gdy w bazie nie ma żadnych kont")
     void shouldReturnEmptyListWhenNoAccountsExist() {
-        when(accountRepository.findAll()).thenReturn(new ArrayList<>());
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
+        when(accountRepository.findAll(pageRequest)).thenReturn(emptyAccountsPage);
 
-        List<Account> result = accountService.getAllAccounts();
+        Page<Account> result = accountService.getAllAccounts(0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertTrue(result.isEmpty()),
-                () -> verify(accountRepository, times(1)).findAll()
+                () -> verify(accountRepository, times(1)).findAll(pageRequest)
         );
     }
 
@@ -78,15 +87,16 @@ public class AccountServiceGetAllAccountsTest {
     @DisplayName("Pomyślne pobranie listy kont przefiltrowanych po frazie")
     void shouldReturnFilteredAccounts() {
         String phrase = "user1";
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)).thenReturn(filteredAccounts);
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredAccountsPage);
 
-        List<Account> result = accountService.searchAccounts(phrase);
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
-                () -> assertEquals(1, result.size()),
-                () -> assertEquals("user1", result.get(0).getLogin()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)
+                () -> assertEquals(1, result.getTotalElements()),
+                () -> assertEquals("user1", result.getContent().get(0).getLogin()),
+                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase, pageRequest)
         );
     }
 
@@ -94,14 +104,15 @@ public class AccountServiceGetAllAccountsTest {
     @DisplayName("Zwrócenie pustej listy, gdy żadne konto nie pasuje do wyszukiwanej frazy")
     void shouldReturnEmptyListWhenNoAccountsMatchPhrase() {
         String phrase = "nonexistent";
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)).thenReturn(new ArrayList<>());
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
 
-        List<Account> result = accountService.searchAccounts(phrase);
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertTrue(result.isEmpty()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)
+                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase, pageRequest)
         );
     }
 }

@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -58,18 +59,23 @@ public class AccountController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<AccountDTO> getAllAccounts(@RequestParam(required = false) String phrase) {
+    public Page<AccountDTO> getAllAccounts(
+            @RequestParam(required = false) String phrase,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<Account> accountPage;
+
         if (phrase == null || phrase.trim().isEmpty()) {
-            return accountService.getAllAccounts().stream().map((account) -> accountMapper.toAccountDTO(
-                    account,
-                    versionHashService.hashObjectVersion(account.getId(), account.getVersion()))
-            ).toList();
+            accountPage = accountService.getAllAccounts(page, size);
         } else {
-            return accountService.searchAccounts(phrase).stream().map((account) -> accountMapper.toAccountDTO(
-                    account,
-                    versionHashService.hashObjectVersion(account.getId(), account.getVersion()))
-            ).toList();
+            accountPage = accountService.searchAccounts(phrase, page, size);
         }
+
+        return accountPage.map(account -> accountMapper.toAccountDTO(
+                account,
+                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+        ));
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
@@ -77,9 +83,10 @@ public class AccountController {
     public AccountWithAccessLevelsDTO grantAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody AccountDTO accountDTO) {
+            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
 
-        accountService.grantAccessLevel(id, accessLevelName, accountDTO.version());
+        accountService.grantAccessLevel(id, accessLevelName, accountDTO.versionHash());
+
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
@@ -92,9 +99,10 @@ public class AccountController {
     public AccountWithAccessLevelsDTO revokeAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody AccountDTO accountDTO) {
+            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
 
-        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.version());
+        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.versionHash());
+
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
         return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(

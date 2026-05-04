@@ -1,10 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,11 +74,11 @@ public class GetAllAccountsTest extends BaseTestSetup {
 
         String responseBody = requestFunctions.sendGetRequest(
                 200,
-                "/api/account",
+                "/api/account?page=0&size=10",
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("$");
+        List<Object> accounts = JsonPath.from(responseBody).getList("content");
 
         assertAll(
                 () -> assertNotNull(accounts),
@@ -93,11 +94,11 @@ public class GetAllAccountsTest extends BaseTestSetup {
 
         String responseBody = requestFunctions.sendGetRequest(
                 200,
-                "/api/account?phrase=searchable",
+                "/api/account?phrase=searchable&page=0&size=10",
                 adminHeaders
         );
 
-        List<String> logins = JsonPath.from(responseBody).getList("login", String.class);
+        List<String> logins = JsonPath.from(responseBody).getList("content.login", String.class);
 
         assertAll(
                 () -> assertNotNull(logins),
@@ -113,11 +114,11 @@ public class GetAllAccountsTest extends BaseTestSetup {
 
         String responseBody = requestFunctions.sendGetRequest(
                 200,
-                "/api/account?phrase=totally_non_existent_phrase_123",
+                "/api/account?phrase=totally_non_existent_phrase_123&page=0&size=10",
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("$");
+        List<Object> accounts = JsonPath.from(responseBody).getList("content");
 
         assertAll(
                 () -> assertNotNull(accounts),
@@ -125,26 +126,26 @@ public class GetAllAccountsTest extends BaseTestSetup {
         );
     }
 
-    //TODO: poprawić tutaj headery bo ustawiane są dwa razy w testach i przechodzi kiedy ma wrzucić 403
     @Test
     @DisplayName("Odrzucenie próby pobrania listy wszystkich użytkowników bez uprawnień administratora")
-    @Disabled
     public void shouldFailWithStudentToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
+
         requestFunctions.sendGetRequest(
                 403,
-                "/api/account",
+                "/api/account?page=0&size=10",
                 studentHeaders
         );
     }
 
-    //TODO: poprawić tutaj headery bo ustawiane są dwa razy w testach i przechodzi kiedy ma wrzucić 403
     @Test
     @DisplayName("Odrzucenie próby pobrania listy wszystkich użytkowników bez ważnego tokena uwierzytelniającego")
-    @Disabled
     public void shouldFailWithoutToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
+
         requestFunctions.sendGetRequest(
                 403,
-                "/api/account",
+                "/api/account?page=0&size=10",
                 unauthenticatedHeaders
         );
     }

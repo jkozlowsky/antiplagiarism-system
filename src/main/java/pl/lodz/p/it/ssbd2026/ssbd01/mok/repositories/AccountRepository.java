@@ -3,13 +3,14 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,5 +31,5 @@ public interface AccountRepository extends AbstractRepository<Account> {
     Optional<Account> findById(UUID id);
 
     @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
-    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
+    Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email, Pageable pageable);
 }
