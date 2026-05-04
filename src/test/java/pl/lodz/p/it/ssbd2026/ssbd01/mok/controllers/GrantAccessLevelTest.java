@@ -1,16 +1,18 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
@@ -18,9 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GrantAccessLevelTest extends BaseTestSetup {
 
@@ -29,6 +29,9 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @Autowired
     private JwtAuthService jwtAuthService;
+
+    @Autowired
+    private VersionHashService versionHashService;
 
     private RequestFunctions requestFunctions;
     private Headers adminHeaders;
@@ -67,7 +70,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldGrantAccessLevelSuccessfully() {
         Account testAccount = createTestAccount("user");
         UUID accountId = testAccount.getId();
-        String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
 
         String responseBody = requestFunctions.sendPostRequest(
                 requestBody,
@@ -91,15 +95,18 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         Account testAccount = createTestAccount("regrant");
         UUID accountId = testAccount.getId();
 
-        String reqGrant1 = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash1 = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String reqGrant1 = "{\"versionHash\": \"" + validHash1 + "\"}";
         requestFunctions.sendPostRequest(reqGrant1, 200, "/api/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
 
         Account accAfterGrant = accountRepository.findById(accountId).get();
-        String reqRevoke = "{\"version\": " + accAfterGrant.getVersion() + "}";
+        String validHash2 = versionHashService.hashObjectVersion(accountId, accAfterGrant.getVersion());
+        String reqRevoke = "{\"versionHash\": \"" + validHash2 + "\"}";
         requestFunctions.sendPostRequest(reqRevoke, 200, "/api/account/" + accountId + "/access-levels/TEACHER/revoke", adminHeaders);
 
         Account accAfterRevoke = accountRepository.findById(accountId).get();
-        String reqGrant2 = "{\"version\": " + accAfterRevoke.getVersion() + "}";
+        String validHash3 = versionHashService.hashObjectVersion(accountId, accAfterRevoke.getVersion());
+        String reqGrant2 = "{\"versionHash\": \"" + validHash3 + "\"}";
         String responseBody = requestFunctions.sendPostRequest(reqGrant2, 200, "/api/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
 
         List<Boolean> activeFlags = JsonPath.from(responseBody).getList("accessLevels.active", Boolean.class);
@@ -110,7 +117,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     @DisplayName("Odrzucenie próby nadania poziomu dostępu dla nieistniejącego konta")
     public void shouldFailForNonExistentAccount() {
         UUID nonExistentId = UUID.randomUUID();
-        String requestBody = "{\"version\": 0}";
+        String invalidHash = "mock-hash";
+        String requestBody = "{\"versionHash\": \"" + invalidHash + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody,
@@ -125,8 +133,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldFailForWrongVersion() {
         Account testAccount = createTestAccount("ver");
         UUID accountId = testAccount.getId();
-        Integer wrongVersion = testAccount.getVersion() + 1;
-        String requestBody = "{\"version\": " + wrongVersion + "}";
+        String invalidHash = "invalid-hash-12345";
+        String requestBody = "{\"versionHash\": \"" + invalidHash + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody,
@@ -137,12 +145,13 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     }
 
     @Test
-    @Disabled("Do poprawy bo mamy nadawanie tokenów z góry przez konfigurację testową")
     @DisplayName("Odrzucenie próby nadania poziomu dostępu bez ważnego tokena uwierzytelniającego")
     public void shouldFailWithoutToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("auth");
         UUID accountId = testAccount.getId();
-        String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody,
@@ -154,11 +163,12 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @Test
     @DisplayName("Odrzucenie próby nadania poziomu dostępu z uprawnieniami studenta zamiast administratora")
-    @Disabled("Do poprawy")
     public void shouldFailWithStudentToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("priv");
         UUID accountId = testAccount.getId();
-        String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody,
@@ -173,7 +183,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldFailWhenRoleAlreadyAssigned() {
         Account testAccount = createTestAccount("dup");
         UUID accountId = testAccount.getId();
-        String requestBody1 = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash1 = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String requestBody1 = "{\"versionHash\": \"" + validHash1 + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody1,
@@ -183,7 +194,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
         );
 
         Account updatedAccount = accountRepository.findById(accountId).get();
-        String requestBody2 = "{\"version\": " + updatedAccount.getVersion() + "}";
+        String validHash2 = versionHashService.hashObjectVersion(accountId, updatedAccount.getVersion());
+        String requestBody2 = "{\"versionHash\": \"" + validHash2 + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody2,
@@ -198,7 +210,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldFailForNonExistentRole() {
         Account testAccount = createTestAccount("role");
         UUID accountId = testAccount.getId();
-        String requestBody = "{\"version\": " + testAccount.getVersion() + "}";
+        String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
+        String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
 
         requestFunctions.sendPostRequest(
                 requestBody,

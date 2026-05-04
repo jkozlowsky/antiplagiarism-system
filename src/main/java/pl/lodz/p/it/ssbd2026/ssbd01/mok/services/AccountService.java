@@ -23,8 +23,11 @@ import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -79,8 +82,9 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public List<Account> getAllAccounts() {
-        return accountRepository.findAll();
+    public Page<Account> getAllAccounts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return accountRepository.findAll(pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
@@ -105,8 +109,9 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public List<Account> searchAccounts(String phrase) {
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase);
+    public Page<Account> searchAccounts(String phrase, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -116,11 +121,11 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public void grantAccessLevel(UUID uuid, String accessLevelName, Integer sourceVersion) {
-        Account account = accountRepository.findById(uuid)
-                .orElseThrow(AccountNotFoundException::new);
+    public void grantAccessLevel(UUID uuid, String accessLevelName, String versionHash) {
+        Account account = accountRepository.findById(uuid).orElseThrow(AccountNotFoundException::new);
+        mokRefreshRepository.refresh(account);
 
-        if (!account.getVersion().equals(sourceVersion)) {
+        if (!versionHash.equals(versionHashService.hashObjectVersion(uuid, account.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
@@ -165,11 +170,11 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public void revokeAccessLevel(UUID uuid, String accessLevelName, Integer sourceVersion) {
-        Account account = accountRepository.findById(uuid)
-                .orElseThrow(AccountNotFoundException::new);
+    public void revokeAccessLevel(UUID uuid, String accessLevelName, String versionHash) {
+        Account account = accountRepository.findById(uuid).orElseThrow(AccountNotFoundException::new);
+        mokRefreshRepository.refresh(account);
 
-        if (!account.getVersion().equals(sourceVersion)) {
+        if (!versionHash.equals(versionHashService.hashObjectVersion(uuid, account.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
@@ -217,6 +222,7 @@ public class AccountService {
 
         return accountRepository.saveAndFlush(account);
     }
+
     @PreAuthorize("isAuthenticated()")
     @Transactional(propagation = Propagation.MANDATORY)
     @Retryable(
