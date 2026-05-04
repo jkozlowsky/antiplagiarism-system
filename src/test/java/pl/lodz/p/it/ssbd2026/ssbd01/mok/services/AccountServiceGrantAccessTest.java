@@ -8,15 +8,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
@@ -26,10 +27,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AccountServiceGrantAccessTest {
+
+    private final String VALID_HASH = "mocked-valid-hash-123";
 
     @Mock
     private AccountRepository accountRepository;
@@ -43,6 +47,9 @@ public class AccountServiceGrantAccessTest {
     @Mock
     private MokRefreshRepository mokRefreshRepository;
 
+    @Mock
+    private PostCommitTransactionManager postCommitTransactionManager;
+
     @InjectMocks
     private AccountService accountService;
 
@@ -50,7 +57,6 @@ public class AccountServiceGrantAccessTest {
     private AccessLevelDict accessLevelDict;
     private AccessLevel accessLevel;
     private UUID accountId;
-    private final String VALID_HASH = "mocked-valid-hash-123";
 
     @BeforeEach
     void setUp() {
@@ -59,6 +65,8 @@ public class AccountServiceGrantAccessTest {
 
         ReflectionTestUtils.setField(account, "id", accountId);
         ReflectionTestUtils.setField(account, "version", 0);
+        account.setLogin("testUser");
+        account.setEmail("test@example.com");
         account.setAccessLevelList(new ArrayList<>());
 
         accessLevelDict = new AccessLevelDict();
@@ -85,7 +93,8 @@ public class AccountServiceGrantAccessTest {
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
                 () -> assertInstanceOf(Teacher.class, account.getAccessLevelList().getFirst()),
-                () -> assertTrue(account.getAccessLevelList().getFirst().getActive())
+                () -> assertTrue(account.getAccessLevelList().getFirst().getActive()),
+                () -> verify(postCommitTransactionManager, times(1)).register(any(Runnable.class))
         );
     }
 
@@ -105,7 +114,8 @@ public class AccountServiceGrantAccessTest {
         assertAll(
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
-                () -> assertTrue(account.getAccessLevelList().getFirst().getActive())
+                () -> assertTrue(account.getAccessLevelList().getFirst().getActive()),
+                () -> verify(postCommitTransactionManager, times(1)).register(any(Runnable.class))
         );
     }
 
@@ -116,6 +126,7 @@ public class AccountServiceGrantAccessTest {
 
         assertThrows(AccountNotFoundException.class, () ->
                 accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 
     @Test
@@ -127,6 +138,7 @@ public class AccountServiceGrantAccessTest {
 
         assertThrows(ConcurrentUpdateException.class, () ->
                 accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, "invalid-hash-999"));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 
     @Test
@@ -139,6 +151,7 @@ public class AccountServiceGrantAccessTest {
 
         assertThrows(AccessLevelDictNotFoundException.class, () ->
                 accountService.grantAccessLevel(accountId, "NON_EXISTENT", VALID_HASH));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 
     @Test
@@ -153,5 +166,6 @@ public class AccountServiceGrantAccessTest {
 
         assertThrows(AccessLevelAlreadyAssignedException.class, () ->
                 accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 }

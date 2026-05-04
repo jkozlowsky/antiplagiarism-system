@@ -62,4 +62,14 @@ public class EmailService {
 
         sendEmail(toAddress, subject, content);
     }
+
+    @Async
+    public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName) {
+        String subject = "Notification - Access Level Granted";
+        String content = String.format(
+                "Hello %s,\n\nWe are writing to inform you that you have received a new access level: %s.",
+                login, accessLevelName
+        );
+        sendEmail(toAddress, subject, content);
+    }
 }
