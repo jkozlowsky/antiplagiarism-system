@@ -33,6 +33,7 @@ services:
     build:
       context: .
     environment:
+      - APP_FRONTEND_URL=https://localhost
       - TZ=Europe/Warsaw
       - DB_HOST=db
       - DB_PORT=5432

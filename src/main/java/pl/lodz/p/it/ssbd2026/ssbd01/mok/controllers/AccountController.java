@@ -6,9 +6,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.RegisterAccountDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
@@ -29,7 +36,7 @@ import java.util.UUID;
 @RequestMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @MethodCallLogged
-public class AccountController {
+public class  AccountController {
 
     private final AccountService accountService;
     private final AccountMapper accountMapper;
@@ -75,6 +82,19 @@ public class AccountController {
                 account,
                 versionHashService.hashObjectVersion(account.getId(), account.getVersion())
         ));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
+        Account account = accountMapper.toEntity(dto);
+        accountService.registerAccount(account);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/activate")
+    public ResponseEntity<?> activate(@RequestParam String token) {
+        accountService.confirmActivation(token);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
