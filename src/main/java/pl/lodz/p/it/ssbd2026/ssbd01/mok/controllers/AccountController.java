@@ -8,9 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.RegisterAccountDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import org.springframework.validation.annotation.Validated;
@@ -19,9 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.OwnEmailChangeDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeEmailDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
@@ -198,4 +193,20 @@ public class  AccountController {
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }
+
+    @PostMapping("/{id}/password")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeOtherPassword(
+            @PathVariable UUID id,
+            @Valid @RequestBody ChangeOtherPasswordDto dto,
+            @RequestHeader("If-Match") String ifMatch) {
+
+        accountService.changeOtherPassword(
+                id,
+                dto.getNewPassword(),
+                ifMatch
+        );
+    }
+
 }
