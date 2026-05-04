@@ -1,22 +1,20 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
 @Service
 public class EmailService {
     private final JavaMailSender mailSender;
-    private final String frontendUrl;
 
-    public EmailService(
-            JavaMailSender mailSender,
-            @Value("${app.frontend.url}") String frontendUrl) {
-        this.mailSender = mailSender;
-        this.frontendUrl = frontendUrl;
-    }
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
 
     public void sendEmail(String toAddress, String subject, String content){
         SimpleMailMessage message = new SimpleMailMessage();

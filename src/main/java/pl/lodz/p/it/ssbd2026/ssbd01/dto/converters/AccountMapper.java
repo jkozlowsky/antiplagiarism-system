@@ -26,8 +26,6 @@ public interface AccountMapper {
     @Mapping(target = "accessLevels", source = "account.accessLevelList")
     AccountWithAccessLevelsDTO toAccountWithAccessLevelsDTO(Account account);
 
-    @Mapping(target = "name", source = "firstName")
-    @Mapping(target = "surname", source = "lastName")
     @Mapping(target = "passwordHash", source = "password")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "version", ignore = true)

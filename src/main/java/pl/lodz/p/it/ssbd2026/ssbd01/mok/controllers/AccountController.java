@@ -80,11 +80,8 @@ public class  AccountController {
         }
     }
 
-@PostMapping("/register")
+    @PostMapping("/register")
     public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
-        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("error.passwords.mismatch");
-        }
         Account account = accountMapper.toEntity(dto);
         accountService.registerAccount(account);
         return ResponseEntity.accepted().build();
