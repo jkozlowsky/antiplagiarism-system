@@ -11,7 +11,7 @@ public record AccountDTO(
         UUID id,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        String version,
+        Integer version,
 
         @Null(groups = OnCreate.class)
         @NotNull(groups = OnUpdate.class)
