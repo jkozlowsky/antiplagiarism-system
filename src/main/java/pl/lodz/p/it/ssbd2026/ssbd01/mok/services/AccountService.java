@@ -28,7 +28,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -84,7 +83,7 @@ public class AccountService {
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
     public Page<Account> getAllAccounts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("login").ascending());
+        Pageable pageable = PageRequest.of(page, size);
         return accountRepository.findAll(pageable);
     }
 
@@ -111,8 +110,8 @@ public class AccountService {
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
     public Page<Account> searchAccounts(String phrase, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("login").ascending());
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")

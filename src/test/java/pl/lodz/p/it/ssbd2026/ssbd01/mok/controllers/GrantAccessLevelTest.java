@@ -1,10 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GrantAccessLevelTest extends BaseTestSetup {
 
@@ -42,7 +41,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
         String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"), 1);
-        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"),1);
+        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"), 1);
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();
@@ -146,9 +145,9 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     }
 
     @Test
-    @Disabled("Do poprawy bo mamy nadawanie tokenów z góry przez konfigurację testową")
     @DisplayName("Odrzucenie próby nadania poziomu dostępu bez ważnego tokena uwierzytelniającego")
     public void shouldFailWithoutToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("auth");
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
@@ -164,8 +163,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @Test
     @DisplayName("Odrzucenie próby nadania poziomu dostępu z uprawnieniami studenta zamiast administratora")
-    @Disabled("Do poprawy")
     public void shouldFailWithStudentToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("priv");
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());

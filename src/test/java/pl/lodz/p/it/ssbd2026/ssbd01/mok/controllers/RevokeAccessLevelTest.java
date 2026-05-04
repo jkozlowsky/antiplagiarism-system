@@ -1,10 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -157,9 +158,9 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     }
 
     @Test
-    @Disabled("Do poprawy bo mamy nadawanie tokenów z góry przez konfigurację testową")
     @DisplayName("Odrzucenie próby odebrania poziomu dostępu bez ważnego tokena uwierzytelniającego")
     public void shouldFailWithoutToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccountWithRole("auth_rev", AccountConsts.ROLE_TEACHER);
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
@@ -175,8 +176,8 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
 
     @Test
     @DisplayName("Odrzucenie próby odebrania poziomu dostępu z uprawnieniami studenta zamiast administratora")
-    @Disabled("Do poprawy")
     public void shouldFailWithStudentToken() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccountWithRole("priv_rev", AccountConsts.ROLE_TEACHER);
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());

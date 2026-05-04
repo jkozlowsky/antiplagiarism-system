@@ -85,6 +85,7 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 null,
                 changedName,
                 changedSurname,
+                null,
                 null
         );
         String response = requestFunctions.sendPatchRequest(

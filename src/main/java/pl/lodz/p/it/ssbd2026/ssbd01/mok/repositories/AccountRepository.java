@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,11 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
     Optional<Account> findById(UUID id);
 
+    @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict"})
     @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
-    Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email, Pageable pageable);
+    Page<Account> findAll(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict"})
+    @Transactional(readOnly = true, propagation = Propagation.MANDATORY)
+    Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String login, String email, String name, String surname, Pageable pageable);
 }

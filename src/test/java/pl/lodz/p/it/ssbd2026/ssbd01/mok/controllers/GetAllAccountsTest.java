@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GetAllAccountsTest extends BaseTestSetup {
 
@@ -49,29 +50,34 @@ public class GetAllAccountsTest extends BaseTestSetup {
         unauthenticatedHeaders = new Headers();
     }
 
-    private void createTestAccount(String prefix) {
+    private void createTestAccount(String login, String email, String name, String surname) {
         Account admin = accountRepository.findByLogin("admin").get();
         LanguageDict language = admin.getLanguageVersion();
-        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
 
         Account testAccount = new Account();
-        testAccount.setLogin(prefix + "_" + uniqueId);
-        testAccount.setEmail(prefix + "_" + uniqueId + "@example.com");
+        testAccount.setLogin(login);
+        testAccount.setEmail(email);
         testAccount.setPasswordHash("password_hash");
-        testAccount.setName("TestName");
-        testAccount.setSurname("TestSurname");
+        testAccount.setName(name);
+        testAccount.setSurname(surname);
         testAccount.setIsBlocked(false);
         testAccount.setLanguageVersion(language);
 
         accountRepository.save(testAccount);
     }
 
-    @Test
-    @DisplayName("Pomyślne pobranie listy wszystkich kont z uprawnieniami administratora")
-    public void shouldGetAllAccountsSuccessfully() {
-        createTestAccount("list_user1");
-        createTestAccount("list_user2");
+    @BeforeEach
+    public void seedDatabaseForSearch() {
+        String uniqueId = UUID.randomUUID().toString().substring(0, 4);
+        createTestAccount("kowalski.j" + uniqueId, "jan" + uniqueId + "@p.lodz.pl", "Jan", "Kowalski");
+        createTestAccount("nowak.a" + uniqueId, "anna.nowak" + uniqueId + "@p.lodz.pl", "Anna", "Nowak");
+        createTestAccount("wiacek.p" + uniqueId, "piotr" + uniqueId + "@p.lodz.pl", "Piotr", "Wiacek");
+        createTestAccount("anna.z" + uniqueId, "anna.z" + uniqueId + "@p.lodz.pl", "Zofia", "Zawadzka");
+    }
 
+    @Test
+    @DisplayName("Pomyślne pobranie listy wszystkich kont z paginacją")
+    public void shouldGetAllAccountsSuccessfully() {
         String responseBody = requestFunctions.sendGetRequest(
                 200,
                 "/api/account?page=0&size=10",
@@ -87,50 +93,104 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Pomyślne przefiltrowanie listy kont z wykorzystaniem parametru phrase")
-    public void shouldGetFilteredAccountsSuccessfully() {
-        createTestAccount("searchable_acc");
-        createTestAccount("hidden_acc");
-
+    @DisplayName("Pomyślne wyszukiwanie po imieniu ignorując wielkość liter")
+    public void shouldSearchByNameIgnoreCase() {
         String responseBody = requestFunctions.sendGetRequest(
                 200,
-                "/api/account?phrase=searchable&page=0&size=10",
+                "/api/account?phrase=aNNa&page=0&size=10",
                 adminHeaders
         );
 
-        List<String> logins = JsonPath.from(responseBody).getList("content.login", String.class);
+        List<String> names = JsonPath.from(responseBody).getList("content.account.name", String.class);
+        List<String> logins = JsonPath.from(responseBody).getList("content.account.login", String.class);
 
         assertAll(
-                () -> assertNotNull(logins),
-                () -> assertFalse(logins.isEmpty()),
-                () -> assertTrue(logins.stream().allMatch(login -> login.contains("searchable")))
+                () -> assertFalse(names.isEmpty()),
+                () -> assertTrue(names.stream().anyMatch(n -> n.equals("Anna")) || logins.stream().anyMatch(l -> l.contains("anna")))
         );
     }
 
     @Test
-    @DisplayName("Zwrócenie pustej listy, gdy parametr phrase nie pasuje do żadnego konta")
-    public void shouldReturnEmptyListForNonMatchingPhrase() {
-        createTestAccount("standard_acc");
-
+    @DisplayName("Pomyślne wyszukiwanie po nazwisku")
+    public void shouldSearchBySurname() {
         String responseBody = requestFunctions.sendGetRequest(
                 200,
-                "/api/account?phrase=totally_non_existent_phrase_123&page=0&size=10",
+                "/api/account?phrase=Wiacek&page=0&size=10",
+                adminHeaders
+        );
+
+        List<String> surnames = JsonPath.from(responseBody).getList("content.account.surname", String.class);
+
+        assertAll(
+                () -> assertFalse(surnames.isEmpty()),
+                () -> assertTrue(surnames.stream().allMatch(s -> s.contains("Wiacek")))
+        );
+    }
+
+    @Test
+    @DisplayName("Pomyślne wyszukiwanie po adresie e-mail (częściowe)")
+    public void shouldSearchByEmailPartial() {
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account?phrase=@p.lodz.pl&page=0&size=10",
+                adminHeaders
+        );
+
+        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+
+        assertAll(
+                () -> assertFalse(emails.isEmpty()),
+                () -> assertTrue(emails.size() >= 4),
+                () -> assertTrue(emails.stream().allMatch(e -> e.endsWith("@p.lodz.pl")))
+        );
+    }
+
+    @Test
+    @DisplayName("Zwrócenie wszystkich wyników w przypadku przekazania samej spacji jako frazy")
+    public void shouldReturnAllAccountsForWhitespacePhrase() {
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account?phrase=   &page=0&size=10",
+                adminHeaders
+        );
+
+        int totalElements = JsonPath.from(responseBody).getInt("totalElements");
+
+        assertTrue(totalElements >= 4);
+    }
+
+    @Test
+    @DisplayName("Zwrócenie pustej listy dla frazy bez dopasowań we wszystkich polach")
+    public void shouldReturnEmptyListForUnmatchedPhrase() {
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account?phrase=NIE_MA_TAKIEGO_TUTAJ&page=0&size=10",
                 adminHeaders
         );
 
         List<Object> accounts = JsonPath.from(responseBody).getList("content");
 
-        assertAll(
-                () -> assertNotNull(accounts),
-                () -> assertTrue(accounts.isEmpty())
-        );
+        assertTrue(accounts.isEmpty());
     }
 
     @Test
-    @DisplayName("Odrzucenie próby pobrania listy wszystkich użytkowników bez uprawnień administratora")
+    @DisplayName("Zwrócenie pustej strony w przypadku zażądania strony wykraczającej poza limit")
+    public void shouldReturnEmptyPageForOutOfRangePageNumber() {
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account?page=9999&size=10",
+                adminHeaders
+        );
+
+        List<Object> accounts = JsonPath.from(responseBody).getList("content");
+
+        assertTrue(accounts.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Odrzucenie próby pobrania listy bez uprawnień administratora")
     public void shouldFailWithStudentToken() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
-
         requestFunctions.sendGetRequest(
                 403,
                 "/api/account?page=0&size=10",
@@ -139,10 +199,9 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Odrzucenie próby pobrania listy wszystkich użytkowników bez ważnego tokena uwierzytelniającego")
+    @DisplayName("Odrzucenie próby pobrania listy bez tokena uwierzytelniającego")
     public void shouldFailWithoutToken() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
-
         requestFunctions.sendGetRequest(
                 403,
                 "/api/account?page=0&size=10",

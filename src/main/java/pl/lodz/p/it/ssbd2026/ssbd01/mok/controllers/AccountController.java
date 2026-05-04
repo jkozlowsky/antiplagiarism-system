@@ -5,14 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeEmailDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
-import org.springframework.http.ResponseEntity;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
@@ -21,9 +21,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 
 import java.security.Principal;
-
-
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,7 +46,7 @@ public class AccountController {
 
     @GetMapping("/login/{login}")
     @ResponseStatus(HttpStatus.OK)
-    public AccountWithAccessLevelsDTO getAccountByLogin(@PathVariable String login){
+    public AccountWithAccessLevelsDTO getAccountByLogin(@PathVariable String login) {
         Account account = accountService.getAccountByLogin(login);
         return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
                 account,
@@ -59,7 +56,7 @@ public class AccountController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<AccountDTO> getAllAccounts(
+    public Page<AccountWithAccessLevelsDTO> getAllAccounts(
             @RequestParam(required = false) String phrase,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -72,7 +69,7 @@ public class AccountController {
             accountPage = accountService.searchAccounts(phrase, page, size);
         }
 
-        return accountPage.map(account -> accountMapper.toAccountDTO(
+        return accountPage.map(account -> accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
                 account,
                 versionHashService.hashObjectVersion(account.getId(), account.getVersion())
         ));
