@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
