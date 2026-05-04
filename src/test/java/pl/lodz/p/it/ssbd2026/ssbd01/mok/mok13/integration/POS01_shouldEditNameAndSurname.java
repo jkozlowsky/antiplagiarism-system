@@ -81,6 +81,7 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 null,
                 changedName,
                 changedSurname,
+                null,
                 null
                 );
         String response = requestFunctions.sendPatchRequest(

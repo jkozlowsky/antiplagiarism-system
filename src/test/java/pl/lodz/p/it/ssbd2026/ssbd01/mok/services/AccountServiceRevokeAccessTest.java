@@ -20,6 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -37,6 +38,12 @@ public class AccountServiceRevokeAccessTest {
     @Mock
     private AccessLevelDictRepository accessLevelDictRepository;
 
+    @Mock
+    private VersionHashService versionHashService;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
     @InjectMocks
     private AccountService accountService;
 
@@ -44,12 +51,14 @@ public class AccountServiceRevokeAccessTest {
     private AccessLevelDict accessLevelDict;
     private AccessLevel accessLevel;
     private UUID accountId;
+    private final String VALID_HASH = "mocked-valid-hash-123";
 
     @BeforeEach
     void setUp() {
         accountId = UUID.randomUUID();
         account = new Account();
 
+        ReflectionTestUtils.setField(account, "id", accountId);
         ReflectionTestUtils.setField(account, "version", 0);
         account.setAccessLevelList(new ArrayList<>());
 
@@ -69,9 +78,11 @@ public class AccountServiceRevokeAccessTest {
         account.getAccessLevelList().add(accessLevel);
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
 
-        accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0);
+        accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
 
         assertAll(
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
@@ -87,10 +98,12 @@ public class AccountServiceRevokeAccessTest {
         account.getAccessLevelList().add(accessLevel);
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
 
         assertThrows(AccessLevelAlreadyRevokedException.class, () ->
-                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0));
+                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
     }
 
     @Test
@@ -99,35 +112,41 @@ public class AccountServiceRevokeAccessTest {
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
         assertThrows(AccountNotFoundException.class, () ->
-                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0));
+                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
     }
 
     @Test
     @DisplayName("Wyrzucenie błędu ConcurrentUpdateException w przypadku niezgodności wersji obiektu")
     void shouldThrowConcurrentUpdateException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
 
         assertThrows(ConcurrentUpdateException.class, () ->
-                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 2));
+                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, "invalid-hash-999"));
     }
 
     @Test
     @DisplayName("Wyrzucenie błędu AccessLevelDictNotFoundException dla nieistniejącej nazwy roli")
     void shouldThrowAccessLevelDictNotFoundException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName("NON_EXISTENT")).thenReturn(Optional.empty());
 
         assertThrows(AccessLevelDictNotFoundException.class, () ->
-                accountService.revokeAccessLevel(accountId, "NON_EXISTENT", 0));
+                accountService.revokeAccessLevel(accountId, "NON_EXISTENT", VALID_HASH));
     }
 
     @Test
     @DisplayName("Wyrzucenie błędu AccessLevelNotAssignedException, gdy konto w ogóle nie posiada danej roli (pusta lista)")
     void shouldThrowAccessLevelNotAssignedException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
 
         assertThrows(AccessLevelNotAssignedException.class, () ->
-                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, 0));
+                accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
     }
 }

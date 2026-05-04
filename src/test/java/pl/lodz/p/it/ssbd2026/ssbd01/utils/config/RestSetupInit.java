@@ -15,21 +15,6 @@ import java.util.List;
 @TestComponent
 public class RestSetupInit {
 
-    @Value("${oauth.url}")
-    private String oauthUrl;
-
-    @Value("${oauth.username}")
-    private String oauthUsername;
-
-    @Value("${oauth.password}")
-    private String oauthPassword;
-
-    @Value("${oauth.client-id}")
-    private String oauthclientId;
-
-    @Value("${oauth.client-secret}")
-    private String oauthclientSecret;
-
     @Autowired
     private JwtAuthService jwtAuthService;
 
@@ -50,7 +35,7 @@ public class RestSetupInit {
     }
 
     public void generateToken() {
-        String tokenString = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR", "STUDENT", "TEACHER"), 1);
+        String tokenString = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR", "STUDENT", "TEACHER"));
         RestAssured.requestSpecification.header("Authorization", "Bearer " + tokenString);
     }
 

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record AccountDTO(
@@ -47,6 +48,9 @@ public record AccountDTO(
         @NotBlank(groups = OnCreate.class)
         @Email(groups = {OnCreate.class, OnUpdate.class})
         @Size(max = 128, groups = {OnCreate.class, OnUpdate.class})
-        String email
+        String email,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        LocalDateTime lastLoginSuccessDateTime
 ) {
 }

@@ -33,8 +33,8 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
-        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN), 1);
-        String studentToken = jwtAuthService.generateToken("anowak", List.of(AccountConsts.ROLE_STUDENT),1);
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
+        String studentToken = jwtAuthService.generateToken("anowak", List.of(AccountConsts.ROLE_STUDENT));
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();

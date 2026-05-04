@@ -7,6 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
@@ -26,82 +29,142 @@ public class AccountServiceGetAllAccountsTest {
     private AccountService accountService;
 
     private List<Account> mockAccounts;
-    private List<Account> filteredAccounts;
+    private Page<Account> mockAccountsPage;
+    private Page<Account> emptyAccountsPage;
 
     @BeforeEach
     void setUp() {
         mockAccounts = new ArrayList<>();
         Account acc1 = new Account();
-        acc1.setLogin("user1");
-        acc1.setEmail("user1@example.com");
+        acc1.setLogin("j.kowalski");
+        acc1.setEmail("jan.kowalski@example.com");
+        acc1.setName("Jan");
+        acc1.setSurname("Kowalski");
+
         Account acc2 = new Account();
-        acc2.setLogin("user2");
-        acc2.setEmail("user2@example.com");
+        acc2.setLogin("a.nowak");
+        acc2.setEmail("anna.nowak@example.com");
+        acc2.setName("Anna");
+        acc2.setSurname("Nowak");
+
+        Account acc3 = new Account();
+        acc3.setLogin("j.zielinski");
+        acc3.setEmail("jan.zielinski@example.com");
+        acc3.setName("Piotr");
+        acc3.setSurname("Zielinski");
+
         mockAccounts.add(acc1);
         mockAccounts.add(acc2);
+        mockAccounts.add(acc3);
 
-        filteredAccounts = new ArrayList<>();
-        filteredAccounts.add(acc1);
+        mockAccountsPage = new PageImpl<>(mockAccounts, PageRequest.of(0, 10), 3);
+        emptyAccountsPage = new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
     }
 
     @Test
     @DisplayName("Pomyślne pobranie listy wszystkich kont")
     void shouldReturnAllAccounts() {
-        when(accountRepository.findAll()).thenReturn(mockAccounts);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(accountRepository.findAll(pageRequest)).thenReturn(mockAccountsPage);
 
-        List<Account> result = accountService.getAllAccounts();
+        Page<Account> result = accountService.getAllAccounts(0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
-                () -> assertEquals(2, result.size()),
-                () -> assertEquals("user1", result.get(0).getLogin()),
-                () -> assertEquals("user2", result.get(1).getLogin()),
-                () -> verify(accountRepository, times(1)).findAll()
+                () -> assertEquals(3, result.getTotalElements()),
+                () -> verify(accountRepository, times(1)).findAll(pageRequest)
         );
     }
 
     @Test
     @DisplayName("Zwrócenie pustej listy, gdy w bazie nie ma żadnych kont")
     void shouldReturnEmptyListWhenNoAccountsExist() {
-        when(accountRepository.findAll()).thenReturn(new ArrayList<>());
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(accountRepository.findAll(pageRequest)).thenReturn(emptyAccountsPage);
 
-        List<Account> result = accountService.getAllAccounts();
-
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertTrue(result.isEmpty()),
-                () -> verify(accountRepository, times(1)).findAll()
-        );
-    }
-
-    @Test
-    @DisplayName("Pomyślne pobranie listy kont przefiltrowanych po frazie")
-    void shouldReturnFilteredAccounts() {
-        String phrase = "user1";
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)).thenReturn(filteredAccounts);
-
-        List<Account> result = accountService.searchAccounts(phrase);
-
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(1, result.size()),
-                () -> assertEquals("user1", result.get(0).getLogin()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)
-        );
-    }
-
-    @Test
-    @DisplayName("Zwrócenie pustej listy, gdy żadne konto nie pasuje do wyszukiwanej frazy")
-    void shouldReturnEmptyListWhenNoAccountsMatchPhrase() {
-        String phrase = "nonexistent";
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)).thenReturn(new ArrayList<>());
-
-        List<Account> result = accountService.searchAccounts(phrase);
+        Page<Account> result = accountService.getAllAccounts(0, 10);
 
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertTrue(result.isEmpty()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(phrase, phrase)
+                () -> verify(accountRepository, times(1)).findAll(pageRequest)
         );
+    }
+
+    @Test
+    @DisplayName("Pomyślne wyszukiwanie po imieniu (częściowe dopasowanie)")
+    void shouldReturnAccountsFilteredByName() {
+        String phrase = "Ja";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(0), mockAccounts.get(2)), pageRequest, 2);
+
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
+
+        assertAll(
+                () -> assertEquals(2, result.getTotalElements()),
+                () -> assertTrue(result.getContent().stream().anyMatch(a -> a.getName().equals("Jan"))),
+                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+        );
+    }
+
+    @Test
+    @DisplayName("Pomyślne wyszukiwanie po nazwisku ignorując wielkość liter")
+    void shouldReturnAccountsFilteredBySurnameIgnoreCase() {
+        String phrase = "nOwAk";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(1)), pageRequest, 1);
+
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
+
+        assertAll(
+                () -> assertEquals(1, result.getTotalElements()),
+                () -> assertEquals("Nowak", result.getContent().get(0).getSurname()),
+                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+        );
+    }
+
+    @Test
+    @DisplayName("Pomyślne wyszukiwanie po adresie email")
+    void shouldReturnAccountsFilteredByEmail() {
+        String phrase = "@example.com";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(mockAccountsPage);
+
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
+
+        assertEquals(3, result.getTotalElements());
+    }
+
+    @Test
+    @DisplayName("Pomyślne wyszukiwanie po loginie")
+    void shouldReturnAccountsFilteredByLogin() {
+        String phrase = "j.zielinski";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(2)), pageRequest, 1);
+
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("j.zielinski", result.getContent().get(0).getLogin());
+    }
+
+    @Test
+    @DisplayName("Zwrócenie pustej listy, gdy żadne pole nie pasuje do frazy")
+    void shouldReturnEmptyListWhenNoFieldsMatch() {
+        String phrase = "nieistniejący_użytkownik_123";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
+
+        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
+
+        assertTrue(result.isEmpty());
     }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE public.one_time_token ADD COLUMN token_type VARCHAR(32) NOT NULL;

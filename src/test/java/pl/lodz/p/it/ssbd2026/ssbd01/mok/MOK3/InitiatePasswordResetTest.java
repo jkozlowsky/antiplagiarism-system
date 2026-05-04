@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
@@ -70,7 +71,7 @@ public class InitiatePasswordResetTest {
         oldToken.setUsed(false);
 
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-        when(tokenRepository.findByUsernameAndIsUsedIsFalse(email)).thenReturn(List.of(oldToken));
+        when(tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET)).thenReturn(List.of(oldToken));
 
         passwordResetService.initiatePasswordReset(email);
 
@@ -92,7 +93,7 @@ public class InitiatePasswordResetTest {
         Account account = new Account();
 
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-        when(tokenRepository.findByUsernameAndIsUsedIsFalse(email)).thenReturn(List.of());
+        when(tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET)).thenReturn(List.of());
 
         passwordResetService.initiatePasswordReset(email);
 
@@ -109,7 +110,7 @@ public class InitiatePasswordResetTest {
         Account account = new Account();
 
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-        when(tokenRepository.findByUsernameAndIsUsedIsFalse(email)).thenReturn(List.of());
+        when(tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET)).thenReturn(List.of());
 
         passwordResetService.initiatePasswordReset(email);
 
