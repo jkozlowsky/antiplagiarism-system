@@ -23,6 +23,9 @@ public abstract class AccessLevel extends AbstractEntity {
     @JoinColumn(name="account_id")
     private Account account;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean active = true;
+
     @Transient
     public String getAccessLevelName() {
         return this.accessLevelDict != null ? this.accessLevelDict.getAccessLevelName() : null;

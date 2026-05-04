@@ -19,6 +19,7 @@ public class POS02_BlockAccountTest extends BaseTestSetup {
     @Autowired
     private AccountTestRepository accountTestRepository;
 
+
     @BeforeEach
     public void setup() {
         System.out.print("\n\n\n" +

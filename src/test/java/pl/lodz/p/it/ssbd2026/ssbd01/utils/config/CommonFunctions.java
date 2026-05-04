@@ -19,4 +19,8 @@ public class CommonFunctions {
     public String generateStringNotMatchingRegex(String regex) {
         return RgxGen.parse(regex).generateNotMatching();
     }
+
+    public String generateRandomEmail() {
+        return RgxGen.parse("[a-z0-9]{5,12}@[a-z]{3,8}\\.[a-z]{2,3}").generate();
+    }
 }

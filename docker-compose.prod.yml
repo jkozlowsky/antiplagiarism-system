@@ -50,6 +50,7 @@ services:
       - mpp_password
       - mail_password
       - jwt_secret
+      - frontend_url
     volumes:
       - ../logs:/app/logs
     networks:
@@ -110,3 +111,7 @@ secrets:
     file: ./secrets/mail_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
+  frontend_url:
+    file: ./secrets/frontend_url.txt
+  version_hash_secret:
+    file: ./secrets/version_hash_secret.txt

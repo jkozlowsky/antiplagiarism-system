@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.config;
+package pl.lodz.p.it.ssbd2026.ssbd01.config.db;
 
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,33 +19,32 @@ import java.util.Objects;
 
 @Configuration
 @EnableJpaRepositories(
-        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories",
-        entityManagerFactoryRef = "mokEntityManagerFactory",
-        transactionManagerRef = "mokTransactionManager"
+        basePackages = "pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories",
+        entityManagerFactoryRef = "mppEntityManagerFactory",
+        transactionManagerRef = "mppTransactionManager"
 )
-public class MokDBConfig {
+public class MppDBConfig {
 
     @Bean
-    @ConfigurationProperties("spring.datasource.mok")
-    public DataSourceProperties mokDataSourceProperties() {
+    @ConfigurationProperties("spring.datasource.mpp")
+    public DataSourceProperties mppDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    public DataSource mokDataSource() {
-        return mokDataSourceProperties()
+    public DataSource mppDataSource() {
+        return mppDataSourceProperties()
                 .initializeDataSourceBuilder()
                 .build();
     }
 
-    @Bean(name="mokEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean mokEntityManagerFactory(
-            @Qualifier("mokDataSource") DataSource dataSource) {
+    @Bean(name="mppEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean mppEntityManagerFactory(
+            @Qualifier("mppDataSource") DataSource dataSource) {
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.entities",
-                "pl.lodz.p.it.ssbd2026.ssbd01.mok.entities");
+        em.setPackagesToScan("pl.lodz.p.it.ssbd2026.ssbd01.entities");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -57,9 +56,10 @@ public class MokDBConfig {
         return em;
     }
 
-    @Bean(name="mokTransactionManager")
-    public PlatformTransactionManager mokTransactionManager(
-            @Qualifier("mokEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
+
+    @Bean(name="mppTransactionManager")
+    public PlatformTransactionManager mppTransactionManager(
+            @Qualifier("mppEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
         return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactory.getObject()));
     }
 }

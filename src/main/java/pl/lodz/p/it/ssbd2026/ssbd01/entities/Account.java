@@ -44,7 +44,7 @@ public class Account extends AbstractEntity {
     private String lastFailedLoginIp;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "language_version_id", nullable = false)
+    @JoinColumn(name = "language_version_id",  nullable = false)
     private LanguageDict languageVersion;
 
     @Column(name = "failed_attempts")
@@ -73,4 +73,14 @@ public class Account extends AbstractEntity {
 
     @Column(name = "second_email_sent", nullable = false)
     private boolean secondEmailSent = false;
+
+//    @Column(name = "token_version", nullable = false)
+//    private Integer tokenVersion;
+
+//    @PrePersist
+//    protected void onCreate(){
+//        if (tokenVersion == null){
+//            tokenVersion = 1;
+//        }
+//    }
 }

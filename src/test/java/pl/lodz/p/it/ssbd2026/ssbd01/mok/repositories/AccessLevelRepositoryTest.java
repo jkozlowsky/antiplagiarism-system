@@ -15,8 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AccessLevelRepositoryTest extends BaseTestSetup {
 
@@ -30,7 +29,7 @@ public class AccessLevelRepositoryTest extends BaseTestSetup {
     private AccessLevelDictRepository accessLevelDictRepository;
 
     @Test
-    @DisplayName("Zwrócenie obiektu poziomu dostępu, jeśli użytkownik posiada daną rolę - tutaj Teacher")
+    @DisplayName("Zwrócenie obiektu poziomu dostępu (Teacher), który w bazie jest prawidłowo oznaczony jako aktywny")
     void shouldFindAccessLevelByDictAndAccount() {
         Account adminUser = accountTestRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();
@@ -51,16 +50,20 @@ public class AccessLevelRepositoryTest extends BaseTestSetup {
         Teacher teacherLevel = new Teacher();
         teacherLevel.setAccount(account);
         teacherLevel.setAccessLevelDict(dict);
+        teacherLevel.setActive(true);
         accessLevelRepository.save(teacherLevel);
 
         Optional<AccessLevel> found = accessLevelRepository.findByAccessLevelDictAndAccount(dict, account);
 
-        assertTrue(found.isPresent());
-        assertTrue(found.get() instanceof Teacher);
+        assertAll(
+                () -> assertTrue(found.isPresent()),
+                () -> assertInstanceOf(Teacher.class, found.get()),
+                () -> assertTrue(found.get().getActive())
+        );
     }
 
     @Test
-    @DisplayName("Zwrócenie pustego wyniku, jeśli użytkownik nie posiada danej roli")
+    @DisplayName("Zwrócenie pustego wyniku, jeśli użytkownik w ogóle nie posiada danego obiektu roli w bazie")
     void shouldReturnEmptyWhenAccessLevelNotAssigned() {
         Account adminUser = accountTestRepository.findByLogin("admin").get();
         LanguageDict ld = adminUser.getLanguageVersion();

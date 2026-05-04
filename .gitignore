@@ -47,3 +47,7 @@ bin/
 
 .env
 secrets/
+
+*.http
+.DS_Store
+

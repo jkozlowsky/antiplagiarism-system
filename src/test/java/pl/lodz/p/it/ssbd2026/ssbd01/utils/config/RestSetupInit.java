@@ -4,11 +4,13 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestComponent;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.TestConsts;
 
-import static io.restassured.RestAssured.oauth2;
+import java.util.List;
 
 @TestComponent
 public class RestSetupInit {
@@ -28,38 +30,28 @@ public class RestSetupInit {
     @Value("${oauth.client-secret}")
     private String oauthclientSecret;
 
-    public RequestSpecification initRequestSpec() {
+    @Autowired
+    private JwtAuthService jwtAuthService;
+
+    public RequestSpecification initRequestSpec(int port) {
         RequestSpecBuilder builder = new RequestSpecBuilder();
 
+        builder.setPort(port);
         builder.setContentType(ContentType.JSON);
         builder.setAccept(ContentType.JSON);
-
+        builder.setPort(port);
         return builder.build();
     }
 
-    public void initRestAssured() {
+    public void initRestAssured(int port) {
         RestAssured.baseURI = TestConsts.BASE_ENDPOINT.getKeyName();
-        RestAssured.basePath = "/api";
-        RestAssured.requestSpecification = initRequestSpec();
+        RestAssured.requestSpecification = initRequestSpec(port);
         RestAssured.filters(new CredentialsFilter());
     }
 
     public void generateToken() {
-        String tokenString = RestAssured.given()
-                .contentType("application/x-www-form-urlencoded;charset=UTF-8")
-                .formParam("grant_type", "password")
-                .formParam("username", oauthUsername)
-                .formParam("password", oauthPassword)
-                .formParam("client_id", oauthclientId)
-                .formParam("client_secret", oauthclientSecret)
-                .when()
-                .post(oauthUrl)
-                .then()
-                .statusCode(200)
-                .extract()
-                .path("access_token");
-
-        RestAssured.authentication = oauth2(tokenString);
+        String tokenString = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR", "STUDENT", "TEACHER"), 1);
+        RestAssured.requestSpecification.header("Authorization", "Bearer " + tokenString);
     }
 
     public void clearRestAssured() {

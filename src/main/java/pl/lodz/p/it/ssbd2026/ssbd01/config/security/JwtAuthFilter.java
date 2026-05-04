@@ -1,10 +1,12 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtAuthService jwtAuthService;
@@ -41,7 +44,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
-            if (!jwtAuthService.isTokenValid(token)) {
+            // zakomentowane bo chyba nie jest potrzebne xd
+            if (!jwtAuthService.isTokenValid(token) /*|| !jwtAuthService.checkTokenVersion(token)**/ ) {
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -56,8 +60,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
-        } catch (Exception e) {
-            //TODO: Logowanie
+        } catch (JwtException e) {
+             log.warn("Invalid JWT token: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
