@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -53,10 +54,13 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Value("${app.frontend.url:https://localhost}") // Default to localhost if not set
+    private String frontendUrl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(frontendUrl));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Correlation-Id"));
         configuration.setExposedHeaders(List.of("Authorization"));
