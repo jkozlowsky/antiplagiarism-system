@@ -47,7 +47,7 @@ public class JwtAuthService implements LogoutHandler {
 
     private final Map<String, LocalDateTime> tokenBlacklist = new ConcurrentHashMap<>(); //Nie wiem, czy my to chcemy, czy to już overengineering.
     // I tak pewnie lepiej byłoby zrobić Redisa pod rozszerzenie ze skalowania (S3_BALANCE) do tego celu albo w ogóle
-    // tą blacklistę wywalić, ale wolę to z wami przedyskutować.
+    // tą blacklistę wywalić, ale wolę to z wami przedyskutować. Na razie rozwiązanie na "ślinę i pajęczynę".
 
     @PostConstruct
     public void init() {
