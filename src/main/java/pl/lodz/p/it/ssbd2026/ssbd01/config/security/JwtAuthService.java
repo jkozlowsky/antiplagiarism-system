@@ -12,10 +12,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import javax.crypto.SecretKey;
@@ -45,10 +41,10 @@ public class JwtAuthService {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, List<String> roles, Integer tokenVersion) {
+    public String generateToken(String username, List<String> roles) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", roles);
-        extraClaims.put("token_version", tokenVersion);
+//        extraClaims.put("token_version", tokenVersion);
         return createToken(extraClaims, username, expirationTime);
     }
 

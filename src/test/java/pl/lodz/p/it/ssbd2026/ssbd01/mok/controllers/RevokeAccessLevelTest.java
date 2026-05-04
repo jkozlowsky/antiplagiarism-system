@@ -49,8 +49,8 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     public void setUpAuth() {
         requestFunctions = new RequestFunctions();
 
-        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN), 1);
-        String studentToken = jwtAuthService.generateToken("student", List.of(AccountConsts.ROLE_STUDENT), 1);
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
+        String studentToken = jwtAuthService.generateToken("student", List.of(AccountConsts.ROLE_STUDENT));
 
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
