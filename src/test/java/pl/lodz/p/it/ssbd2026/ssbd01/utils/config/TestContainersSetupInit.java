@@ -32,7 +32,8 @@ public abstract class TestContainersSetupInit {
     public static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:18.3")
             .withDatabaseName(PG_DB)
             .withUsername(PG_USER)
-            .withPassword(PG_PASS);
+            .withPassword(PG_PASS)
+            .withCommand("-c", "max_connections=1000");;
 
     static {
         postgreSQLContainer.start();
@@ -71,6 +72,6 @@ public abstract class TestContainersSetupInit {
         registry.add("spring.datasource.mpp.password", () -> MPP_PASS);
 
         registry.add("spring.main.allow-bean-definition-overriding", () -> "true");
-        registry.add("spring.datasource.mok.hikari.maximum-pool-size", () -> "10");
+        registry.add("spring.datasource.mok.hikari.maximum-pool-size", () -> "5");
     }
 }

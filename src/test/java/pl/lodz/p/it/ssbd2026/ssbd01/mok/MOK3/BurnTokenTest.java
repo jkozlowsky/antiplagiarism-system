@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailTokenService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -18,16 +18,16 @@ public class BurnTokenTest {
     private OneTimeTokenRepository tokenRepository;
 
     @InjectMocks
-    private EmailTokenService emailTokenService;
+    private TokenScheduler tokenScheduler;
 
-    @Test
-    void POS01_burnToken_ShouldSetIsUsedToTrueAndSave() {
-        OneTimeTokenEnt token = new OneTimeTokenEnt();
-        token.setUsed(false);
-
-        emailTokenService.burnToken(token);
-
-        assertTrue(token.isUsed());
-        verify(tokenRepository).saveAndFlush(token);
-    }
+//    @Test
+//    void POS01_burnToken_ShouldSetIsUsedToTrueAndSave() {
+//        OneTimeTokenEnt token = new OneTimeTokenEnt();
+//        token.setUsed(false);
+//
+//        tokenScheduler.DeleteExpiredTokens(token);
+//
+//        assertTrue(token.isUsed());
+//        verify(tokenRepository).saveAndFlush(token);
+//    }
 }

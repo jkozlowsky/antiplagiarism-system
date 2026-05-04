@@ -31,7 +31,7 @@ import java.util.UUID;
 @RequestMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @MethodCallLogged
-public class  AccountController {
+public class AccountController {
 
     private final AccountService accountService;
     private final AccountMapper accountMapper;
@@ -53,6 +53,16 @@ public class  AccountController {
     public AccountWithAccessLevelsDTO getAccountByLogin(@PathVariable String login) {
         Account account = accountService.getAccountByLogin(login);
         return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                account,
+                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+        );
+    }
+
+    @GetMapping("/login/no-access-level/{login}")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountDTO getAccountByLoginNoAccessLevel(@PathVariable String login) {
+        Account account = accountService.getAccountByLogin(login);
+        return accountMapper.toAccountDTO(
                 account,
                 versionHashService.hashObjectVersion(account.getId(), account.getVersion())
         );
@@ -183,7 +193,8 @@ public class  AccountController {
     }
 
     @PatchMapping(value = "/{id}")
-    public AccountWithAccessLevelsDTO updateAccount(
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO updateOtherAccount(
             @PathVariable UUID id,
             @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO
     ) {
@@ -193,6 +204,22 @@ public class  AccountController {
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }
+
+    @PatchMapping("/update-myself")
+    @ResponseStatus(HttpStatus.OK)
+    public AccountWithAccessLevelsDTO updateMyAccount(
+            @Validated(OnUpdate.class) @RequestBody AccountDTO accountDTO,
+            Principal principal) {
+
+        String login = principal.getName();
+
+        return accountService.updateAccountByLogin(
+                login,
+                accountDTO.versionHash(),
+                accountMapper.toUpdateAccount(accountDTO)
+        );
+    }
+
 
     @PostMapping("/{id}/password")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")

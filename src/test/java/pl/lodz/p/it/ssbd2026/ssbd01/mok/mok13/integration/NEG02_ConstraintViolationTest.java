@@ -36,10 +36,10 @@ public class NEG02_ConstraintViolationTest extends BaseTestSetup {
 
     private String accountEmail;
     private String accountLogin;
-
+    CommonFunctions commonFunctions;
     @BeforeEach
     void testSetup() {
-        CommonFunctions commonFunctions = new CommonFunctions();
+        commonFunctions = new CommonFunctions();
         accountEmail = commonFunctions.generateRandomEmail();
         accountLogin = commonFunctions.generateRandomStringOfLength(8);
 
@@ -64,8 +64,8 @@ public class NEG02_ConstraintViolationTest extends BaseTestSetup {
 
     @Test
     void NEG02_ConstraintViolationTest() throws JsonProcessingException {
-        String changedName = "ch";
-        String changedSurname = "ab";
+        String changedName = commonFunctions.generateRandomStringOfLength(2);
+        String changedSurname = commonFunctions.generateRandomStringOfLength(2);
         String value1 = requestFunctions.sendGetRequest(
                 200,
                 "/api/account/login/" + accountLogin,

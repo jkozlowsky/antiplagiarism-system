@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
@@ -18,6 +19,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.HashEncryptionException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -36,16 +38,17 @@ public class PasswordResetService {
     private final AccountRepository accountRepository;
 
     private final EmailService emailService;
-    private final EmailTokenService tokenService;
+    private final TokenScheduler tokenService;
 
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
     @PersistenceContext
     private EntityManager entityManager;
 
     private final PasswordEncoder passwordEncoder;
 
+    private final PostCommitTransactionManager postCommitTransactionManager;
+
     /**
+     * Żeby zapobiec zaśmieceniu bazy danych utworzono TokenScheduler który czyści martwe tokeny co minutę.
      * @param email: adres email na który będzie wysłany jednorazowy adres url
      */
     public void initiatePasswordReset(String email) {
@@ -70,9 +73,7 @@ public class PasswordResetService {
         token.setUsed(false);
         tokenRepository.saveAndFlush(token);
 
-        String magicLink = frontendUrl + "reset-password?token=" + rawToken;
-        log.info(magicLink);
-        emailService.sendEmail(email, "Password Reset", "Click to reset: " + magicLink);
+        emailService.sendResetPasswordEmail(email, rawToken);
     } //TODO: i18n
 
     /**

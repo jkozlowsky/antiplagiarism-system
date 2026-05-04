@@ -42,10 +42,10 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
 
     private String accountEmail;
     private String accountLogin;
-
+    CommonFunctions commonFunctions;
     @BeforeEach
     void testSetup() {
-        CommonFunctions commonFunctions = new CommonFunctions();
+        commonFunctions = new CommonFunctions();
         accountEmail = commonFunctions.generateRandomEmail();
         accountLogin = commonFunctions.generateRandomStringOfLength(8);
 
@@ -69,8 +69,8 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
 
     @Test
     void POS01_shouldEditNameAndSurname() throws JsonProcessingException {
-        String changedName = "changed_name";
-        String changedSurname = "changed_surname";
+        String changedName = commonFunctions.generateRandomStringOfLength(10);
+        String changedSurname = commonFunctions.generateRandomStringOfLength(10);
         AccountDTO accountDTO = new AccountDTO(
                 null,
                 null,

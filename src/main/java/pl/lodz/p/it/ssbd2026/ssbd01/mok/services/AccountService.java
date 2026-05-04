@@ -418,6 +418,23 @@ public class AccountService {
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public AccountWithAccessLevelsDTO updateAccountByLogin(String login, String versionHash, Account source){
+        Account target = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
+        mokRefreshRepository.refresh(target);
+        System.out.println(versionHash);
+        System.out.println(versionHashService.hashObjectVersion(target.getId(), target.getVersion()));
+        if (!versionHash.equals(versionHashService.hashObjectVersion(target.getId(), target.getVersion()))){
+            throw new ConcurrentUpdateException();
+        }
+
+        accountMapper.updateExistingAccount(source, target);
+        Account savedAccount = accountRepository.saveAndFlush(target);
+        return accountMapper.toAccountWithAccessLevelsDTO(savedAccount);
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
     public void changeOtherPassword(UUID id, String newPassword, String ifMatch){
