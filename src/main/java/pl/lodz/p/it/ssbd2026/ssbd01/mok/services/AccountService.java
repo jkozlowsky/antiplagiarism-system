@@ -70,7 +70,7 @@ public class AccountService {
     private final MokRefreshRepository mokRefreshRepository;
     private final AccountMapper accountMapper;
     private final PostCommitTransactionManager postCommitTransactionManager;
-    private final PasswordEncoder passwordEncoder;
+
     private final LanguageDictRepository languageDictRepository;
 
 
