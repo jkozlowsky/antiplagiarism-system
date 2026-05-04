@@ -9,9 +9,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.task.SyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
@@ -21,6 +28,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 public class GrantAccessLevelTest extends BaseTestSetup {
 
@@ -32,6 +42,9 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @Autowired
     private VersionHashService versionHashService;
+
+    @MockitoBean
+    private EmailService emailService;
 
     private RequestFunctions requestFunctions;
     private Headers adminHeaders;
@@ -85,7 +98,12 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
         assertAll(
                 () -> assertEquals(testAccount.getLogin(), returnedLogin),
-                () -> assertTrue(activeFlags.contains(true))
+                () -> assertTrue(activeFlags.contains(true)),
+                () -> verify(emailService, times(1)).sendAccessLevelGrantedInfo(
+                        eq(testAccount.getEmail()),
+                        eq(testAccount.getLogin()),
+                        eq("TEACHER")
+                )
         );
     }
 
@@ -126,6 +144,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 "/api/account/" + nonExistentId + "/access-levels/STUDENT/grant",
                 adminHeaders
         );
+
+        verify(emailService, never()).sendAccessLevelGrantedInfo(any(), any(), any());
     }
 
     @Test
@@ -219,5 +239,14 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 "/api/account/" + accountId + "/access-levels/SUPER_HERO/grant",
                 adminHeaders
         );
+    }
+
+    @TestConfiguration
+    static class SyncAsyncTestConfig {
+        @Bean
+        @Primary
+        public TaskExecutor taskExecutor() {
+            return new SyncTaskExecutor();
+        }
     }
 }

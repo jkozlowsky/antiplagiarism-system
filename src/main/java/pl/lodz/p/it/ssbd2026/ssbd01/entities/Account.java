@@ -53,6 +53,9 @@ public class Account extends AbstractEntity {
     @Column(name = "is_blocked", nullable = false)
     private Boolean isBlocked;
 
+    @Column(name = "is_verified", nullable = false)
+    private Boolean isVerified = false;
+
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 
@@ -61,6 +64,15 @@ public class Account extends AbstractEntity {
 
     @Column(name = "surname", nullable = false, length = AccountConsts.SURNAME_LENGTH)
     private String surname;
+
+    @Column(name = "activation_token", unique = true)
+    private String activationToken;
+
+    @Column(name = "creation_date", nullable = false)
+    private LocalDateTime creationDate = LocalDateTime.now();
+
+    @Column(name = "second_email_sent", nullable = false)
+    private boolean secondEmailSent = false;
 
 //    @Column(name = "token_version", nullable = false)
 //    private Integer tokenVersion;

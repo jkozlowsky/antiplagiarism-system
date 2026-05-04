@@ -15,10 +15,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
+                "server.tomcat.accesslog.enabled=false",
                 "spring.web.error.include-message=always",
                 "spring.web.error.include-stacktrace=always",
                 "spring.main.allow-bean-definition-overriding=true"
         })
+        
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableConfigurationProperties(OauthData.class)
 @Import(RestSetupInit.class)

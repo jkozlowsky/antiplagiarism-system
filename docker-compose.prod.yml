@@ -30,6 +30,7 @@ services:
   backend:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
     environment:
+      - APP_FRONTEND_URL=https://team-1.proj-sum.it.p.lodz.pl
       - TZ=Europe/Warsaw
       - DB_HOST=db
       - DB_PORT=5432
