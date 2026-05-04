@@ -5,12 +5,10 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.validators.PasswordsMatch;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 
 @Data
 @NoArgsConstructor
-@PasswordsMatch
 public class ChangeOtherPasswordDto {
 
     @Size(min = 12, message = "error.password.too.short")
@@ -22,6 +20,4 @@ public class ChangeOtherPasswordDto {
     )
     private String newPassword;
 
-    @NotBlank(message = "error.confirm.password.blank")
-    private String confirmNewPassword;
 }
