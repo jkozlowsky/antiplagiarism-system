@@ -24,7 +24,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 
@@ -49,7 +48,6 @@ import java.util.UUID;
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    @Autowired
     private final AccessLevelDictRepository accessLevelDictRepository;
     private final EmailService emailService;
     private final VersionHashService versionHashService;
@@ -57,15 +55,8 @@ public class AccountService {
     private final AccountMapper accountMapper;
     private final PostCommitTransactionManager postCommitTransactionManager;
     private final PasswordEncoder passwordEncoder;
+    private final LanguageDictRepository languageDictRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private LanguageDictRepository languageDictRepository;
-
-    @Autowired
-    private EmailService emailService;
 
     @Transactional(propagation =  Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void registerAccount(Account account) {
@@ -88,7 +79,7 @@ public class AccountService {
         Student studentRole = new Student();
         studentRole.setAccessLevelDict(studentDict);
         studentRole.setAccount(account);
-        studentRole.setIsActive(true);
+        studentRole.setActive(true);
 
         account.getAccessLevelList().add(studentRole);
 

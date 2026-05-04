@@ -45,10 +45,16 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
     @BeforeEach
     public void setupTest() {
         int actualPort = Integer.parseInt(env.getProperty("local.server.port", "8080"));
+        io.restassured.RestAssured.reset();
+
         io.restassured.RestAssured.port = actualPort;
-        io.restassured.RestAssured.requestSpecification.port(actualPort);
         io.restassured.RestAssured.baseURI = "http://localhost";
         io.restassured.RestAssured.basePath = "/api";
+
+        io.restassured.RestAssured.requestSpecification = new io.restassured.builder.RequestSpecBuilder()
+                .setPort(actualPort)
+                .build();
+
         requestFunctions = new RequestFunctions();
     }
 
