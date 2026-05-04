@@ -18,6 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
@@ -36,10 +37,12 @@ public class PasswordResetIT extends BaseTestSetup {
 
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    ;
 
     @MockitoBean
     private EmailService emailService;
+
+    @MockitoBean
+    private VersionHashService versionHashService;
 
     private final RequestFunctions requestFunctions = new RequestFunctions();
     private final CommonFunctions commonFunctions = new CommonFunctions();
@@ -73,7 +76,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 jsonBody,
                 200,
-                "/api/auth/ott/request",
+                "/api/auth/reset/request",
                 new Headers()
         );
 
@@ -89,7 +92,7 @@ public class PasswordResetIT extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(requestDto),
                 200,
-                "/api/auth/ott/request",
+                "/api/auth/reset/request",
                 new Headers()
         );
 
@@ -101,11 +104,11 @@ public class PasswordResetIT extends BaseTestSetup {
         String emailBody = emailBodyCaptor.getValue();
         String rawToken = emailBody.substring(emailBody.indexOf("token=") + 6);
 
-        ConfirmResetDto confirmDto = new ConfirmResetDto(rawToken, "new_secure_password123");
+        ConfirmResetDto confirmDto = new ConfirmResetDto(rawToken, "new_secure_passworD123");
         String responseBody = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(confirmDto),
                 200,
-                "/api/auth/ott/confirm",
+                "/api/auth/reset/confirm",
                 new Headers()
         );
         assertEquals("Password successfully changed.", responseBody);

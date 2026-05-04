@@ -1,16 +1,17 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
-import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
@@ -19,11 +20,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFou
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import java.util.List;
@@ -47,9 +45,12 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final AccessLevelDictRepository accessLevelDictRepository;
-    private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-
+    private final VersionHashService versionHashService;
+    private final MokRefreshRepository mokRefreshRepository;
+    private final AccountMapper accountMapper;
+    private final PostCommitTransactionManager postCommitTransactionManager;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -80,6 +81,20 @@ public class AccountService {
     )
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Retryable(
+            retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public Account getAccountByLogin(String login) {
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(AccountNotFoundException::new);
+        account.getAccessLevelList().isEmpty();
+        return account;
     }
 
     /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
@@ -176,6 +191,32 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
     }
 
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false,
+            transactionManager = "mokTransactionManager"
+    )
+    @Retryable(
+            retryFor = {JpaSystemException.class},
+            backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
+            maxAttemptsExpression = "${app.retry.maxattempts}"
+    )
+    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, Integer sourceVersion)
+            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
+    {
+        Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+        if (!account.getVersion().equals(sourceVersion)) {
+            throw new ConcurrentUpdateException();
+        }
+        String oldEmail = account.getEmail();
+        account.setEmail(newEmail);
+
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(oldEmail));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail));
+
+        return accountRepository.saveAndFlush(account);
+    }
     @PreAuthorize("isAuthenticated()")
     @Transactional(propagation = Propagation.MANDATORY)
     @Retryable(
@@ -203,6 +244,7 @@ public class AccountService {
         account.setPasswordHash(passwordEncoder.encode(newPassword));
         accountRepository.saveAndFlush(account);
     }
+
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
@@ -235,6 +277,21 @@ public class AccountService {
         emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
     }
 
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public AccountWithAccessLevelsDTO updateAccount(UUID id, String versionHash, Account source){
+        Account target = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
+        mokRefreshRepository.refresh(target);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(id, target.getVersion()))){
+            throw new ConcurrentUpdateException();
+        }
+
+        accountMapper.updateExistingAccount(source, target);
+        Account savedAccount = accountRepository.saveAndFlush(target);
+        return accountMapper.toAccountWithAccessLevelsDTO(savedAccount);
+    }
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -255,6 +312,5 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
 
     }
-
 
 }
