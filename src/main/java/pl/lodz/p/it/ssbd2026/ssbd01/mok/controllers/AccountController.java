@@ -7,10 +7,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.OwnEmailChangeDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeEmailDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.ChangeOwnPasswordDto;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
@@ -150,6 +152,19 @@ public class AccountController {
     public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
         accountService.unblockUserAccount(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/change")
+    public ResponseEntity<Void> requestEmailChange(Authentication authentication) {
+        String login = authentication.getName();
+        accountService.createUrlOwnEmailChange(login);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmEmailChange(@Valid @RequestBody OwnEmailChangeDTO request) {
+        accountService.confirmOwnEmailChange(request.token(), request.password(), request.newEmail());
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping(value = "/{id}")

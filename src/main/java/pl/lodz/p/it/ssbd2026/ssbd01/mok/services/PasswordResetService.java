@@ -12,11 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.HashEncryptionException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -53,8 +54,9 @@ public class PasswordResetService {
             return;
         }
 
-        List<OneTimeTokenEnt> potentialClashedToken = tokenRepository.findByUsernameAndIsUsedIsFalse(email);
+        List<OneTimeTokenEnt> potentialClashedToken = tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET);
         potentialClashedToken.forEach(item -> item.setUsed(true));
+
         if (!potentialClashedToken.isEmpty()) {
             tokenRepository.saveAllAndFlush(potentialClashedToken);
         }
@@ -64,6 +66,7 @@ public class PasswordResetService {
         token.setTokenValue(hashToken(rawToken));
         token.setUsername(email);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
+        token.setTokenType(OneTimeTokenType.PASSWORD_RESET);
         token.setUsed(false);
         tokenRepository.saveAndFlush(token);
 
@@ -79,7 +82,7 @@ public class PasswordResetService {
     public void resolvePasswordReset(String token, String passwordHash) {
         String hashedTokenInput = hashToken(token);
         OneTimeTokenEnt tokenEntity = tokenRepository
-                .findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(hashedTokenInput, LocalDateTime.now())
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(hashedTokenInput, OneTimeTokenType.PASSWORD_RESET, LocalDateTime.now())
                 .orElseThrow(() -> new OneTimeTokenInvalidException("Time to reset password has expired or the token is used"));
         //TODO: i18n
 

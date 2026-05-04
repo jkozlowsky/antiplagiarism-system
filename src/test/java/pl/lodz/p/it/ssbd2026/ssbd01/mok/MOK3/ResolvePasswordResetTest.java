@@ -10,10 +10,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailTokenService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.PasswordResetService;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-class ResolvePasswordResetTest{
+class ResolvePasswordResetTest {
 
     @Mock
     private OneTimeTokenRepository tokenRepository;
@@ -58,7 +59,10 @@ class ResolvePasswordResetTest{
 
     @Test
     void NEG01_resolvePasswordReset_ShouldThrowException_WhenTokenIsInvalidOrExpired() {
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(),
+                eq(OneTimeTokenType.PASSWORD_RESET),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
         assertThrows(OneTimeTokenInvalidException.class, () ->
@@ -78,7 +82,10 @@ class ResolvePasswordResetTest{
         OneTimeTokenEnt tokenEntity = new OneTimeTokenEnt();
         tokenEntity.setUsername(email);
 
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(),
+                eq(OneTimeTokenType.PASSWORD_RESET),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.of(tokenEntity));
         when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
 
@@ -106,7 +113,10 @@ class ResolvePasswordResetTest{
 //        account.setTokenVersion(1);
         account.setEmail(email);
 
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(),
+                eq(OneTimeTokenType.PASSWORD_RESET),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.of(tokenEntity));
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
         when(passwordEncoder.encode(rawPassword)).thenReturn(hashedPassword);

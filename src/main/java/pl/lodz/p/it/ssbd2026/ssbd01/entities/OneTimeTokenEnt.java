@@ -25,4 +25,7 @@ public class OneTimeTokenEnt extends AbstractEntity{
     @Column(name="is_used", nullable = false)
     private boolean isUsed;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "token_type", nullable = false, updatable = false, length = 32)
+    private OneTimeTokenType tokenType;
 }
