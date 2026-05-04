@@ -205,6 +205,9 @@ public class AccountService {
         accessLevelToRevoke.setActive(false);
 
         accountRepository.saveAndFlush(account);
+
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccessLevelRevokedInfo(account.getEmail(), account.getLogin(), accessLevelName));
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")

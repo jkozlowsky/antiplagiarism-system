@@ -4,10 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
@@ -44,6 +46,12 @@ public class AccountServiceRevokeAccessTest {
     @Mock
     private MokRefreshRepository mokRefreshRepository;
 
+    @Mock
+    private PostCommitTransactionManager postCommitTransactionManager;
+
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private AccountService accountService;
 
@@ -60,6 +68,8 @@ public class AccountServiceRevokeAccessTest {
 
         ReflectionTestUtils.setField(account, "id", accountId);
         ReflectionTestUtils.setField(account, "version", 0);
+        account.setLogin("testUser");
+        account.setEmail("test@example.com");
         account.setAccessLevelList(new ArrayList<>());
 
         accessLevelDict = new AccessLevelDict();
@@ -82,12 +92,17 @@ public class AccountServiceRevokeAccessTest {
         when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
 
+        ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(postCommitTransactionManager).register(captor.capture());
+
         accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
+        captor.getValue().run();
 
         assertAll(
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
-                () -> assertFalse(account.getAccessLevelList().getFirst().getActive())
+                () -> assertFalse(account.getAccessLevelList().getFirst().getActive()),
+                () -> verify(emailService, times(1)).sendAccessLevelRevokedInfo(account.getEmail(), account.getLogin(), AccountConsts.ROLE_TEACHER)
         );
     }
 
@@ -104,6 +119,7 @@ public class AccountServiceRevokeAccessTest {
 
         assertThrows(AccessLevelAlreadyRevokedException.class, () ->
                 accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 
     @Test
@@ -113,6 +129,7 @@ public class AccountServiceRevokeAccessTest {
 
         assertThrows(AccountNotFoundException.class, () ->
                 accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
+        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
     }
 
     @Test
@@ -124,18 +141,7 @@ public class AccountServiceRevokeAccessTest {
 
         assertThrows(ConcurrentUpdateException.class, () ->
                 accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, "invalid-hash-999"));
-    }
-
-    @Test
-    @DisplayName("Wyrzucenie błędu AccessLevelDictNotFoundException dla nieistniejącej nazwy roli")
-    void shouldThrowAccessLevelDictNotFoundException() {
-        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
-        doNothing().when(mokRefreshRepository).refresh(account);
-        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
-        when(accessLevelDictRepository.findByAccessLevelName("NON_EXISTENT")).thenReturn(Optional.empty());
-
-        assertThrows(AccessLevelDictNotFoundException.class, () ->
-                accountService.revokeAccessLevel(accountId, "NON_EXISTENT", VALID_HASH));
+        verify(postCommitTransactionManager, never()).register(any());
     }
 
     @Test
@@ -148,5 +154,17 @@ public class AccountServiceRevokeAccessTest {
 
         assertThrows(AccessLevelNotAssignedException.class, () ->
                 accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
+    }
+
+    @Test
+    @DisplayName("Wyrzucenie błędu AccessLevelDictNotFoundException, gdy podana rola nie istnieje w słowniku")
+    void shouldThrowAccessLevelDictNotFoundException() {
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        doNothing().when(mokRefreshRepository).refresh(account);
+        when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
+        when(accessLevelDictRepository.findByAccessLevelName("NON_EXISTENT_ROLE")).thenReturn(Optional.empty());
+
+        assertThrows(AccessLevelDictNotFoundException.class, () ->
+                accountService.revokeAccessLevel(accountId, "NON_EXISTENT_ROLE", VALID_HASH));
     }
 }
