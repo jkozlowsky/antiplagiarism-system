@@ -40,8 +40,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
-        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"), 1);
-        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"), 1);
+        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
+        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();
