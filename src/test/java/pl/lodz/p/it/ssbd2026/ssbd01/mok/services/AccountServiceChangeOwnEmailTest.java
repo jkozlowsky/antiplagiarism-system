@@ -13,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidCredentialsProvidedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
@@ -94,7 +95,10 @@ public class AccountServiceChangeOwnEmailTest {
         tokenEntity.setUsed(false);
         tokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
 
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(eq(generatedUrl), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                eq(generatedUrl),
+                eq(OneTimeTokenType.OWN_EMAIL_CHANGE),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.of(tokenEntity));
         when(accountRepository.findByLogin("ownemail_tester"))
                 .thenReturn(Optional.of(testAccount));
@@ -126,7 +130,10 @@ public class AccountServiceChangeOwnEmailTest {
     @Test
     @DisplayName("Test block function if token is invalid")
     void NEG02_changeOwnEmailUnit() {
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(anyString(), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(),
+                eq(OneTimeTokenType.OWN_EMAIL_CHANGE),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
         assertAll(
@@ -145,7 +152,10 @@ public class AccountServiceChangeOwnEmailTest {
         tokenEntity.setTokenValue(generatedUrl);
         tokenEntity.setUsername("ownemail_tester");
 
-        when(tokenRepository.findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(eq(generatedUrl), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                eq(generatedUrl),
+                eq(OneTimeTokenType.OWN_EMAIL_CHANGE),
+                any(LocalDateTime.class)))
                 .thenReturn(Optional.of(tokenEntity));
         when(accountRepository.findByLogin("ownemail_tester"))
                 .thenReturn(Optional.of(testAccount));

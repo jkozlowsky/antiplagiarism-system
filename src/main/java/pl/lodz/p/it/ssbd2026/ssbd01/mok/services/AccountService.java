@@ -23,9 +23,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFou
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.time.LocalDateTime;
@@ -212,8 +212,7 @@ public class AccountService {
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
     public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, Integer sourceVersion)
-            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException
-    {
+            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException {
         Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
         if (!account.getVersion().equals(sourceVersion)) {
             throw new ConcurrentUpdateException();
@@ -226,6 +225,7 @@ public class AccountService {
 
         return accountRepository.saveAndFlush(account);
     }
+
     @PreAuthorize("isAuthenticated()")
     @Transactional(propagation = Propagation.MANDATORY)
     @Retryable(
@@ -299,6 +299,7 @@ public class AccountService {
         token.setTokenValue(generateUrl);
         token.setUsername(login);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
+        token.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
         token.setUsed(false);
 
         tokenRepository.saveAndFlush(token);
@@ -313,7 +314,7 @@ public class AccountService {
     public void confirmOwnEmailChange(String token, String password, String newEmail) {
 
         OneTimeTokenEnt tokenEntity = tokenRepository
-                .findByTokenValueAndIsUsedIsFalseAndExpiresAtAfter(token, LocalDateTime.now())
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.OWN_EMAIL_CHANGE, LocalDateTime.now())
                 .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
 
         Account account = accountRepository.findByLogin(tokenEntity.getUsername())
@@ -325,18 +326,20 @@ public class AccountService {
 
         account.setEmail(newEmail);
         tokenEntity.setUsed(true);
+        tokenEntity.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
+
 
         accountRepository.saveAndFlush(account);
         tokenRepository.saveAndFlush(tokenEntity);
     }
-    
+
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public AccountWithAccessLevelsDTO updateAccount(UUID id, String versionHash, Account source){
+    public AccountWithAccessLevelsDTO updateAccount(UUID id, String versionHash, Account source) {
         Account target = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(target);
 
-        if (!versionHash.equals(versionHashService.hashObjectVersion(id, target.getVersion()))){
+        if (!versionHash.equals(versionHashService.hashObjectVersion(id, target.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
