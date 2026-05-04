@@ -53,6 +53,7 @@ public class EmailService {
 
         sendEmail(toAddress, mailSubject, mailBody);
     }
+
     public void sendAccountIsBlockedInfo(String toAddress, String login) {
         String subject = "Notification - Your account has been blocked";
         String content = String.format(
@@ -84,6 +85,15 @@ public class EmailService {
     }
 
     @Async
+    public void sendAccessLevelRevokedInfo(String toAddress, String login, String accessLevelName) {
+        String subject = "Notification - Access Level Revoked";
+        String content = String.format(
+                "Hello %s,\n\nWe are writing to inform you that your access level has been revoked: %s.",
+                login, accessLevelName
+        );
+        sendEmail(toAddress, subject, content);
+    }
+    
     public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName) {
         String subject = "Notification - Access Level Granted";
         String content = String.format(
