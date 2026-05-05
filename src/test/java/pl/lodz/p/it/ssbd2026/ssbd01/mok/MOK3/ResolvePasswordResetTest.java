@@ -16,7 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailTokenService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.PasswordResetService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
@@ -44,7 +44,7 @@ class ResolvePasswordResetTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private EmailTokenService tokenService;
+    private TokenScheduler tokenService;
 
     @InjectMocks
     private PasswordResetService passwordResetService;

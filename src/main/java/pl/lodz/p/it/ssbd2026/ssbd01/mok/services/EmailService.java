@@ -102,5 +102,10 @@ public class EmailService {
         );
         sendEmail(toAddress, subject, content);
     }
+
+    public void sendResetPasswordEmail(String toAddress, String token){
+        String magicLink = frontendUrl + "reset-password?token=" + token;
+        sendEmail(toAddress, "Password Reset", "Click to reset: " + magicLink);
+    }
 }
 

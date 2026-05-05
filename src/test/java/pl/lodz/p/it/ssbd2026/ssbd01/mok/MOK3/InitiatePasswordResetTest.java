@@ -48,10 +48,6 @@ public class InitiatePasswordResetTest {
 
     private final String frontendUrl = "http://localhost:5173/";
 
-    @BeforeEach
-    public void setUp() {
-        ReflectionTestUtils.setField(passwordResetService, "frontendUrl", frontendUrl);
-    }
 
     @Test
     void NEG01_initiatePasswordReset_ShouldReturnEarly_WhenUserNotFound() {
@@ -84,7 +80,7 @@ public class InitiatePasswordResetTest {
         assertFalse(savedToken.isUsed());
         assertNotNull(savedToken.getTokenValue());
 
-        verify(emailService).sendEmail(eq(email), eq("Password Reset"), contains(frontendUrl+"reset-password?token="));
+        verify(emailService).sendResetPasswordEmail(eq(email), any(String.class));
     }
 
     @Test
@@ -118,10 +114,9 @@ public class InitiatePasswordResetTest {
         String savedDbToken = tokenCaptor.getValue().getTokenValue();
 
         ArgumentCaptor<String> emailBodyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(emailService).sendEmail(eq(email), anyString(), emailBodyCaptor.capture());
+        verify(emailService).sendResetPasswordEmail(eq(email), emailBodyCaptor.capture());
 
-        String emailBody = emailBodyCaptor.getValue();
-        String rawTokenFromEmail = emailBody.substring(emailBody.indexOf("token=") + 6);
+        String rawTokenFromEmail = emailBodyCaptor.getValue();
 
         assertNotEquals(rawTokenFromEmail, savedDbToken);
     }
