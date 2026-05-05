@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
@@ -25,6 +26,8 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     private AccountTestRepository accountTestRepository;
     @Autowired
     private JwtAuthService jwtAuthService;
+    @Autowired
+    private VersionHashService versionHashService;
 
     private RequestFunctions requestFunctions;
     private Headers adminHeaders;
@@ -44,8 +47,9 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void POS01_ChangeEmailByAdmin_ShouldBeSuccessful_AsAdmin() {
         Account account = accountTestRepository.findByLogin("anowak").orElseThrow();
+        String hash = versionHashService.hashObjectVersion(account.getId(), account.getVersion());
         String newEmail = "new1@edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, account.getVersion());
+        String reqBody = createRequestBody(newEmail, hash);
 
         String response = requestFunctions.sendPatchRequest(
                 reqBody,
@@ -61,8 +65,9 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void NEG01_ChangeEmailByAdmin_ShouldFail_AsStudent() {
         Account account = accountTestRepository.findByLogin("admin").orElseThrow();
+        String hash = versionHashService.hashObjectVersion(account.getId(), account.getVersion());
         String newEmail = "new2@edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, account.getVersion());
+        String reqBody = createRequestBody(newEmail, hash);
 
         sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
@@ -75,8 +80,9 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void NEG02_ChangeEmail_ByAdmin_ShouldFail_AsUnauthenticated() {
         Account account = accountTestRepository.findByLogin("jkowalski").orElseThrow();
+        String hash = versionHashService.hashObjectVersion(account.getId(), account.getVersion());
         String newEmail = "new3@edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, account.getVersion());
+        String reqBody = createRequestBody(newEmail, hash);
 
         sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
@@ -89,8 +95,9 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void NEG03_ChangeEmailByAdmin_ShouldFail_ForInconsistentVersion() {
         Account account = accountTestRepository.findByLogin("jkowalski").orElseThrow();
+        String badHash = versionHashService.hashObjectVersion(account.getId(), account.getVersion() - 1);
         String newEmail = "new4@edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, account.getVersion() - 1);
+        String reqBody = createRequestBody(newEmail, badHash);
 
         requestFunctions.sendPatchRequest(
                 reqBody,
@@ -103,7 +110,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void NEG04_ChangeEmailByAdmin_ShouldFail_ForNonExistentAccount() {
         String newEmail = "new5@edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, 60);
+        String reqBody = createRequestBody(newEmail, "60");
         UUID accountId = generateNonExistentAccountId();
 
         requestFunctions.sendPatchRequest(
@@ -117,8 +124,9 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     @Test
     public void NEG05_ChangeEmailByAdmin_ShouldFail_ForInvalidEmailFormat() {
         Account account = accountTestRepository.findByLogin("anowak").orElseThrow();
+        String hash = versionHashService.hashObjectVersion(account.getId(), account.getVersion());
         String newEmail = "????.edu.p.lodz.pl";
-        String reqBody = createRequestBody(newEmail, account.getVersion());
+        String reqBody = createRequestBody(newEmail, hash);
 
         requestFunctions.sendPatchRequest(
                 reqBody,
@@ -128,11 +136,11 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         );
     }
 
-    private String createRequestBody(String newEmail, int version) {
+    private String createRequestBody(String newEmail, String version) {
         return """
                 {
                 "email": "%s",
-                "version": %d
+                "version": "%s"
                 }
                 """.formatted(newEmail, version);
     }

@@ -139,7 +139,7 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO adminChangeAccountEmail(
             @PathVariable UUID id,
-            @Valid @RequestBody ChangeEmailDTO changeEmailDTO) {
+            @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO) {
 
         Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), changeEmailDTO.version());
         return accountMapper.toAccountDTONoHash(account);
