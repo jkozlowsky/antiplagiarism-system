@@ -14,6 +14,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -29,13 +32,20 @@ public class AccountServiceChangeEmailByAdminTest {
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
 
+    @Mock
+    private VersionHashService versionHashService;
+
     @InjectMocks
     private AccountService accountService;
+
+    private final CommonFunctions commonFunctions = new CommonFunctions();
 
     private Account account;
     private UUID accountId;
     private final String oldEmail = "old@edu.p.lodz.pl";
     private final String newEmail = "new@edu.p.lodz.pl";
+    private final String validHash = commonFunctions.generateRandomStringOfLength(10);
+    private final String invalidHash = commonFunctions.generateRandomStringOfLength(10) + "1";
 
     @BeforeEach
     public void init() {
@@ -49,9 +59,10 @@ public class AccountServiceChangeEmailByAdminTest {
     @Test
     public void POS01_ChangeEmailByAdmin_ShouldBeSuccessful() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
         when(accountRepository.saveAndFlush(account)).thenReturn(account);
 
-        Account updated = accountService.changeEmailByAdmin(account.getId(), newEmail, account.getVersion());
+        Account updated = accountService.changeEmailByAdmin(account.getId(), newEmail, validHash);
         assertEquals(newEmail, updated.getEmail());
         verify(accountRepository, times(1)).saveAndFlush(account);
 
@@ -64,7 +75,7 @@ public class AccountServiceChangeEmailByAdminTest {
     public void NEG01_ChangeEmailByAdmin_ShouldThrowAccountNotFoundException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
         assertThrows(AccountNotFoundException.class, () ->
-                accountService.changeEmailByAdmin(accountId, newEmail, 67));
+                accountService.changeEmailByAdmin(accountId, newEmail, validHash));
 
         verify(accountRepository, times(0)).saveAndFlush(account);
         verify(postCommitTransactionManager, times(0)).register(any());
@@ -73,10 +84,10 @@ public class AccountServiceChangeEmailByAdminTest {
     @Test
     public void NEG02_ChangeEmailByAdmin_ShouldThrowConcurrentUpdateException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
-
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
         assertAll(
                 () -> assertThrows(ConcurrentUpdateException.class, () ->
-                        accountService.changeEmailByAdmin(accountId, newEmail, account.getVersion() - 1)),
+                        accountService.changeEmailByAdmin(accountId, newEmail, invalidHash)),
                 () -> assertEquals(oldEmail, account.getEmail())
         );
 

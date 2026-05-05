@@ -63,6 +63,7 @@ public class AccountService {
     private final EmailService emailService;
     private final OneTimeTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VersionHashService hashService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -279,10 +280,10 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, Integer sourceVersion)
-            throws ConcurrentUpdateException, AccountNotFoundException, AccountConstraintViolationException {
+    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, String frontendVersionHash) {
         Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
-        if (!account.getVersion().equals(sourceVersion)) {
+        String expectedVersionHash = hashService.hashObjectVersion(targetAccountId, account.getVersion());
+        if (!expectedVersionHash.equals(frontendVersionHash)) {
             throw new ConcurrentUpdateException();
         }
         String oldEmail = account.getEmail();
