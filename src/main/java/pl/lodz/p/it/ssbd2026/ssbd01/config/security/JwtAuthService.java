@@ -44,11 +44,6 @@ public class JwtAuthService implements LogoutHandler {
     private SecretKey secretKey;
 
     private final AccountRepository accountRepository;
-
-    private final Map<String, LocalDateTime> tokenBlacklist = new ConcurrentHashMap<>(); //Nie wiem, czy my to chcemy, czy to już overengineering.
-    // I tak pewnie lepiej byłoby zrobić Redisa pod rozszerzenie ze skalowania (S3_BALANCE) do tego celu albo w ogóle
-    // tą blacklistę wywalić, ale wolę to z wami przedyskutować. Na razie rozwiązanie na "ślinę i pajęczynę".
-
     @PostConstruct
     public void init() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
@@ -79,7 +74,7 @@ public class JwtAuthService implements LogoutHandler {
     }
 
     public boolean isTokenValid(@NotNull @NotBlank @NotEmpty String token) {
-        if (token == null || token.trim().isEmpty() || isTokenBlacklisted(token)) {
+        if (token == null || token.trim().isEmpty()) {
             return false;
         }
         try {
@@ -138,36 +133,6 @@ public class JwtAuthService implements LogoutHandler {
 
     @Override
     public void logout(HttpServletRequest httpServletRequest, @NonNull HttpServletResponse response, Authentication authentication) {
-        String authHeader = httpServletRequest.getHeader("Authorization");
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return;
-        }
-
-        String token = authHeader.substring(7).trim();
-
-        if (isTokenValid(token)) {
-            Date expirationDate = extractClaim(token, Claims::getExpiration);
-
-            LocalDateTime expiresAt = expirationDate.toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDateTime();
-
-            addTokenToBlacklist(token, expiresAt);
-        }
-    }
-
-    public void addTokenToBlacklist(String token, LocalDateTime expirationTime) {
-        tokenBlacklist.put(token, expirationTime);
-    }
-
-    public boolean isTokenBlacklisted(String token) {
-        return tokenBlacklist.containsKey(token);
-    }
-
-    @Scheduled(fixedDelay = 60*30, timeUnit = TimeUnit.SECONDS)
-    public void clearBlacklist() {
-        tokenBlacklist.entrySet().removeIf(entry ->
-                entry.getValue().isBefore(LocalDateTime.now()));
+        //Architektura bezstanowa więc metoda nic nie robi.
     }
 }

@@ -62,8 +62,6 @@ public class LogoutIntegrationTest extends BaseTestSetup {
     @Test
     public void POS01_Logout_ShouldReturnNoContent() {
         requestFunctions.sendPostRequest("", HttpStatus.NO_CONTENT.value(), "api/auth/logout", headers);
-
-        assertTrue(jwtAuthService.isTokenBlacklisted(token));
     }
 
     @Test
