@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 
 @Data
@@ -28,6 +29,7 @@ public class RegisterAccountDTO {
     @Pattern(regexp = "^[a-zA-Z0-9]+$", groups = OnCreate.class, message = "Login może zawierać tylko litery i cyfry")
     private String login;
 
+    @ToString.Exclude
     @NotBlank(groups = OnCreate.class)
     @Size(min = 8, max = 64, groups = OnCreate.class)
     @Pattern(

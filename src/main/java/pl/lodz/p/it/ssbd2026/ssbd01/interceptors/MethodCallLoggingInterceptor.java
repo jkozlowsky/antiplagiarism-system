@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.interceptors;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -42,8 +43,26 @@ public class MethodCallLoggingInterceptor {
                         .append(":").append(Thread.currentThread().threadId());
                 message.append(" | User: ").append(username);
                 message.append(" | Args: ");
-                for (Object arg : joinPoint.getArgs()) {
-                    message.append(arg).append(" ");
+                if (joinPoint.getSignature() instanceof MethodSignature methodSignature) {
+                    String[] parameterNames = methodSignature.getParameterNames();
+                    Object[] args = joinPoint.getArgs();
+
+                    for (int i = 0; i < args.length; i++) {
+                        String paramName = (parameterNames != null && parameterNames.length > i) ? parameterNames[i].toLowerCase() : "";
+                        Object arg = args[i];
+
+                        if (paramName.contains("password") || paramName.contains("haslo")) {
+                            message.append("*** UKRYTE *** ");
+                        } else {
+                            String argStr = (arg != null) ? arg.toString() : "null";
+                            argStr = argStr.replaceAll("(?i)(password\\s*=\\s*)[^,\\}\\]]+", "$1*** UKRYTE ***");
+                            message.append(argStr).append(" ");
+                        }
+                    }
+                } else {
+                    for (Object arg : joinPoint.getArgs()) {
+                        message.append(arg).append(" ");
+                    }
                 }
             } catch (Exception e) {
                 log.error("| Unexpected exception within interceptor: ", e);

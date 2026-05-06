@@ -8,7 +8,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import java.util.List;
 
 public record AccountWithAccessLevelsDTO(
-
         @NotNull(groups = {OnCreate.class, OnUpdate.class})
         @Valid
         AccountDTO account,
