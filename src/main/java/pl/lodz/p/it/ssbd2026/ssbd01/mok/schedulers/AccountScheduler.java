@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -38,5 +40,21 @@ public class AccountScheduler {
                     emailService.sendAccountDeletedEmail(acc.getEmail());
                     accountRepository.delete(acc);
                 });
+    }
+
+    @Scheduled(fixedDelayString = "${app.scheduler.check.interval.ms}")
+    @Transactional(transactionManager = "mokTransactionManager")
+    public void unblockAccountsAfter24Hours() {
+        LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+        List<Account> accountsToUnblock = accountRepository
+                .findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(3, threshold);
+
+        accountsToUnblock.forEach(acc -> {
+            acc.setIsBlocked(false);
+            acc.setFailedAttempts(0);
+            emailService.sendAccountIsUnblockedInfo(acc.getEmail(), acc.getLogin());
+        });
+
+        accountRepository.saveAllAndFlush(accountsToUnblock);
     }
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
@@ -42,7 +43,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
     public void setUpAuth() {
         requestFunctions = new RequestFunctions();
 
-        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
         String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
 
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
