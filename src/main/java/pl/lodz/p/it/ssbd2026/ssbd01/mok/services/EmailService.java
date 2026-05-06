@@ -93,7 +93,7 @@ public class EmailService {
         );
         sendEmail(toAddress, subject, content);
     }
-    
+
     public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName) {
         String subject = "Notification - Access Level Granted";
         String content = String.format(
@@ -127,5 +127,16 @@ public class EmailService {
         );
         sendEmail(toAddress, subject, content);
     }
+
+    @Async
+    public void send2FAuthEmail (String Auth2F, String toAddres){
+
+        String mailSubject = "Code - Two Factor Authentication";
+        String content = "Your 2FA verification code is: \n" + Auth2F +
+                "\n The code will expire in 5 minutes";
+
+        sendEmail(toAddres, mailSubject, content);
+    }
+
 }
 

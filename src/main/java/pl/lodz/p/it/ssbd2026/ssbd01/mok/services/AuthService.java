@@ -8,19 +8,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AuthResponseDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsBlockedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidCredentialsProvidedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,10 +39,60 @@ public class AuthService {
     private final JwtAuthService jwtAuthService;
     private final EmailService emailService;
     private final PostCommitTransactionManager postCommitTransactionManager;
+    private final TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
+    private final OneTimeTokenRepository tokenRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
     @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
-    public AuthResponseDTO authenticate(String login, String password, String ipAddress) {
+    public void authenticate(String login, String password, String ipAddress) {
+        Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
+
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        }
+
+        if (!account.getIsVerified()) {
+            throw new AccountIsNotVerifiedException();
+        }
+
+        if (!passwordEncoder.matches(password, account.getPasswordHash())) {
+            handleFailedLogin(account, ipAddress);
+            throw new InvalidCredentialsProvidedException();
+        }
+
+        generate2FactorCode(account);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            transactionManager = "mokTransactionManager",
+            noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
+    public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress) {
+
+        String hashedToken = hashToken(token);
+
+        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository
+                .findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        hashedToken, login, OneTimeTokenType.CODE_2FA, LocalDateTime.now());
+
+        if (tokenOpt.isEmpty()) {
+            Account account = accountRepository.findByLogin(login)
+                    .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+            handleFailedLogin(account, ipAddress);
+            throw new OneTimeTokenInvalidException("Token is invalid");
+        }
+
+        OneTimeTokenEnt tokenEntity = tokenOpt.get();
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
+
+        tokenEntity.setUsed(true);
+        tokenRepository.saveAndFlush(tokenEntity);
+
+        return handleSuccessfulLogin(account, ipAddress);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void resend2FactorCode(String login) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(InvalidCredentialsProvidedException::new);
 
@@ -44,15 +101,65 @@ public class AuthService {
         }
 
         if (!account.getIsVerified()) {
-            throw new InvalidCredentialsProvidedException();
+            throw new AccountIsNotVerifiedException();
         }
 
-        if (!passwordEncoder.matches(password, account.getPasswordHash())) {
-            handleFailedLogin(account, ipAddress);
-            throw new InvalidCredentialsProvidedException();
+        generate2FactorCode(account);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void generate2FactorCode(Account account) {
+        List<OneTimeTokenEnt> activeTokens = tokenRepository
+                .findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.CODE_2FA);
+
+        if (!activeTokens.isEmpty()) {
+            OneTimeTokenEnt oldToken = activeTokens.getFirst();
+            if (oldToken.getExpiresAt() != null) {
+                LocalDateTime createdAt = oldToken.getExpiresAt().minusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES);
+                LocalDateTime canResend = createdAt.plusMinutes(OneTimeTokenConsts.RESEND_TIMEOUT_2FA_IN_MINUTES);
+
+                if (LocalDateTime.now().isBefore(canResend)) {
+                    throw new Resend2FATokenException();
+                }
+            }
+            oldToken.setUsed(true);
+            tokenRepository.save(oldToken);
         }
 
-        return handleSuccessfulLogin(account, ipAddress);
+        OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
+        String twoFactorCode = tokenValueGenerator.generate2FAToken();
+        postCommitTransactionManager.register(() -> emailService.send2FAuthEmail(twoFactorCode, account.getEmail()));
+
+        tokenEnt.setTokenValue(hashToken(twoFactorCode));
+        tokenEnt.setUsername(account.getLogin());
+        tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
+        tokenEnt.setTokenType(OneTimeTokenType.CODE_2FA);
+        tokenEnt.setUsed(false);
+
+        tokenRepository.saveAndFlush(tokenEnt);
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(OneTimeTokenConsts.HASHING_ALGORITHM);
+            byte[] encodedHash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+
+            return getStringFromByteArray(encodedHash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new HashEncryptionException("Algorithm " + OneTimeTokenConsts.HASHING_ALGORITHM + " does not exist", e);
+        }
+    }
+
+    private static String getStringFromByteArray(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 
     private void handleFailedLogin(Account account, String ipAddress) {
@@ -75,18 +182,13 @@ public class AuthService {
         account.setLastLoginSuccessDateTime(LocalDateTime.now());
         accountRepository.saveAndFlush(account);
 
-        List<String> roles = account.getAccessLevelList().stream()
-                .filter(AccessLevel::getActive)
-                .map(al -> al.getAccessLevelDict().getAccessLevelName())
-                .toList();
+        List<String> roles = account.getAccessLevelList().stream().filter(AccessLevel::getActive).map(al -> al.getAccessLevelDict().getAccessLevelName()).toList();
 
         if (roles.contains(AccountConsts.ROLE_ADMIN)) {
             postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress));
         }
-
         String token = jwtAuthService.generateToken(account.getLogin(), roles);
         String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
-
         return new AuthResponseDTO(token, refreshToken);
     }
 
@@ -99,17 +201,13 @@ public class AuthService {
 
         String login = jwtAuthService.extractUsername(refreshToken);
 
-        Account account = accountRepository.findByLogin(login)
-                .orElseThrow(InvalidCredentialsProvidedException::new);
+        Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
 
-        List<String> roles = account.getAccessLevelList().stream()
-                .filter(AccessLevel::getActive)
-                .map(al -> al.getAccessLevelDict().getAccessLevelName())
-                .toList();
+        List<String> roles = account.getAccessLevelList().stream().filter(AccessLevel::getActive).map(al -> al.getAccessLevelDict().getAccessLevelName()).toList();
 
         account.setLastSuccessfulLoginIp(ipAddress);
         accountRepository.saveAndFlush(account);

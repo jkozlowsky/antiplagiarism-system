@@ -20,6 +20,8 @@ import java.util.Optional;
 public interface OneTimeTokenRepository extends AbstractRepository<OneTimeTokenEnt> {
     Optional<OneTimeTokenEnt> findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(String token, OneTimeTokenType tokenType, LocalDateTime now);
 
+    Optional<OneTimeTokenEnt> findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(String token, String username, OneTimeTokenType tokenType, LocalDateTime now);
+
     //Blokujemy wpisy które znajdziemy żeby wyeliminować wyścig związany z jednoczesnym wczytaniem i tworzeniem tokenu.
     //Nie do końca wiem czy jest to potrzebne ale chyba nic złego nie robi ¯\_(ツ)_/¯
     @Lock(LockModeType.PESSIMISTIC_WRITE)
