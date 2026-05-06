@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/account/register", "/account/activate").permitAll()
                         .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                         .requestMatchers("/auth/reset/request", "/auth/reset/confirm").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/loggers", "/actuator/loggers/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         //TODO: trzeba zmienić ścieżki dodając wersje do nich
                         .anyRequest().authenticated()
