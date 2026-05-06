@@ -7,10 +7,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsNotBlockedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFound;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -27,11 +31,20 @@ public class AccountServiceUnblockAccountTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private VersionHashService versionHashService;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
     @InjectMocks
     private AccountService accountService;
 
     private Account account;
     private UUID accountId;
+
+    private final CommonFunctions commonFunctions = new CommonFunctions();
+    private final String validHash = commonFunctions.generateRandomStringOfLength(10);
 
     @BeforeEach
     void setUp() {
@@ -44,6 +57,9 @@ public class AccountServiceUnblockAccountTest {
         account.setIsBlocked(true);
         account.setPasswordHash("testcontainers_hash");
 
+        ReflectionTestUtils.setField(account, "id", accountId);
+        ReflectionTestUtils.setField(account, "version", 0);
+
         System.out.print("\n\n\n" +
                 "Unit test - Account service unblock user account function\n" +
                 "Check if unblocking user account is working properly\"\n\n\n");
@@ -53,8 +69,9 @@ public class AccountServiceUnblockAccountTest {
     @DisplayName("Test successful work of unblock function")
     void POS01_unblockUserAccountUnit() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
 
-        accountService.unblockUserAccount(accountId);
+        accountService.unblockUserAccount(accountId, validHash);
 
         assertAll(
                 () -> assertFalse(account.getIsBlocked()),
@@ -68,7 +85,7 @@ public class AccountServiceUnblockAccountTest {
     void NEG01_unblockUserAccountUnit() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFound.class, () -> accountService.unblockUserAccount(accountId));
+        assertThrows(AccountNotFoundException.class, () -> accountService.unblockUserAccount(accountId, validHash));
 
         verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
     }
@@ -77,10 +94,24 @@ public class AccountServiceUnblockAccountTest {
     @DisplayName("Test unblock function if account is currently not blocked")
     void NEG02_unblockUserAccountUnit() {
         account.setIsBlocked(false);
-        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-        assertThrows(AccountIsNotBlockedException.class, () -> accountService.unblockUserAccount(accountId));
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
+
+        assertThrows(AccountIsNotBlockedException.class, () -> accountService.unblockUserAccount(accountId, validHash));
 
         verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Test unblock function if optimistic lock fails")
+    void NEG03_unblockUserAccountUnit() {
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
+
+        assertThrows(ConcurrentUpdateException.class, () -> accountService.unblockUserAccount(accountId, "invalid-hash"));
+
+        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
+        verify(accountRepository, never()).saveAndFlush(any());
     }
 }

@@ -1,9 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -26,20 +27,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -75,7 +64,7 @@ public class AccountService {
     private final LanguageDictRepository languageDictRepository;
 
 
-    @Transactional(propagation =  Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void registerAccount(Account account) {
         account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
 
@@ -327,8 +316,13 @@ public class AccountService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void blockUserAccount(UUID id) {
-        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+    public void blockUserAccount(UUID id, String versionHash) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
+
+        mokRefreshRepository.refresh(account);
+        if (!versionHash.equals(versionHashService.hashObjectVersion(id, account.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
 
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
@@ -343,8 +337,13 @@ public class AccountService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void unblockUserAccount(UUID id) {
-        Account account = accountRepository.findById(id).orElseThrow(AccountNotFound::new);
+    public void unblockUserAccount(UUID id, String versionHash) {
+        Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
+
+        mokRefreshRepository.refresh(account);
+        if (!versionHash.equals(versionHashService.hashObjectVersion(id, account.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
 
         if (!account.getIsBlocked()) {
             throw new AccountIsNotBlockedException();
@@ -358,19 +357,22 @@ public class AccountService {
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void createUrlOwnEmailChange(String login) {
+    public void createUrlOwnEmailChange(String login, String versionHash) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException());
 
+        mokRefreshRepository.refresh(account);
+        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
         String generateUrl = UUID.randomUUID().toString();
         OneTimeTokenEnt token = new OneTimeTokenEnt();
-
         token.setTokenValue(generateUrl);
         token.setUsername(login);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
         token.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
         token.setUsed(false);
-
         tokenRepository.saveAndFlush(token);
 
         String changeUrl = frontendUrl + "/change-email?token=" + generateUrl;
@@ -420,12 +422,12 @@ public class AccountService {
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public AccountWithAccessLevelsDTO updateAccountByLogin(String login, String versionHash, Account source){
+    public AccountWithAccessLevelsDTO updateAccountByLogin(String login, String versionHash, Account source) {
         Account target = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(target);
         System.out.println(versionHash);
         System.out.println(versionHashService.hashObjectVersion(target.getId(), target.getVersion()));
-        if (!versionHash.equals(versionHashService.hashObjectVersion(target.getId(), target.getVersion()))){
+        if (!versionHash.equals(versionHashService.hashObjectVersion(target.getId(), target.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
@@ -438,14 +440,14 @@ public class AccountService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
-    public void changeOtherPassword(UUID id, String newPassword, String ifMatch){
+    public void changeOtherPassword(UUID id, String newPassword, String ifMatch) {
         Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
 
-        if(!account.getVersion().toString().equals(ifMatch)){
+        if (!account.getVersion().toString().equals(ifMatch)) {
             throw new ConcurrentUpdateException();
         }
 
-        if(passwordEncoder.matches(newPassword, account.getPasswordHash())){
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
             throw new PasswordSameAsOldException();
         }
 
