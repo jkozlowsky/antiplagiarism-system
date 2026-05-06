@@ -22,38 +22,27 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<MessageResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
-
         authService.authenticate(loginRequest.login(), loginRequest.password(), ipAddress);
-
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MessageResponseDTO("mfa.required"));
     }
 
-
     @PostMapping("/resend2FA")
     public ResponseEntity<MessageResponseDTO> resend2FACode(@Valid @RequestBody Resend2FARequestDTO requestDTO) {
-
         authService.resend2FactorCode(requestDTO.login());
-
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MessageResponseDTO("mfa.resend"));
     }
 
     @PostMapping("/check2FA")
-    public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO,
-                                                     HttpServletRequest request) {
+    public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
-
-        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.Auth2F(), ipAddress);
-
+        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.Auth2F(), requestDTO.login(), ipAddress);
         return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponseDTO> refresh(@Valid @RequestBody RefreshTokenRequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
-
         AuthResponseDTO response = authService.refreshToken(requestDTO.refreshToken(), ipAddress);
-
         return ResponseEntity.ok(response);
     }
 }

@@ -18,6 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
@@ -67,7 +68,7 @@ class AuthService2FAPositiveTest {
         testAccount.setIsVerified(true);
         testAccount.setFailedAttempts(0);
 
-        AccessLevel accessLevel = new pl.lodz.p.it.ssbd2026.ssbd01.entities.Student();
+        AccessLevel accessLevel = new Student();
         AccessLevelDict dict = new AccessLevelDict();
         dict.setAccessLevelName("ROLE_STUDENT");
         accessLevel.setAccessLevelDict(dict);
@@ -89,9 +90,7 @@ class AuthService2FAPositiveTest {
             return null;
         }).when(postCommitTransactionManager).register(any(Runnable.class));
 
-
         authService.authenticate(testAccount.getLogin(), "validPassword", IP_ADDRESS);
-
 
         ArgumentCaptor<OneTimeTokenEnt> tokenCaptor = ArgumentCaptor.forClass(OneTimeTokenEnt.class);
         verify(tokenRepository, times(1)).saveAndFlush(tokenCaptor.capture());
@@ -101,7 +100,6 @@ class AuthService2FAPositiveTest {
         assertEquals(OneTimeTokenType.CODE_2FA, savedToken.getTokenType());
         assertFalse(savedToken.isUsed());
         assertNotNull(savedToken.getTokenValue());
-
 
         verify(emailService, times(1)).send2FAuthEmail(OTP_CODE, testAccount.getEmail());
     }
@@ -114,8 +112,8 @@ class AuthService2FAPositiveTest {
         validToken.setUsed(false);
         validToken.setExpiresAt(LocalDateTime.now().plusMinutes(5));
 
-        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
-                anyString(), eq(OneTimeTokenType.CODE_2FA), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(), eq(testAccount.getLogin()), eq(OneTimeTokenType.CODE_2FA), any(LocalDateTime.class)))
                 .thenReturn(Optional.of(validToken));
 
         when(accountRepository.findByLogin(testAccount.getLogin())).thenReturn(Optional.of(testAccount));
@@ -123,7 +121,7 @@ class AuthService2FAPositiveTest {
         when(jwtAuthService.generateToken(eq(testAccount.getLogin()), anyList())).thenReturn("accessToken123");
         when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList())).thenReturn("refreshToken123");
 
-        AuthResponseDTO response = authService.verify2FactorCode(OTP_CODE, IP_ADDRESS);
+        AuthResponseDTO response = authService.verify2FactorCode(OTP_CODE, testAccount.getLogin(), IP_ADDRESS);
 
         assertNotNull(response);
         assertEquals("accessToken123", response.token());
@@ -149,7 +147,6 @@ class AuthService2FAPositiveTest {
         when(tokenValueGenerator.generate2FAToken()).thenReturn("87654321");
 
         authService.resend2FactorCode(testAccount.getLogin());
-
 
         verify(tokenRepository, times(1)).saveAndFlush(any(OneTimeTokenEnt.class));
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));

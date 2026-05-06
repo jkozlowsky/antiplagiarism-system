@@ -27,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -62,15 +63,25 @@ public class AuthService {
         generate2FactorCode(account);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public AuthResponseDTO verify2FactorCode(String token, String ipAddress) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            transactionManager = "mokTransactionManager",
+            noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
+    public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress) {
 
         String hashedToken = hashToken(token);
 
-        OneTimeTokenEnt tokenEntity = tokenRepository
-                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(hashedToken, OneTimeTokenType.CODE_2FA, LocalDateTime.now())
-                .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository
+                .findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        hashedToken, login, OneTimeTokenType.CODE_2FA, LocalDateTime.now());
 
+        if (tokenOpt.isEmpty()) {
+            Account account = accountRepository.findByLogin(login)
+                    .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+            handleFailedLogin(account, ipAddress);
+            throw new OneTimeTokenInvalidException("Token is invalid");
+        }
+
+        OneTimeTokenEnt tokenEntity = tokenOpt.get();
         Account account = accountRepository.findByLogin(tokenEntity.getUsername())
                 .orElseThrow(AccountNotFoundException::new);
 
@@ -98,28 +109,24 @@ public class AuthService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void generate2FactorCode(Account account) {
-
         List<OneTimeTokenEnt> activeTokens = tokenRepository
                 .findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.CODE_2FA);
 
-        OneTimeTokenEnt tokenEnt;
-
         if (!activeTokens.isEmpty()) {
-            tokenEnt = activeTokens.getFirst();
-
-            if (tokenEnt.getExpiresAt() != null) {
-                LocalDateTime createdAt = tokenEnt.getExpiresAt().minusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES);
-
+            OneTimeTokenEnt oldToken = activeTokens.getFirst();
+            if (oldToken.getExpiresAt() != null) {
+                LocalDateTime createdAt = oldToken.getExpiresAt().minusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES);
                 LocalDateTime canResend = createdAt.plusMinutes(OneTimeTokenConsts.RESEND_TIMEOUT_2FA_IN_MINUTES);
 
                 if (LocalDateTime.now().isBefore(canResend)) {
                     throw new Resend2FATokenException();
                 }
             }
-        } else {
-            tokenEnt = new OneTimeTokenEnt();
+            oldToken.setUsed(true);
+            tokenRepository.save(oldToken);
         }
 
+        OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
         String twoFactorCode = tokenValueGenerator.generate2FAToken();
         postCommitTransactionManager.register(() -> emailService.send2FAuthEmail(twoFactorCode, account.getEmail()));
 

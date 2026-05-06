@@ -128,15 +128,18 @@ class AuthService2FANegativeTest {
 
     @Test
     void verify2FactorCode_ShouldThrowException_WhenTokenIsInvalidOrExpired() {
-        when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
-                anyString(), eq(OneTimeTokenType.CODE_2FA), any(LocalDateTime.class)))
+        when(tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(), eq(testAccount.getLogin()), eq(OneTimeTokenType.CODE_2FA), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
+        when(accountRepository.findByLogin(testAccount.getLogin())).thenReturn(Optional.of(testAccount));
+
         assertThrows(OneTimeTokenInvalidException.class, () ->
-                authService.verify2FactorCode("invalidOTP", IP_ADDRESS)
+                authService.verify2FactorCode("invalidOTP", testAccount.getLogin(), IP_ADDRESS)
         );
 
-        verify(accountRepository, never()).saveAndFlush(any(Account.class));
+        assertEquals(1, testAccount.getFailedAttempts());
+        verify(accountRepository, times(1)).saveAndFlush(testAccount);
     }
 
     @Test
