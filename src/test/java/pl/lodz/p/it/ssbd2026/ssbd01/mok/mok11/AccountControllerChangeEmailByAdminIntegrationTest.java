@@ -55,7 +55,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
                 reqBody,
                 HttpStatus.OK.value(),
                 "/api/account/" + account.getId() + "/email",
-                adminHeaders
+                new Headers(new Header("if-Match", hash))
         );
 
         String responseEmail = JsonPath.from(response).getString("email");
@@ -103,7 +103,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
                 reqBody,
                 HttpStatus.CONFLICT.value(),
                 "/api/account/" + account.getId() + "/email",
-                adminHeaders
+                new Headers(new Header("if-Match",badHash))
         );
     }
 
@@ -117,7 +117,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
                 reqBody,
                 HttpStatus.NOT_FOUND.value(),
                 "/api/account/" + accountId + "/email",
-                adminHeaders
+                new Headers(new Header("if-Match", ""))
         );
     }
 

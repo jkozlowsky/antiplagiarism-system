@@ -8,7 +8,5 @@ public record ChangeEmailDTO(
         @NotBlank(groups = {OnCreate.class})
         @Email(groups = {OnCreate.class})
         @Size(max = AccountConsts.EMAIL_LENGTH, groups = {OnCreate.class})
-        String email,
-        @NotBlank(groups = {OnCreate.class})
-        String version
+        String email
 ) {}

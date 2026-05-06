@@ -124,7 +124,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 200,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
 
         verify(emailService, times(1)).sendAccessLevelRevokedInfo(
@@ -144,7 +144,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 404,
                 "/api/account/" + nonExistentId + "/access-levels/" + AccountConsts.ROLE_STUDENT + "/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", "any-hash"))
         );
 
         verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
@@ -162,7 +162,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", invalidHash))
         );
 
         verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
@@ -181,8 +181,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 403,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                new Headers()
-        );
+                new Headers(new Header("if-Match", validHash)));
     }
 
     @Test
@@ -193,12 +192,12 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
         String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
-
+        Headers headers = new Headers(studentHeaders.get("Authorization"), new Header("if-Match", validHash));
         requestFunctions.sendPostRequest(
                 requestBody,
                 403,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                studentHeaders
+                headers
         );
     }
 
@@ -214,7 +213,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
     }
 
@@ -230,7 +229,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/SUPER_HERO/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
     }
 
@@ -246,7 +245,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
     }
 }

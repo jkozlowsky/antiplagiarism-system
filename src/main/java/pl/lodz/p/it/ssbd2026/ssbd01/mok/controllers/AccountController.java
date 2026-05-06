@@ -6,18 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -107,15 +102,8 @@ public class AccountController {
     public AccountWithAccessLevelsDTO grantAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
-
-        accountService.grantAccessLevel(id, accessLevelName, accountDTO.versionHash());
-
-        Account updatedAccount = accountService.getAccountWithAccessLevels(id);
-
-        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                updatedAccount,
-                versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
+            @RequestHeader("If-Match") String ifMatch) {
+        return accountService.grantAccessLevel(id, accessLevelName, ifMatch);
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
@@ -123,9 +111,9 @@ public class AccountController {
     public AccountWithAccessLevelsDTO revokeAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
+            @RequestHeader("If-Match") String ifMatch) {
 
-        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.versionHash());
+        accountService.revokeAccessLevel(id, accessLevelName, ifMatch);
 
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
@@ -139,9 +127,10 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO adminChangeAccountEmail(
             @PathVariable UUID id,
-            @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO) {
+            @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO,
+            @RequestHeader("If-Match") String ifMatch) {
 
-        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), changeEmailDTO.version());
+        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), ifMatch);
         return accountMapper.toAccountDTONoHash(account);
     }
 
@@ -166,23 +155,29 @@ public class AccountController {
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @PostMapping("/block/{id}")
-    public ResponseEntity<Void> blockUserAccount(@PathVariable UUID id) {
-        accountService.blockUserAccount(id);
+    public ResponseEntity<Void> blockUserAccount(
+            @PathVariable UUID id,
+            @RequestHeader("If-Match") String ifMatch) {
+        accountService.blockUserAccount(id, ifMatch);
         return ResponseEntity.noContent().build();
     }
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @PostMapping("/unblock/{id}")
-    public ResponseEntity<Void> unblockUserAccount(@PathVariable UUID id) {
-        accountService.unblockUserAccount(id);
+    public ResponseEntity<Void> unblockUserAccount(
+            @PathVariable UUID id,
+            @RequestHeader("If-Match") String ifMatch) {
+        accountService.unblockUserAccount(id, ifMatch);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/change")
-    public ResponseEntity<Void> requestEmailChange(Authentication authentication) {
+    public ResponseEntity<Void> requestEmailChange(
+            Authentication authentication,
+            @RequestHeader("If-Match") String ifMatch) {
         String login = authentication.getName();
-        accountService.createUrlOwnEmailChange(login);
+        accountService.createUrlOwnEmailChange(login, ifMatch);
         return ResponseEntity.ok().build();
     }
 
@@ -196,11 +191,12 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateOtherAccount(
             @PathVariable UUID id,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO
+            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO,
+            @RequestHeader("If-Match") String ifMatch
     ) {
         return accountService.updateAccount(
                 id,
-                accountDTO.versionHash(),
+                ifMatch,
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }
@@ -209,13 +205,14 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateMyAccount(
             @Validated(OnUpdate.class) @RequestBody AccountDTO accountDTO,
+            @RequestHeader("If-Match") String ifMatch,
             Principal principal) {
 
         String login = principal.getName();
 
         return accountService.updateAccountByLogin(
                 login,
-                accountDTO.versionHash(),
+                ifMatch,
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }

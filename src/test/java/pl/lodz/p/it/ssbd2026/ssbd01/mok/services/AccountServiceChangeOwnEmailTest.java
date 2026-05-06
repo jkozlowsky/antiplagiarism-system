@@ -10,15 +10,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidCredentialsProvidedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -43,28 +47,46 @@ public class AccountServiceChangeOwnEmailTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private VersionHashService versionHashService;
+
+    @Mock
+    PostCommitTransactionManager postCommitTransactionManager;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
     @InjectMocks
     private AccountService accountService;
 
     private Account testAccount;
+    private UUID accountId;
     private final String FRONTEND_URL = "http://localhost:5173";
+
+    private final CommonFunctions commonFunctions = new CommonFunctions();
+    private final String validHash = commonFunctions.generateRandomStringOfLength(10);
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(accountService, "frontendUrl", FRONTEND_URL);
 
+        accountId = UUID.randomUUID();
         testAccount = new Account();
         testAccount.setLogin("ownemail_tester");
         testAccount.setEmail("test@testownemail.com");
         testAccount.setPasswordHash("testcontainers_hash");
+
+        ReflectionTestUtils.setField(testAccount, "id", accountId);
+        ReflectionTestUtils.setField(testAccount, "version", 0);
     }
 
     @Test
     @DisplayName("Test successful work of own email change function - create url")
     void POS01_changeOwnEmailUnit() {
         when(accountRepository.findByLogin("ownemail_tester")).thenReturn(Optional.of(testAccount));
+        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
 
-        accountService.createUrlOwnEmailChange("ownemail_tester");
+        accountService.createUrlOwnEmailChange("ownemail_tester", validHash);
 
         ArgumentCaptor<OneTimeTokenEnt> tokenCaptor = ArgumentCaptor.forClass(OneTimeTokenEnt.class);
         verify(tokenRepository, times(1)).saveAndFlush(tokenCaptor.capture());
@@ -74,11 +96,7 @@ public class AccountServiceChangeOwnEmailTest {
                 () -> assertEquals("ownemail_tester", savedToken.getUsername()),
                 () -> assertFalse(savedToken.isUsed()),
                 () -> assertNotNull(savedToken.getTokenValue()),
-                () -> verify(emailService, times(1)).sendUrlToChangeOwnEmail(
-                        eq("test@testownemail.com"),
-                        eq("ownemail_tester"),
-                        contains(FRONTEND_URL + "/change-email?token=")
-                )
+                () -> verify(postCommitTransactionManager, times(1)).register(any())
         );
     }
 
@@ -121,7 +139,7 @@ public class AccountServiceChangeOwnEmailTest {
         when(accountRepository.findByLogin("no_existing_user")).thenReturn(Optional.empty());
 
         assertAll(
-                () -> assertThrows(AccountNotFoundException.class, () -> accountService.createUrlOwnEmailChange("no_existing_user")),
+                () -> assertThrows(AccountNotFoundException.class, () -> accountService.createUrlOwnEmailChange("no_existing_user", validHash)),
                 () -> verifyNoInteractions(tokenRepository),
                 () -> verifyNoInteractions(emailService)
         );
@@ -165,6 +183,19 @@ public class AccountServiceChangeOwnEmailTest {
         assertAll(
                 () -> assertThrows(InvalidCredentialsProvidedException.class, () -> accountService.confirmOwnEmailChange(generatedUrl, "wrongPassword", "newtest@testownemail.com")),
                 () -> verify(accountRepository, never()).saveAndFlush(any())
+        );
+    }
+
+    @Test
+    @DisplayName("Test create url function if optimistic lock fails")
+    void NEG04_changeOwnEmailUnit() {
+        when(accountRepository.findByLogin("ownemail_tester")).thenReturn(Optional.of(testAccount));
+        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
+
+        assertAll(
+                () -> assertThrows(ConcurrentUpdateException.class, () -> accountService.createUrlOwnEmailChange("ownemail_tester", "invalid-hash")),
+                () -> verifyNoInteractions(tokenRepository),
+                () -> verifyNoInteractions(emailService)
         );
     }
 }

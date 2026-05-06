@@ -14,8 +14,7 @@ public record AccountDTO(
         @Null(groups = {OnCreate.class, OnUpdate.class})
         Integer version,
 
-        @Null(groups = OnCreate.class)
-        @NotNull(groups = OnUpdate.class)
+        @Null(groups = {OnCreate.class, OnUpdate.class})
         String versionHash,
 
         @Null(groups = OnUpdate.class)

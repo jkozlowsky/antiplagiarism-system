@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok5;
 
+import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 
@@ -28,6 +30,9 @@ public class NEG01_unblockUserAccount extends BaseTestSetup {
 
     @MockitoBean
     private EmailService emailService;
+
+    @Autowired
+    private VersionHashService versionHashService;
 
     @Autowired
     @Qualifier("mokTransactionManager")
@@ -62,11 +67,13 @@ public class NEG01_unblockUserAccount extends BaseTestSetup {
             return accountRepository.saveAndFlush(account);
         });
 
+        String validHash = versionHashService.hashObjectVersion(testAccount.getId(), testAccount.getVersion());
+
         String responseBody = requestFunctions.sendPostRequest(
                 "",
                 409,
                 ACCOUNT_UNBLOCK.getKeyName().replace("id", testAccount.getId().toString()),
-                new Headers()
+                new Headers(new Header("If-Match", validHash))
         );
 
         transTemp.execute(status -> {

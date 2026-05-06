@@ -10,6 +10,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
@@ -50,6 +52,9 @@ public class AccountServiceGrantAccessTest {
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
 
+    @Mock
+    private AccountMapper accountMapper;
+
     @InjectMocks
     private AccountService accountService;
 
@@ -82,14 +87,18 @@ public class AccountServiceGrantAccessTest {
     @Test
     @DisplayName("Pomyślne dodanie nowej roli dostępu do wybranego konta użytkownika (gdy lista jest pusta)")
     void shouldGrantAccessLevelSuccessfully() {
+        account.getAccessLevelList().clear();
+        AccountWithAccessLevelsDTO expectedDto = mock(AccountWithAccessLevelsDTO.class);
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         doNothing().when(mokRefreshRepository).refresh(account);
         when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
-
-        accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
-
+        when(accountRepository.saveAndFlush(account)).thenReturn(account);
+        when(accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(account, VALID_HASH)).thenReturn(expectedDto);
+        AccountWithAccessLevelsDTO result = accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
         assertAll(
+                () -> assertNotNull(result, "Metoda powinna zwrócić zmapowane DTO"),
+                () -> assertEquals(expectedDto, result, "Zwrócone DTO powinno zgadzać się z tym z mappera"),
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
                 () -> assertInstanceOf(Teacher.class, account.getAccessLevelList().getFirst()),
@@ -103,15 +112,21 @@ public class AccountServiceGrantAccessTest {
     void shouldReactivateRevokedAccessLevelSuccessfully() {
         accessLevel.setActive(false);
         account.getAccessLevelList().add(accessLevel);
+        AccountWithAccessLevelsDTO expectedDto = mock(AccountWithAccessLevelsDTO.class);
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         doNothing().when(mokRefreshRepository).refresh(account);
         when(versionHashService.hashObjectVersion(accountId, 0)).thenReturn(VALID_HASH);
         when(accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_TEACHER)).thenReturn(Optional.of(accessLevelDict));
+        when(accountRepository.saveAndFlush(account)).thenReturn(account);
 
-        accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
+        when(accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(account, VALID_HASH)).thenReturn(expectedDto);
+
+        AccountWithAccessLevelsDTO result = accountService.grantAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH);
 
         assertAll(
+                () -> assertNotNull(result, "Metoda powinna zwrócić zmapowane DTO"),
+                () -> assertEquals(expectedDto, result, "Zwrócone DTO powinno zgadzać się z tym z mappera"),
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
                 () -> assertTrue(account.getAccessLevelList().getFirst().getActive()),

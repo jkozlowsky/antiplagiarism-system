@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 
 import java.util.Optional;
 
@@ -25,6 +26,12 @@ public class POS08_ChangeOwnPasswordServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private VersionHashService versionHashService;
 
     @InjectMocks
     private AccountService accountService;
@@ -50,7 +57,7 @@ public class POS08_ChangeOwnPasswordServiceTest {
         when(passwordEncoder.matches(OLD_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(true);
         when(passwordEncoder.matches(NEW_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(false);
         when(passwordEncoder.encode(NEW_PASSWORD_PLAIN)).thenReturn(NEW_PASSWORD_HASH);
-
+        when(versionHashService.hashObjectVersion(account.getId(), account.getVersion())).thenReturn("0");
         assertDoesNotThrow(() -> accountService.changeOwnPassword(LOGIN, OLD_PASSWORD_PLAIN, NEW_PASSWORD_PLAIN, "0"));
 
         assertAll(

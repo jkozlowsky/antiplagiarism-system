@@ -7,10 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsBlockedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFound;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -27,11 +32,23 @@ public class AccountServiceBlockAccountTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private VersionHashService versionHashService;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private PostCommitTransactionManager postCommitTransactionManager;
+
     @InjectMocks
     private AccountService accountService;
 
     private Account account;
     private UUID accountId;
+
+    private final CommonFunctions commonFunctions = new CommonFunctions();
+    private final String validHash = commonFunctions.generateRandomStringOfLength(10);
 
     @BeforeEach
     void setUp() {
@@ -44,6 +61,9 @@ public class AccountServiceBlockAccountTest {
         account.setIsBlocked(false);
         account.setPasswordHash("testcontainers_hash");
 
+        ReflectionTestUtils.setField(account, "id", accountId);
+        ReflectionTestUtils.setField(account, "version", 0);
+
         System.out.print("\n\n\n" +
                 "Unit test - Account service block user account function\n" +
                 "Check if blocking user account is working properly\"\n\n\n");
@@ -53,13 +73,14 @@ public class AccountServiceBlockAccountTest {
     @DisplayName("Test successful work of block function")
     void POS01_blockUserAccountUnit() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
 
-        accountService.blockUserAccount(accountId);
+        accountService.blockUserAccount(accountId, validHash);
 
         assertAll(
                 () -> assertTrue(account.getIsBlocked()),
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
-                () -> verify(emailService, times(1)).sendAccountIsBlockedInfo(account.getEmail(), account.getLogin())
+                () -> verify(postCommitTransactionManager, times(1)).register(any())
         );
     }
 
@@ -68,7 +89,7 @@ public class AccountServiceBlockAccountTest {
     void NEG01_blockUserAccountUnit() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFound.class, () -> accountService.blockUserAccount(accountId));
+        assertThrows(AccountNotFoundException.class, () -> accountService.blockUserAccount(accountId, validHash));
 
         verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
     }
@@ -78,9 +99,22 @@ public class AccountServiceBlockAccountTest {
     void NEG02_blockUserAccountUnit() {
         account.setIsBlocked(true);
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
 
-        assertThrows(AccountIsBlockedException.class, () -> accountService.blockUserAccount(accountId));
+        assertThrows(AccountIsBlockedException.class, () -> accountService.blockUserAccount(accountId, validHash));
 
         verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Test block function if optimistic lock fails")
+    void NEG03_blockUserAccountUnit() {
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
+
+        assertThrows(ConcurrentUpdateException.class, () -> accountService.blockUserAccount(accountId, "invalid-hash"));
+
+        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
+        verify(accountRepository, never()).saveAndFlush(any());
     }
 }
