@@ -102,15 +102,8 @@ public class AccountController {
     public AccountWithAccessLevelsDTO grantAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
-
-        accountService.grantAccessLevel(id, accessLevelName, accountDTO.versionHash());
-
-        Account updatedAccount = accountService.getAccountWithAccessLevels(id);
-
-        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                updatedAccount,
-                versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
+            @RequestHeader("If-Match") String ifMatch) {
+        return accountService.grantAccessLevel(id, accessLevelName, ifMatch);
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
@@ -118,9 +111,9 @@ public class AccountController {
     public AccountWithAccessLevelsDTO revokeAccessLevel(
             @PathVariable UUID id,
             @PathVariable String accessLevelName,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO) {
+            @RequestHeader("If-Match") String ifMatch) {
 
-        accountService.revokeAccessLevel(id, accessLevelName, accountDTO.versionHash());
+        accountService.revokeAccessLevel(id, accessLevelName, ifMatch);
 
         Account updatedAccount = accountService.getAccountWithAccessLevels(id);
 
@@ -134,9 +127,10 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO adminChangeAccountEmail(
             @PathVariable UUID id,
-            @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO) {
+            @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO,
+            @RequestHeader("If-Match") String ifMatch) {
 
-        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), changeEmailDTO.version());
+        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), ifMatch);
         return accountMapper.toAccountDTONoHash(account);
     }
 
@@ -197,11 +191,12 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateOtherAccount(
             @PathVariable UUID id,
-            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO
+            @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO,
+            @RequestHeader("If-Match") String ifMatch
     ) {
         return accountService.updateAccount(
                 id,
-                accountDTO.versionHash(),
+                ifMatch,
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }
@@ -210,13 +205,14 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateMyAccount(
             @Validated(OnUpdate.class) @RequestBody AccountDTO accountDTO,
+            @RequestHeader("If-Match") String ifMatch,
             Principal principal) {
 
         String login = principal.getName();
 
         return accountService.updateAccountByLogin(
                 login,
-                accountDTO.versionHash(),
+                ifMatch,
                 accountMapper.toUpdateAccount(accountDTO)
         );
     }

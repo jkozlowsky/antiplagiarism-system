@@ -55,8 +55,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void setUpRestAssuredAndAuth() {
         String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
         String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
-        adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
-        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
+//        adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
+//        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();
         requestFunctions = new RequestFunctions();
     }
@@ -90,7 +90,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 200,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
 
         String returnedLogin = JsonPath.from(responseBody).getString("account.login");
@@ -115,17 +115,25 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
         String validHash1 = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
         String reqGrant1 = "{\"versionHash\": \"" + validHash1 + "\"}";
-        requestFunctions.sendPostRequest(reqGrant1, 200, "/api/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
+        requestFunctions.sendPostRequest(reqGrant1, 200,
+                "/api/account/" + accountId + "/access-levels/TEACHER/grant",
+                new Headers(new Header("if-Match", validHash1)));
 
         Account accAfterGrant = accountRepository.findById(accountId).get();
         String validHash2 = versionHashService.hashObjectVersion(accountId, accAfterGrant.getVersion());
         String reqRevoke = "{\"versionHash\": \"" + validHash2 + "\"}";
-        requestFunctions.sendPostRequest(reqRevoke, 200, "/api/account/" + accountId + "/access-levels/TEACHER/revoke", adminHeaders);
+        requestFunctions.sendPostRequest(reqRevoke,
+                200,
+                "/api/account/" + accountId + "/access-levels/TEACHER/revoke",
+                new Headers(new Header("if-Match", validHash2)));
 
         Account accAfterRevoke = accountRepository.findById(accountId).get();
         String validHash3 = versionHashService.hashObjectVersion(accountId, accAfterRevoke.getVersion());
         String reqGrant2 = "{\"versionHash\": \"" + validHash3 + "\"}";
-        String responseBody = requestFunctions.sendPostRequest(reqGrant2, 200, "/api/account/" + accountId + "/access-levels/TEACHER/grant", adminHeaders);
+        String responseBody = requestFunctions.sendPostRequest(reqGrant2,
+                200,
+                "/api/account/" + accountId + "/access-levels/TEACHER/grant",
+                new Headers(new Header("if-Match", validHash3)));
 
         List<Boolean> activeFlags = JsonPath.from(responseBody).getList("accessLevels.active", Boolean.class);
         assertTrue(activeFlags.contains(true));
@@ -142,7 +150,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 404,
                 "/api/account/" + nonExistentId + "/access-levels/STUDENT/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", invalidHash))
         );
 
         verify(emailService, never()).sendAccessLevelGrantedInfo(any(), any(), any());
@@ -160,7 +168,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/ADMINISTRATOR/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", invalidHash))
         );
     }
 
@@ -194,7 +202,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 403,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
-                studentHeaders
+                new Headers(new Header("if-Match", validHash))
         );
     }
 
@@ -210,7 +218,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody1,
                 200,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash1))
         );
 
         Account updatedAccount = accountRepository.findById(accountId).get();
@@ -221,7 +229,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody2,
                 409,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash2))
         );
     }
 
@@ -237,7 +245,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 409,
                 "/api/account/" + accountId + "/access-levels/SUPER_HERO/grant",
-                adminHeaders
+                new Headers(new Header("if-Match", validHash))
         );
     }
 

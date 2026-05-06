@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountIsBlockedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
@@ -36,6 +37,9 @@ public class AccountServiceBlockAccountTest {
 
     @Mock
     private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private PostCommitTransactionManager postCommitTransactionManager;
 
     @InjectMocks
     private AccountService accountService;
@@ -76,7 +80,7 @@ public class AccountServiceBlockAccountTest {
         assertAll(
                 () -> assertTrue(account.getIsBlocked()),
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
-                () -> verify(emailService, times(1)).sendAccountIsBlockedInfo(account.getEmail(), account.getLogin())
+                () -> verify(postCommitTransactionManager, times(1)).register(any())
         );
     }
 

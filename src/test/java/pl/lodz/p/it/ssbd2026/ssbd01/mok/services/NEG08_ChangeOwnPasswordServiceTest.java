@@ -15,6 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidOldPasswordException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordSameAsOldException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 
 import java.util.Optional;
 
@@ -29,6 +30,12 @@ public class NEG08_ChangeOwnPasswordServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private VersionHashService versionHashService;
 
     @InjectMocks
     private AccountService accountService;
@@ -68,6 +75,7 @@ public class NEG08_ChangeOwnPasswordServiceTest {
     void shouldThrowInvalidOldPasswordException() {
         when(accountRepository.findByLogin(LOGIN)).thenReturn(Optional.of(account));
         when(passwordEncoder.matches("BledneHaslo123!", HASHED_PASSWORD)).thenReturn(false);
+        when(versionHashService.hashObjectVersion(account.getId(), account.getVersion())).thenReturn("0");
 
         assertThrows(InvalidOldPasswordException.class, () ->
                 accountService.changeOwnPassword(LOGIN, "BledneHaslo123!", NEW_PASSWORD_PLAIN, CURRENT_VERSION));
@@ -78,6 +86,7 @@ public class NEG08_ChangeOwnPasswordServiceTest {
         when(accountRepository.findByLogin(LOGIN)).thenReturn(Optional.of(account));
         when(passwordEncoder.matches(OLD_PASSWORD_PLAIN, HASHED_PASSWORD)).thenReturn(true);
         when(passwordEncoder.matches(NEW_PASSWORD_PLAIN, HASHED_PASSWORD)).thenReturn(true);
+        when(versionHashService.hashObjectVersion(account.getId(), account.getVersion())).thenReturn("0");
 
         assertThrows(PasswordSameAsOldException.class, () ->
                 accountService.changeOwnPassword(LOGIN, OLD_PASSWORD_PLAIN, NEW_PASSWORD_PLAIN, CURRENT_VERSION));

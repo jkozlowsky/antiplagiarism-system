@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
@@ -48,6 +49,9 @@ public class AccountServiceChangeOwnEmailTest {
 
     @Mock
     private VersionHashService versionHashService;
+
+    @Mock
+    PostCommitTransactionManager postCommitTransactionManager;
 
     @Mock
     private MokRefreshRepository mokRefreshRepository;
@@ -92,11 +96,7 @@ public class AccountServiceChangeOwnEmailTest {
                 () -> assertEquals("ownemail_tester", savedToken.getUsername()),
                 () -> assertFalse(savedToken.isUsed()),
                 () -> assertNotNull(savedToken.getTokenValue()),
-                () -> verify(emailService, times(1)).sendUrlToChangeOwnEmail(
-                        eq("test@testownemail.com"),
-                        eq("ownemail_tester"),
-                        contains(FRONTEND_URL + "/change-email?token=")
-                )
+                () -> verify(postCommitTransactionManager, times(1)).register(any())
         );
     }
 

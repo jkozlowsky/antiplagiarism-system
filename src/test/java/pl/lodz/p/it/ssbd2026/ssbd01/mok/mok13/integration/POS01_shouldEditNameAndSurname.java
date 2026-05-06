@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok13.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,7 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
         AccountDTO accountDTO = new AccountDTO(
                 null,
                 null,
-                versionHashService.hashObjectVersion(testAccount.getId(), testAccount.getVersion()),
+                null,
                 null,
                 null,
                 null,
@@ -88,7 +89,8 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 objectMapper.writeValueAsString(accountDTO),
                 200,
                 "/api/account/" + testAccount.getId(),
-                new Headers()
+                new Headers(new Header("if-Match",
+                        versionHashService.hashObjectVersion(testAccount.getId(), testAccount.getVersion())))
         );
         AccountWithAccessLevelsDTO result = objectMapper.readValue(response, AccountWithAccessLevelsDTO.class);
         assertAll(

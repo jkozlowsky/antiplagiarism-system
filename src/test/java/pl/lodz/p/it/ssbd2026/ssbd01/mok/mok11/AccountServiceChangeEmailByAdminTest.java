@@ -13,6 +13,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
@@ -34,6 +35,9 @@ public class AccountServiceChangeEmailByAdminTest {
 
     @Mock
     private VersionHashService versionHashService;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -85,6 +89,7 @@ public class AccountServiceChangeEmailByAdminTest {
     public void NEG02_ChangeEmailByAdmin_ShouldThrowConcurrentUpdateException() {
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(versionHashService.hashObjectVersion(accountId, account.getVersion())).thenReturn(validHash);
+
         assertAll(
                 () -> assertThrows(ConcurrentUpdateException.class, () ->
                         accountService.changeEmailByAdmin(accountId, newEmail, invalidHash)),

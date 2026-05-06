@@ -29,7 +29,11 @@ public class RegisterAccountDTO {
     private String login;
 
     @NotBlank(groups = OnCreate.class)
-    @Size(min = 8, groups = OnCreate.class)
-    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$", groups = OnCreate.class)
+    @Size(min = 8, max = 64, groups = OnCreate.class)
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).*$",
+            groups = OnCreate.class,
+            message = "Hasło musi zawierać co najmniej jedną wielką literę i znak specjalny (!@#$%^&*(),.?\":{}|<>)"
+    )
     private String password;
 }

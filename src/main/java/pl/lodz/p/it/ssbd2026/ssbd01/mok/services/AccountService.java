@@ -90,7 +90,8 @@ public class AccountService {
         account.getAccessLevelList().add(studentRole);
 
         accountRepository.saveAndFlush(account);
-        emailService.sendActivationEmail(account.getEmail(), account.getActivationToken());
+        postCommitTransactionManager.register(() ->
+                emailService.sendActivationEmail(account.getEmail(), account.getActivationToken()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -174,7 +175,7 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public void grantAccessLevel(UUID uuid, String accessLevelName, String versionHash) {
+    public AccountWithAccessLevelsDTO grantAccessLevel(UUID uuid, String accessLevelName, String versionHash) {
         Account account = accountRepository.findById(uuid).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(account);
 
@@ -196,11 +197,14 @@ public class AccountService {
                 throw new AccessLevelAlreadyAssignedException();
             } else {
                 existingAccessLevel.setActive(true);
-                accountRepository.saveAndFlush(account);
+                Account saved = accountRepository.saveAndFlush(account);
 
                 postCommitTransactionManager.register(() ->
                         emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
-                return;
+                return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                        saved,
+                        versionHashService.hashObjectVersion(saved.getId(), saved.getVersion())
+                );
             }
         }
 
@@ -216,10 +220,14 @@ public class AccountService {
         newAccessLevel.setActive(true);
 
         account.getAccessLevelList().add(newAccessLevel);
-        accountRepository.saveAndFlush(account);
+        Account saved = accountRepository.saveAndFlush(account);
 
         postCommitTransactionManager.register(() ->
                 emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
+        return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                saved,
+                versionHashService.hashObjectVersion(saved.getId(), saved.getVersion())
+        );
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -271,6 +279,7 @@ public class AccountService {
     )
     public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, String frontendVersionHash) {
         Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+        mokRefreshRepository.refresh(account);
         String expectedVersionHash = hashService.hashObjectVersion(targetAccountId, account.getVersion());
         if (!expectedVersionHash.equals(frontendVersionHash)) {
             throw new ConcurrentUpdateException();
@@ -295,8 +304,8 @@ public class AccountService {
 
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(AccountNotFoundException::new);
-
-        if (!account.getVersion().toString().equals(ifMatch)) {
+        mokRefreshRepository.refresh(account);
+        if (!ifMatch.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
@@ -330,7 +339,8 @@ public class AccountService {
 
         account.setIsBlocked(true);
         accountRepository.saveAndFlush(account);
-        emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin());
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin()));
     }
 
     @MethodCallLogged
@@ -351,7 +361,8 @@ public class AccountService {
 
         account.setIsBlocked(false);
         accountRepository.saveAndFlush(account);
-        emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin());
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin()));
     }
 
     @MethodCallLogged
@@ -373,10 +384,12 @@ public class AccountService {
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
         token.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
         token.setUsed(false);
+
         tokenRepository.saveAndFlush(token);
 
         String changeUrl = frontendUrl + "/change-email?token=" + generateUrl;
-        emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl);
+        postCommitTransactionManager.register(() ->
+                emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl));
     }
 
     @MethodCallLogged
@@ -425,8 +438,6 @@ public class AccountService {
     public AccountWithAccessLevelsDTO updateAccountByLogin(String login, String versionHash, Account source) {
         Account target = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(target);
-        System.out.println(versionHash);
-        System.out.println(versionHashService.hashObjectVersion(target.getId(), target.getVersion()));
         if (!versionHash.equals(versionHashService.hashObjectVersion(target.getId(), target.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -443,7 +454,8 @@ public class AccountService {
     public void changeOtherPassword(UUID id, String newPassword, String ifMatch) {
         Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
 
-        if (!account.getVersion().toString().equals(ifMatch)) {
+        mokRefreshRepository.refresh(account);
+        if (!ifMatch.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
