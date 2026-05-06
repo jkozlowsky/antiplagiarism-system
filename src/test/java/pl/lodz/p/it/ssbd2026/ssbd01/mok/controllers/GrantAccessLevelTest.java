@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
@@ -53,7 +54,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
-        String adminToken = jwtAuthService.generateToken("admin", List.of("ADMINISTRATOR"));
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
         String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));

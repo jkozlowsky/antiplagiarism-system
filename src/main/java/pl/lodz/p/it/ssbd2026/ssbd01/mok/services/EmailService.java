@@ -107,5 +107,25 @@ public class EmailService {
         String magicLink = frontendUrl + "reset-password?token=" + token;
         sendEmail(toAddress, "Password Reset", "Click to reset: " + magicLink);
     }
+
+    @Async
+    public void sendAutoBlockEmail(String toAddress, String login) {
+        String subject = "Powiadomienie - Twoje konto zostało zablokowane";
+        String content = String.format(
+                "Witaj %s,\n\nTwoje konto zostało automatycznie zablokowane na 24 godziny z powodu odnotowania 3 z rzędu nieudanych prób logowania.",
+                login
+        );
+        sendEmail(toAddress, subject, content);
+    }
+
+    @Async
+    public void sendAdminLoginNotification(String toAddress, String login, String ipAddress) {
+        String subject = "Powiadomienie - Nowe logowanie na konto administratora";
+        String content = String.format(
+                "Witaj %s,\n\nOdnotowano nową sesję na Twoim koncie z uprawnieniami Administratora.\nAdres IP: %s",
+                login, ipAddress
+        );
+        sendEmail(toAddress, subject, content);
+    }
 }
 

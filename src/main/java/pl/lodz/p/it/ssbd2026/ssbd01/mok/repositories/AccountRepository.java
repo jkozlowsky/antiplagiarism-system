@@ -47,5 +47,7 @@ public interface AccountRepository extends AbstractRepository<Account> {
     List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
 
     UUID id(UUID id);
+
+    List<Account> findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(Integer failedAttempts, LocalDateTime date);
 }
 

@@ -152,7 +152,7 @@ public class AccountService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) or #login == authentication.name")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
@@ -161,7 +161,13 @@ public class AccountService {
     public Account getAccountByLogin(String login) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(AccountNotFoundException::new);
-        account.getAccessLevelList().isEmpty();
+
+        account.getAccessLevelList().forEach(accessLevel -> {
+            if (accessLevel.getAccessLevelDict() != null) {
+                accessLevel.getAccessLevelDict().getAccessLevelName();
+            }
+        });
+
         return account;
     }
 
@@ -418,7 +424,7 @@ public class AccountService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) or #login == authentication.name")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public AccountWithAccessLevelsDTO updateAccountByLogin(String login, String versionHash, Account source){
         Account target = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);

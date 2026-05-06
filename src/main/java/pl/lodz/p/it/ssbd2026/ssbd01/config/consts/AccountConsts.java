@@ -1,7 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.config.consts;
 
 public class AccountConsts {
-    public static final String ROLE_ADMIN = "ADMINISTRATOR";
+    public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_STUDENT = "STUDENT";
     public static final String ROLE_TEACHER = "TEACHER";
 

@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mok.MOK1;
+package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Header;
