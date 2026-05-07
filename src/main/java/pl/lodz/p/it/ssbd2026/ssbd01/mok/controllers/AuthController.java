@@ -35,7 +35,7 @@ public class AuthController {
     @PostMapping("/check2FA")
     public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
-        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.Auth2F(), requestDTO.login(), ipAddress);
+        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.auth2F(), requestDTO.login(), ipAddress);
         return ResponseEntity.ok(response);
     }
 

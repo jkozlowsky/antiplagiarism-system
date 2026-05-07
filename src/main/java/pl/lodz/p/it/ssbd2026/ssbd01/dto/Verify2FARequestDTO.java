@@ -9,6 +9,6 @@ public record Verify2FARequestDTO(
 
     @NotBlank
     @Pattern(regexp = "^\\d{8}$")
-    String Auth2F
+    String auth2F
 
 ){}
