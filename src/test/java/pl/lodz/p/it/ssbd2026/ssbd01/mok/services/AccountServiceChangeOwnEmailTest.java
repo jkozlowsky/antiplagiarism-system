@@ -20,6 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.InvalidCredentialsProvidedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.EmailRevertTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
@@ -55,6 +56,9 @@ public class AccountServiceChangeOwnEmailTest {
 
     @Mock
     private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private EmailRevertTokenRepository revertTokenRepository;
 
     @InjectMocks
     private AccountService accountService;
