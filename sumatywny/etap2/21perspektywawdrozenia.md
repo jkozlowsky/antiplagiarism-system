@@ -1,9 +1,13 @@
 
 ## 2.1. Szczegółowy diagram perspektywy wdrożenia
 
+![Diagram perspektywy wdrożenia](/etap2/img/DiagramPerspektywyWdrozenia.drawio.png)
+
+Rys 2.1.1 Diagram perspektywy wdrożenia.
+
 ### Konteksty przetwarzania danych
 
-Prezentowany powyżej diagram przedstawia szczegółową architekturę wdrożeniową systemu, opartą na środowisku kontenerowym Docker. Zgodnie z wymaganiami projektowymi, na schemacie wyraźnie zaznaczono granicę pomiędzy dwoma głównymi kontekstami przetwarzania danych:
+Prezentowany powyżej diagram, Rys 2.1.1, przedstawia szczegółową architekturę wdrożeniową systemu, opartą na środowisku kontenerowym Docker. Zgodnie z wymaganiami projektowymi, na schemacie wyraźnie zaznaczono granicę pomiędzy dwoma głównymi kontekstami przetwarzania danych:
 
 #### Infrastruktura Klienta 
 Obejmuje zasoby uruchamiane i wykonywane w systemie operacyjnym kontrolowanym przez użytkownika końcowego. Składa się z urządzenia klienta oraz działającej na nim przeglądarki internetowej. To właśnie w tym środowisku uruchomieniowym (po stronie klienta) wykonywana jest pobrana instancja aplikacji jednostronicowej (SPA), stanowiąca interfejs użytkownika.
