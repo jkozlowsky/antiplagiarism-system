@@ -12,12 +12,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 public class RegisterAccountDTO {
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "validation.name.pattern")
+    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "{validation.name.pattern}")
     private String name;
 
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "validation.surname.pattern")
+    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "{validation.surname.pattern}")
     private String surname;
 
     @NotBlank(groups = OnCreate.class)
@@ -26,16 +26,16 @@ public class RegisterAccountDTO {
 
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", groups = OnCreate.class, message = "validation.login.pattern")
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", groups = OnCreate.class, message = "{validation.login.pattern}")
     private String login;
 
     @ToString.Exclude
     @NotBlank(groups = OnCreate.class)
-    @Size(min = 8, max = 64, groups = OnCreate.class)
+    @Size(min = 12, max = 64, groups = OnCreate.class)
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).*$",
             groups = OnCreate.class,
-            message = "validation.password.complex"
+            message = "{validation.password.complex}"
     )
     private String password;
 }

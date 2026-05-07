@@ -84,9 +84,9 @@ public class AccountServiceChangeOwnEmailTest {
     @DisplayName("Test successful work of own email change function - create url")
     void POS01_changeOwnEmailUnit() {
         when(accountRepository.findByLogin("ownemail_tester")).thenReturn(Optional.of(testAccount));
-        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
+//        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
 
-        accountService.createUrlOwnEmailChange("ownemail_tester", validHash);
+        accountService.createUrlOwnEmailChange("ownemail_tester");
 
         ArgumentCaptor<OneTimeTokenEnt> tokenCaptor = ArgumentCaptor.forClass(OneTimeTokenEnt.class);
         verify(tokenRepository, times(1)).saveAndFlush(tokenCaptor.capture());
@@ -139,7 +139,7 @@ public class AccountServiceChangeOwnEmailTest {
         when(accountRepository.findByLogin("no_existing_user")).thenReturn(Optional.empty());
 
         assertAll(
-                () -> assertThrows(AccountNotFoundException.class, () -> accountService.createUrlOwnEmailChange("no_existing_user", validHash)),
+                () -> assertThrows(AccountNotFoundException.class, () -> accountService.createUrlOwnEmailChange("no_existing_user")),
                 () -> verifyNoInteractions(tokenRepository),
                 () -> verifyNoInteractions(emailService)
         );
@@ -186,16 +186,17 @@ public class AccountServiceChangeOwnEmailTest {
         );
     }
 
-    @Test
-    @DisplayName("Test create url function if optimistic lock fails")
-    void NEG04_changeOwnEmailUnit() {
-        when(accountRepository.findByLogin("ownemail_tester")).thenReturn(Optional.of(testAccount));
-        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
 
-        assertAll(
-                () -> assertThrows(ConcurrentUpdateException.class, () -> accountService.createUrlOwnEmailChange("ownemail_tester", "invalid-hash")),
-                () -> verifyNoInteractions(tokenRepository),
-                () -> verifyNoInteractions(emailService)
-        );
-    }
+//    @Test
+//    @DisplayName("Test create url function if optimistic lock fails")
+//    void NEG04_changeOwnEmailUnit() {
+//        when(accountRepository.findByLogin("ownemail_tester")).thenReturn(Optional.of(testAccount));
+//        when(versionHashService.hashObjectVersion(accountId, testAccount.getVersion())).thenReturn(validHash);
+//
+//        assertAll(
+//                () -> assertThrows(ConcurrentUpdateException.class, () -> accountService.createUrlOwnEmailChange("ownemail_tester")),
+//                () -> verifyNoInteractions(tokenRepository),
+//                () -> verifyNoInteractions(emailService)
+//        );
+//    }
 }

@@ -25,7 +25,7 @@ public record AccountDTO(
         @Size(min = 12, groups = OnCreate.class)
         @Pattern(
                 regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-                message = "validation.password.pattern",
+                message = "{validation.password.pattern}",
                 groups = OnCreate.class
         )
         String password,

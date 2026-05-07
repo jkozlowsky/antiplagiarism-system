@@ -303,7 +303,7 @@ public class AccountService {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @Transactional(propagation = Propagation.MANDATORY,
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
             readOnly = false,
             transactionManager = "mokTransactionManager")
     @Retryable(
@@ -379,14 +379,14 @@ public class AccountService {
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void createUrlOwnEmailChange(String login, String versionHash) {
+    public void createUrlOwnEmailChange(String login) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException());
 
-        mokRefreshRepository.refresh(account);
-        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
-            throw new ConcurrentUpdateException();
-        }
+//        mokRefreshRepository.refresh(account);
+//        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
+//            throw new ConcurrentUpdateException();
+//        }
 
         String generateUrl = UUID.randomUUID().toString();
         OneTimeTokenEnt token = new OneTimeTokenEnt();
@@ -461,7 +461,7 @@ public class AccountService {
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
-    @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void changeOtherPassword(UUID id, String newPassword, String ifMatch) {
         Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
 

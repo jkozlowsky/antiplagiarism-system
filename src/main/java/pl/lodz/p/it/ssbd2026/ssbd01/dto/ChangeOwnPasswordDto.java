@@ -11,14 +11,14 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 @NoArgsConstructor
 public class ChangeOwnPasswordDto {
 
-    @NotBlank(message = "error.old.password.blank")
+    @NotBlank(message = "{error.old.password.blank}")
     private String oldPassword;
 
-    @Size(min = 12, message = "error.password.too.short")
-    @NotBlank(message = "error.new.password.blank")
+    @Size(min = 12, message = "{error.password.too.short}")
+    @NotBlank(message = "{error.new.password.blank}")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-            message = "validation.password.pattern",
+            message = "{validation.password.pattern}",
             groups = OnCreate.class
     )
     private String newPassword;
