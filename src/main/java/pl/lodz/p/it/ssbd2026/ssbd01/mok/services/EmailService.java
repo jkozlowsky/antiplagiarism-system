@@ -86,7 +86,7 @@ public class EmailService {
     }
 
     public void sendResetPasswordEmail(String toAddress, String token, String langCode) {
-        String magicLink = frontendUrl + "reset-password?token=" + token;
+        String magicLink = frontendUrl + "/reset-password?token=" + token;
         String subject = translator.translateForUser("email.password.reset.subject", langCode);
         String content = translator.translateForUser("email.password.reset.content", langCode, magicLink);
         sendEmail(toAddress, subject, content);
