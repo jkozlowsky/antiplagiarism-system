@@ -53,6 +53,7 @@ public class AccountService {
     private final OneTimeTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final VersionHashService hashService;
+    private final EmailRevertTokenRepository revertTokenRepository;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -410,22 +411,69 @@ public class AccountService {
 
         OneTimeTokenEnt tokenEntity = tokenRepository
                 .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.OWN_EMAIL_CHANGE, LocalDateTime.now())
-                .orElseThrow(() -> new OneTimeTokenInvalidException());
+                .orElseThrow(OneTimeTokenInvalidException::new);
 
         Account account = accountRepository.findByLogin(tokenEntity.getUsername())
-                .orElseThrow(() -> new AccountNotFoundException());
+                .orElseThrow(AccountNotFoundException::new);
 
         if (!passwordEncoder.matches(password, account.getPasswordHash())) {
             throw new InvalidCredentialsProvidedException();
         }
 
+        String oldEmail = account.getEmail();
         account.setEmail(newEmail);
         tokenEntity.setUsed(true);
-        tokenEntity.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
 
+        String revertUrlToken = UUID.randomUUID().toString();
+        EmailRevertTokenEnt revertToken = new EmailRevertTokenEnt();
+        revertToken.setTokenValue(revertUrlToken);
+        revertToken.setUsername(account.getLogin());
+        revertToken.setOldEmail(oldEmail);
+        revertToken.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
+        revertToken.setUsed(false);
 
         accountRepository.saveAndFlush(account);
         tokenRepository.saveAndFlush(tokenEntity);
+        revertTokenRepository.saveAndFlush(revertToken);
+
+        String revertUrl = frontendUrl + "/revert-email?token=" + revertUrlToken;
+        postCommitTransactionManager.register(() ->
+                emailService.sendComebackEmailAddressLink(oldEmail, account.getLogin(), newEmail, revertUrl, account.getLanguageVersion().getLanguage()));
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void revertEmailChange(String token) {
+        EmailRevertTokenEnt revertToken = revertTokenRepository.findByTokenValue(token)
+                .orElseThrow(OneTimeTokenInvalidException::new);
+
+        if (revertToken.isUsed() || revertToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new OneTimeTokenInvalidException();
+        }
+
+        Account account = accountRepository.findByLogin(revertToken.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
+
+        account.setEmail(revertToken.getOldEmail());
+        revertToken.setUsed(true);
+
+        accountRepository.saveAndFlush(account);
+        revertTokenRepository.saveAndFlush(revertToken);
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void resendUrlOwnEmailChange(String login) {
+        tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(login, OneTimeTokenType.OWN_EMAIL_CHANGE)
+                .forEach(token -> {
+                    token.setUsed(true);
+                    tokenRepository.save(token);
+                });
+
+        tokenRepository.flush();
+        createUrlOwnEmailChange(login);
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")

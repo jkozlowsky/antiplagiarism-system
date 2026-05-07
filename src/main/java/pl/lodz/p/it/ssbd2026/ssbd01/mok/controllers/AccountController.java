@@ -186,6 +186,19 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/email/change/resend")
+    public ResponseEntity<Void> resendEmailChangeRequest(Authentication authentication) {
+        String login = authentication.getName();
+        accountService.resendUrlOwnEmailChange(login);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/email/revert")
+    public ResponseEntity<Void> revertEmailChange(@RequestParam String token) {
+        accountService.revertEmailChange(token);
+        return ResponseEntity.ok().build();
+    }
+
     @PatchMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateOtherAccount(
