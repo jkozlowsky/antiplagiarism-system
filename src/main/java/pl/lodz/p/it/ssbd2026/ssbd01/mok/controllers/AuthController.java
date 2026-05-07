@@ -41,7 +41,7 @@ public class AuthController {
                                                          HttpServletRequest request,
                                                          @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = "pl") String langHeader) {
         String ipAddress = request.getRemoteAddr();
-        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.Auth2F(), requestDTO.login(), ipAddress, langHeader);
+        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.auth2F(), requestDTO.login(), ipAddress, langHeader);
         return ResponseEntity.ok(response);
     }
 
