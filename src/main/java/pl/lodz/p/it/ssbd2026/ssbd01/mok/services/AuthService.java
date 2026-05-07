@@ -1,6 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +41,8 @@ import java.util.Optional;
 @MethodCallLogged
 public class AuthService {
 
+    @Value("${google.client.id}")
+    private String googleClientId;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthService jwtAuthService;
@@ -43,6 +51,49 @@ public class AuthService {
     private final TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
     private final OneTimeTokenRepository tokenRepository;
     private final LanguageDictRepository languageDictRepository;
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public AuthResponseDTO authenticateWithGoogle(String idTokenString, String ipAddress) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+
+            if (idToken == null) {
+                throw new InvalidCredentialsProvidedException();
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+
+            Account account = accountRepository.findByEmail(email)
+                    .orElseThrow(AccountNotFoundException::new);
+
+            if (account.getIsBlocked()) {
+                throw new AccountIsBlockedException();
+            }
+
+            List<String> roles = account.getAccessLevelList().stream()
+                    .filter(AccessLevel::getActive)
+                    .map(al -> al.getAccessLevelDict().getAccessLevelName())
+                    .toList();
+
+            account.setFailedAttempts(0);
+            account.setLastSuccessfulLoginIp(ipAddress);
+            account.setLastLoginSuccessDateTime(LocalDateTime.now());
+            accountRepository.saveAndFlush(account);
+
+            String token = jwtAuthService.generateToken(account.getLogin(), roles);
+            String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+
+            return new AuthResponseDTO(token, refreshToken);
+
+        } catch (Exception e) {
+            throw new InvalidCredentialsProvidedException();
+        }
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
     @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
@@ -78,9 +129,9 @@ public class AuthService {
 
         if (tokenOpt.isEmpty()) {
             Account account = accountRepository.findByLogin(login)
-                    .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+                    .orElseThrow(OneTimeTokenInvalidException::new);
             handleFailedLogin(account, ipAddress);
-            throw new OneTimeTokenInvalidException("Token is invalid");
+            throw new OneTimeTokenInvalidException();
         }
 
         OneTimeTokenEnt tokenEntity = tokenOpt.get();
