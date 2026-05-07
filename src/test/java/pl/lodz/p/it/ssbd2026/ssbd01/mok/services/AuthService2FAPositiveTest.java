@@ -13,13 +13,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGen
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AuthResponseDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.time.LocalDateTime;
@@ -50,7 +46,8 @@ class AuthService2FAPositiveTest {
     private TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
     @Mock
     private OneTimeTokenRepository tokenRepository;
-
+    @Mock
+    private LanguageDictRepository languageDictRepository;
     @InjectMocks
     private AuthService authService;
 
@@ -60,7 +57,11 @@ class AuthService2FAPositiveTest {
 
     @BeforeEach
     void setUp() {
+        LanguageDict langDict = new LanguageDict();
+        langDict.setLanguage("pl");
+
         testAccount = new Account();
+        testAccount.setLanguageVersion(langDict);
         testAccount.setLogin("testUser");
         testAccount.setPasswordHash("hashedPassword");
         testAccount.setEmail("test@example.com");
@@ -101,7 +102,7 @@ class AuthService2FAPositiveTest {
         assertFalse(savedToken.isUsed());
         assertNotNull(savedToken.getTokenValue());
 
-        verify(emailService, times(1)).send2FAuthEmail(OTP_CODE, testAccount.getEmail());
+        verify(emailService, times(1)).send2FAuthEmail(eq(OTP_CODE), eq(testAccount.getEmail()), any());
     }
 
     @Test
@@ -121,7 +122,7 @@ class AuthService2FAPositiveTest {
         when(jwtAuthService.generateToken(eq(testAccount.getLogin()), anyList())).thenReturn("accessToken123");
         when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList())).thenReturn("refreshToken123");
 
-        AuthResponseDTO response = authService.verify2FactorCode(OTP_CODE, testAccount.getLogin(), IP_ADDRESS);
+        AuthResponseDTO response = authService.verify2FactorCode(OTP_CODE, testAccount.getLogin(), IP_ADDRESS, "en");
 
         assertNotNull(response);
         assertEquals("accessToken123", response.token());

@@ -13,8 +13,8 @@ public record ConfirmResetDto(
         @NotBlank(groups = OnCreate.class)
         @NotNull(groups = OnCreate.class)
         @Pattern(
-                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-                message = "Hasło musi zawierać co najmniej jedną małą literę, jedną dużą literę i jedną cyfrę",
+                regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).*$",
+                message = "validation.password.complex",
                 groups = OnCreate.class
         )
         String newPassword

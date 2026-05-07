@@ -15,7 +15,7 @@ public class ChangeOtherPasswordDto {
     @NotBlank(message = "error.new.password.blank")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-            message = "Hasło musi zawierać co najmniej jedną małą literę, jedną dużą literę i jedną cyfrę",
+            message = "validation.password.pattern",
             groups = OnCreate.class
     )
     private String newPassword;

@@ -10,7 +10,7 @@ public class AccountNotFoundException extends AppBaseException {
     }
 
     public AccountNotFoundException() {
-        super(HttpStatus.NOT_FOUND, "Account not found");
+        super(HttpStatus.NOT_FOUND, "error.account.not.found");
     }
 
     protected AccountNotFoundException(String reason, Throwable cause) {
@@ -18,6 +18,6 @@ public class AccountNotFoundException extends AppBaseException {
     }
 
     public AccountNotFoundException(Throwable cause) {
-        super(HttpStatus.NOT_FOUND, "Account not found", cause);
+        super(HttpStatus.NOT_FOUND, "error.account.not.found", cause);
     }
 }

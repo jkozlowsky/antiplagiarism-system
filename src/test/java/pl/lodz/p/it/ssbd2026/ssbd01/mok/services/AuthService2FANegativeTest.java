@@ -10,14 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.time.LocalDateTime;
@@ -44,7 +40,8 @@ class AuthService2FANegativeTest {
     private OneTimeTokenRepository tokenRepository;
     @Mock
     private TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
-
+    @Mock
+    private LanguageDictRepository languageDictRepository;
     @InjectMocks
     private AuthService authService;
 
@@ -53,7 +50,10 @@ class AuthService2FANegativeTest {
 
     @BeforeEach
     void setUp() {
+        LanguageDict langDict = new LanguageDict();
+        langDict.setLanguage("pl");
         testAccount = new Account();
+        testAccount.setLanguageVersion(langDict);
         testAccount.setLogin("testUser");
         testAccount.setPasswordHash("hashedPassword");
         testAccount.setEmail("test@example.com");
@@ -123,7 +123,7 @@ class AuthService2FANegativeTest {
         assertEquals(3, testAccount.getFailedAttempts());
         assertTrue(testAccount.getIsBlocked());
         verify(accountRepository, times(1)).saveAndFlush(testAccount);
-        verify(emailService, times(1)).sendAutoBlockEmail(testAccount.getEmail(), testAccount.getLogin());
+        verify(emailService, times(1)).sendAutoBlockEmail(eq(testAccount.getEmail()), eq(testAccount.getLogin()), anyString());
     }
 
     @Test
@@ -135,7 +135,7 @@ class AuthService2FANegativeTest {
         when(accountRepository.findByLogin(testAccount.getLogin())).thenReturn(Optional.of(testAccount));
 
         assertThrows(OneTimeTokenInvalidException.class, () ->
-                authService.verify2FactorCode("invalidOTP", testAccount.getLogin(), IP_ADDRESS)
+                authService.verify2FactorCode("invalidOTP", testAccount.getLogin(), IP_ADDRESS, "en")
         );
 
         assertEquals(1, testAccount.getFailedAttempts());

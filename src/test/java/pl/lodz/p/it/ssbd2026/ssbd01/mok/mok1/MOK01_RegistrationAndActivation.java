@@ -20,6 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,7 +78,7 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
             return savedAccount.getActivationToken();
         });
 
-        verify(emailService, times(1)).sendActivationEmail(eq("jan.testowy.api@example.com"), eq(token));
+        verify(emailService, times(1)).sendActivationEmail(eq("jan.testowy.api@example.com"), eq(token), any());
 
         String activationUrl = "/api/account/activate?token=" + token;
         requestFunctions.sendPostRequest("", 200, activationUrl, headers);
@@ -117,7 +118,7 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
 
         accountScheduler.processInactiveAccounts();
 
-        verify(emailService, times(1)).sendActivationReminderEmail(eq("reminder@example.com"), eq(token));
+        verify(emailService, times(1)).sendActivationReminderEmail(eq("reminder@example.com"), eq(token), any());
 
         txTemplate.executeWithoutResult(status -> {
             Account updatedAccount = accountTestRepository.findByLogin("reminder123").get();
@@ -151,7 +152,7 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
 
         accountScheduler.processInactiveAccounts();
 
-        verify(emailService, times(1)).sendAccountDeletedEmail(eq("delete@example.com"));
+        verify(emailService, times(1)).sendAccountDeletedEmail(eq("delete@example.com"), any());
 
         txTemplate.executeWithoutResult(status -> {
             assertTrue(accountTestRepository.findByLogin("delete123").isEmpty(), "Konto powinno zostać fizycznie usunięte z bazy danych");

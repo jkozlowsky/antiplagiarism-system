@@ -6,10 +6,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 public class AccessLevelDictNotFoundException extends AppBaseException {
 
     public AccessLevelDictNotFoundException() {
-        super(HttpStatus.CONFLICT, "Invalid access level name provided");
+        super(HttpStatus.CONFLICT, "error.accesslevel.dict.not.found");
     }
 
     public AccessLevelDictNotFoundException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Invalid access level name provided", cause);
+        super(HttpStatus.CONFLICT, "error.accesslevel.dict.not.found", cause);
     }
 }

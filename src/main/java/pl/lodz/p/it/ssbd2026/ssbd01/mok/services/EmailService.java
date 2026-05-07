@@ -6,6 +6,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.i18n.Translator;
+
 
 @RequiredArgsConstructor
 @Service
@@ -14,6 +16,8 @@ public class EmailService {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    private final Translator translator;
 
     public void sendEmail(String toAddress, String subject, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -25,117 +29,88 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendActivationEmail(String toAddress, String token) {
-        String subject = "Aktywacja konta";
-        String content = String.format("Kliknij w link aby aktywować: %s/activate?token=%s", frontendUrl, token);
+    public void sendActivationEmail(String toAddress, String token, String langCode) {
+        String subject = translator.translateForUser("email.activation.subject", langCode);
+        String content = translator.translateForUser("email.activation.content", langCode, frontendUrl, token);
         sendEmail(toAddress, subject, content);
     }
 
-    public void sendActivationReminderEmail(String toAddress, String token) {
-        String subject = "Przypomnienie o aktywacji";
-        String content = String.format("Minęło 12h. Prosimy o aktywację: %s/activate?token=%s", frontendUrl, token);
+    public void sendActivationReminderEmail(String toAddress, String token, String langCode) {
+        String subject = translator.translateForUser("email.activation.reminder.subject", langCode);
+        String content = translator.translateForUser("email.activation.reminder.content", langCode, frontendUrl, token);
         sendEmail(toAddress, subject, content);
     }
 
-    public void sendAccountDeletedEmail(String toAddress) {
-        String subject = "Konto usunięte";
-        String content = "Twoje konto zostało usunięte z powodu braku aktywacji w ciągu 24h.";
-        sendEmail(toAddress, subject, content);
-    }
-
-    @Async
-    public void sendEmailAddressChangedByAdmin(String toAddress) {
-        String mailSubject = "Your email address has been changed by administrator.";
-        String mailBody = "Hello," +
-                ",\n\nWe are writing to inform you that an administrator has updated your email address.\n" +
-                "If you did not request this change, please contact the administrator immediately.\n\n" +
-                "Best regards,\n"; //+ "Donose60"
-
-        sendEmail(toAddress, mailSubject, mailBody);
-    }
-
-    public void sendAccountIsBlockedInfo(String toAddress, String login) {
-        String subject = "Notification - Your account has been blocked";
-        String content = String.format(
-                "Hello %s,\n\nYour account has been blocked. For more information contact administrator.",
-                login
-        );
-
-        sendEmail(toAddress, subject, content);
-    }
-
-    public void sendAccountIsUnblockedInfo(String toAddress, String login) {
-        String subject = "Notification - Your account has been unblocked";
-        String content = String.format(
-                "Hello %s,\n\nYour account has been unblocked. You can now log into your account again.",
-                login
-        );
-
-        sendEmail(toAddress, subject, content);
-    }
-
-    public void sendUrlToChangeOwnEmail(String toAddress, String login, String url) {
-        String subject = "Notification - You have requested an email change";
-        String content = String.format(
-                "Hello %s,\n\nYou have requested an email change.\nPlease click the link below to confirm the change:\n%s\n\n",
-                login, url
-        );
-
+    public void sendAccountDeletedEmail(String toAddress, String langCode) {
+        String subject = translator.translateForUser("email.account.deleted.subject", langCode);
+        String content = translator.translateForUser("email.account.deleted.content", langCode);
         sendEmail(toAddress, subject, content);
     }
 
     @Async
-    public void sendAccessLevelRevokedInfo(String toAddress, String login, String accessLevelName) {
-        String subject = "Notification - Access Level Revoked";
-        String content = String.format(
-                "Hello %s,\n\nWe are writing to inform you that your access level has been revoked: %s.",
-                login, accessLevelName
-        );
+    public void sendEmailAddressChangedByAdmin(String toAddress, String langCode) {
+        String subject = translator.translateForUser("email.email.changed.subject", langCode);
+        String content = translator.translateForUser("email.email.changed.content", langCode);
         sendEmail(toAddress, subject, content);
     }
 
-    public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName) {
-        String subject = "Notification - Access Level Granted";
-        String content = String.format(
-                "Hello %s,\n\nWe are writing to inform you that you have received a new access level: %s.",
-                login, accessLevelName
-        );
+    public void sendAccountIsBlockedInfo(String toAddress, String login, String langCode) {
+        String subject = translator.translateForUser("email.account.blocked.subject", langCode);
+        String content = translator.translateForUser("email.account.blocked.content", langCode, login);
         sendEmail(toAddress, subject, content);
     }
 
-    public void sendResetPasswordEmail(String toAddress, String token){
+    public void sendAccountIsUnblockedInfo(String toAddress, String login, String langCode) {
+        String subject = translator.translateForUser("email.account.unblocked.subject", langCode);
+        String content = translator.translateForUser("email.account.unblocked.content", langCode, login);
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendUrlToChangeOwnEmail(String toAddress, String login, String url, String langCode) {
+        String subject = translator.translateForUser("email.email.change.request.subject", langCode);
+        String content = translator.translateForUser("email.email.change.request.content", langCode, login, url);
+        sendEmail(toAddress, subject, content);
+    }
+
+    @Async
+    public void sendAccessLevelRevokedInfo(String toAddress, String login, String accessLevelName, String langCode) {
+        String subject = translator.translateForUser("email.accesslevel.revoked.subject", langCode);
+        String content = translator.translateForUser("email.accesslevel.revoked.content", langCode, login, accessLevelName);
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName, String langCode) {
+        String subject = translator.translateForUser("email.accesslevel.granted.subject", langCode);
+        String content = translator.translateForUser("email.accesslevel.granted.content", langCode, login, accessLevelName);
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendResetPasswordEmail(String toAddress, String token, String langCode) {
         String magicLink = frontendUrl + "reset-password?token=" + token;
-        sendEmail(toAddress, "Password Reset", "Click to reset: " + magicLink);
-    }
-
-    @Async
-    public void sendAutoBlockEmail(String toAddress, String login) {
-        String subject = "Powiadomienie - Twoje konto zostało zablokowane";
-        String content = String.format(
-                "Witaj %s,\n\nTwoje konto zostało automatycznie zablokowane na 24 godziny z powodu odnotowania 3 z rzędu nieudanych prób logowania.",
-                login
-        );
+        String subject = translator.translateForUser("email.password.reset.subject", langCode);
+        String content = translator.translateForUser("email.password.reset.content", langCode, magicLink);
         sendEmail(toAddress, subject, content);
     }
 
     @Async
-    public void sendAdminLoginNotification(String toAddress, String login, String ipAddress) {
-        String subject = "Powiadomienie - Nowe logowanie na konto administratora";
-        String content = String.format(
-                "Witaj %s,\n\nOdnotowano nową sesję na Twoim koncie z uprawnieniami Administratora.\nAdres IP: %s",
-                login, ipAddress
-        );
+    public void sendAutoBlockEmail(String toAddress, String login, String langCode) {
+        String subject = translator.translateForUser("email.autoblock.subject", langCode);
+        String content = translator.translateForUser("email.autoblock.content", langCode, login);
         sendEmail(toAddress, subject, content);
     }
 
     @Async
-    public void send2FAuthEmail (String Auth2F, String toAddres){
+    public void sendAdminLoginNotification(String toAddress, String login, String ipAddress, String langCode) {
+        String subject = translator.translateForUser("email.admin.login.subject", langCode);
+        String content = translator.translateForUser("email.admin.login.content", langCode, login, ipAddress);
+        sendEmail(toAddress, subject, content);
+    }
 
-        String mailSubject = "Code - Two Factor Authentication";
-        String content = "Your 2FA verification code is: \n" + Auth2F +
-                "\n The code will expire in 5 minutes";
-
-        sendEmail(toAddres, mailSubject, content);
+    @Async
+    public void send2FAuthEmail(String Auth2F, String toAddres, String langCode) {
+        String subject = translator.translateForUser("email.2fa.subject", langCode);
+        String content = translator.translateForUser("email.2fa.content", langCode, Auth2F);
+        sendEmail(toAddres, subject, content);
     }
 
 }

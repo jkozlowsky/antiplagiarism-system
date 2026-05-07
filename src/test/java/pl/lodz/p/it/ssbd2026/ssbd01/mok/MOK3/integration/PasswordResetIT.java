@@ -80,7 +80,7 @@ public class PasswordResetIT extends BaseTestSetup {
                 new Headers()
         );
 
-        verify(emailService).sendResetPasswordEmail(eq(testEmail), anyString());
+        verify(emailService).sendResetPasswordEmail(eq(testEmail), anyString(), any());
     }
 
     @Test
@@ -97,12 +97,12 @@ public class PasswordResetIT extends BaseTestSetup {
         );
 
         ArgumentCaptor<String> emailBodyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(emailService).sendResetPasswordEmail(eq(testEmail), emailBodyCaptor.capture());
+        verify(emailService).sendResetPasswordEmail(eq(testEmail), emailBodyCaptor.capture(), any());
 
 
         String rawToken = emailBodyCaptor.getValue();
 
-        ConfirmResetDto confirmDto = new ConfirmResetDto(rawToken, "new_secure_passworD123");
+        ConfirmResetDto confirmDto = new ConfirmResetDto(rawToken, "new_secure_passworD123.");
         String responseBody = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(confirmDto),
                 200,

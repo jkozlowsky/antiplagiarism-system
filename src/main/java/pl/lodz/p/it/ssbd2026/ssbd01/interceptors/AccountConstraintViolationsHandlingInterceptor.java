@@ -24,9 +24,9 @@ public class AccountConstraintViolationsHandlingInterceptor {
         String errorMessage = dive.getMessage();
 
         if (errorMessage != null && errorMessage.contains(Account.UNIQUE_LOGIN_INDEX_NAME)) {
-            throw new AccountConstraintViolationException("Account with the given login already exists.");
+            throw new AccountConstraintViolationException("error.account.login.exists");
         } else if (errorMessage != null && errorMessage.contains(Account.UNIQUE_EMAIL_INDEX_NAME)) {
-            throw new AccountConstraintViolationException("Account with the given email already exists.");
+            throw new AccountConstraintViolationException("error.account.email.exists");
         } else {
             throw new AccountConstraintViolationException(dive);
         }

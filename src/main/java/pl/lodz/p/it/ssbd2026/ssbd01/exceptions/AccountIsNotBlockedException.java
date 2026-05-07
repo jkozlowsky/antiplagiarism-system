@@ -9,10 +9,10 @@ import org.springframework.http.HttpStatus;
 public class AccountIsNotBlockedException extends AppBaseException {
 
     public AccountIsNotBlockedException() {
-        super(HttpStatus.CONFLICT, "Account is not blocked");
+        super(HttpStatus.CONFLICT, "error.account.not.blocked");
     }
 
     public AccountIsNotBlockedException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Account is not blocked", cause);
+        super(HttpStatus.CONFLICT, "error.account.not.blocked", cause);
     }
 }

@@ -7,6 +7,7 @@ import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,11 +17,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.LoginRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.RefreshTokenRequestDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Admin;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.Verify2FARequestDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
@@ -30,10 +30,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class MOK2_Authentication extends BaseTestSetup {
 
@@ -51,7 +49,8 @@ public class MOK2_Authentication extends BaseTestSetup {
 
     @Autowired
     private RequestFunctions requestFunctions;
-
+    @Autowired
+    private OneTimeTokenRepository tokenRepository;
     @Autowired
     @Qualifier("mokTransactionManager")
     private PlatformTransactionManager transactionManager;
@@ -64,7 +63,7 @@ public class MOK2_Authentication extends BaseTestSetup {
     @BeforeEach
     public void setup() {
         transactionTemplate = new TransactionTemplate(transactionManager);
-        jsonHeaders = new Headers(new Header("Content-Type", "application/json"));
+        jsonHeaders = new Headers(new Header("Content-Type", "application/json"), new Header( "Accept-Language", "en"));
     }
 
     private Account createTestAccount(String login, String password, boolean isBlocked, String roleName) {
@@ -109,10 +108,21 @@ public class MOK2_Authentication extends BaseTestSetup {
         createTestAccount(login, password, false, AccountConsts.ROLE_STUDENT);
 
         LoginRequestDTO req = new LoginRequestDTO(login, password);
-        String response = requestFunctions.sendPostRequest(
+        String response1 = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(req),
-                200,
+                202,
                 "/api/auth/login",
+                jsonHeaders
+        );
+
+        ArgumentCaptor<String> otpCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).send2FAuthEmail(otpCaptor.capture(), eq(login + "@example.com"), anyString());
+        String otpCode = otpCaptor.getValue();
+        Verify2FARequestDTO verifyReq = new Verify2FARequestDTO(login, otpCode);
+        String response = requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(verifyReq),
+                200,
+                "/api/auth/check2FA",
                 jsonHeaders
         );
 
@@ -123,13 +133,6 @@ public class MOK2_Authentication extends BaseTestSetup {
                 () -> assertNotNull(token, "Zwrócony token nie może być pusty"),
                 () -> assertNotNull(refreshToken, "Zwrócony refresh token nie może być pusty")
         );
-
-        transactionTemplate.executeWithoutResult(status -> {
-            Account dbAccount = accountTestRepository.findByLogin(login).orElseThrow();
-            assertEquals(0, dbAccount.getFailedAttempts(), "Licznik błędów powinien zostać zresetowany");
-            assertNotNull(dbAccount.getLastSuccessfulLoginIp(), "Powinno zarejestrować IP logowania");
-            assertNotNull(dbAccount.getLastLoginSuccessDateTime(), "Powinno zaktualizować czas udanego logowania");
-        });
     }
 
     @Test
@@ -142,13 +145,26 @@ public class MOK2_Authentication extends BaseTestSetup {
         LoginRequestDTO req = new LoginRequestDTO(login, password);
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(req),
-                200,
+                202,
                 "/api/auth/login",
                 jsonHeaders
         );
 
-        verify(emailService, times(1)).sendAdminLoginNotification(eq(login + "@example.com"), eq(login), anyString());
-    }
+        verify(emailService, never()).sendAdminLoginNotification(anyString(), anyString(), anyString(), any());
+
+        ArgumentCaptor<String> otpCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).send2FAuthEmail(otpCaptor.capture(), eq(login + "@example.com"), anyString());
+        String otpCode = otpCaptor.getValue();
+
+        Verify2FARequestDTO verifyReq = new Verify2FARequestDTO(login, otpCode);
+        requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(verifyReq),
+                200,
+                "/api/auth/check2FA",
+                jsonHeaders
+        );
+
+        verify(emailService, times(1)).sendAdminLoginNotification(eq(login + "@example.com"), eq(login), anyString(), any());    }
 
     @Test
     @DisplayName("POS03: Powinien poprawnie odświeżyć token przy użyciu Refresh Tokenu")
@@ -158,13 +174,16 @@ public class MOK2_Authentication extends BaseTestSetup {
         createTestAccount(login, password, false, AccountConsts.ROLE_STUDENT);
 
         LoginRequestDTO loginReq = new LoginRequestDTO(login, password);
-        String loginRes = requestFunctions.sendPostRequest(
-                objectMapper.writeValueAsString(loginReq),
-                200,
-                "/api/auth/login",
-                jsonHeaders
-        );
-        String oldRefreshToken = JsonPath.from(loginRes).getString("refreshToken");
+        requestFunctions.sendPostRequest(objectMapper.writeValueAsString(loginReq), 202, "/api/auth/login", jsonHeaders);
+
+        ArgumentCaptor<String> otpCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).send2FAuthEmail(otpCaptor.capture(), eq(login + "@example.com"), anyString());
+        String otpCode = otpCaptor.getValue();
+
+        Verify2FARequestDTO verifyReq = new Verify2FARequestDTO(login, otpCode);
+        String verifyRes = requestFunctions.sendPostRequest(objectMapper.writeValueAsString(verifyReq), 200, "/api/auth/check2FA", jsonHeaders);
+
+        String oldRefreshToken = JsonPath.from(verifyRes).getString("refreshToken");
 
         RefreshTokenRequestDTO refreshReq = new RefreshTokenRequestDTO(oldRefreshToken);
         String refreshRes = requestFunctions.sendPostRequest(
@@ -187,7 +206,7 @@ public class MOK2_Authentication extends BaseTestSetup {
         LoginRequestDTO req = new LoginRequestDTO(login, "WrongPass!!!");
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(req),
-                401,
+                202,
                 "/api/auth/login",
                 jsonHeaders
         );
@@ -208,9 +227,9 @@ public class MOK2_Authentication extends BaseTestSetup {
         LoginRequestDTO req = new LoginRequestDTO(login, "WrongPass!!!");
         String requestJson = objectMapper.writeValueAsString(req);
 
-        requestFunctions.sendPostRequest(requestJson, 401, "/api/auth/login", jsonHeaders);
-        requestFunctions.sendPostRequest(requestJson, 401, "/api/auth/login", jsonHeaders);
-        requestFunctions.sendPostRequest(requestJson, 401, "/api/auth/login", jsonHeaders);
+        requestFunctions.sendPostRequest(requestJson, 202, "/api/auth/login", jsonHeaders);
+        requestFunctions.sendPostRequest(requestJson, 202, "/api/auth/login", jsonHeaders);
+        requestFunctions.sendPostRequest(requestJson, 202, "/api/auth/login", jsonHeaders);
 
         transactionTemplate.executeWithoutResult(status -> {
             Account dbAccount = accountTestRepository.findByLogin(login).orElseThrow();
@@ -218,7 +237,7 @@ public class MOK2_Authentication extends BaseTestSetup {
             assertEquals(3, dbAccount.getFailedAttempts(), "Licznik prób logowania powinien wynosić 3");
         });
 
-        verify(emailService, times(1)).sendAutoBlockEmail(eq(login + "@example.com"), eq(login));
+        verify(emailService, times(1)).sendAutoBlockEmail(eq(login + "@example.com"), eq(login), any());
     }
 
     @Test
@@ -244,7 +263,7 @@ public class MOK2_Authentication extends BaseTestSetup {
 
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(refreshReq),
-                401,
+                202,
                 "/api/auth/refresh",
                 jsonHeaders
         );

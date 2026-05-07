@@ -112,7 +112,7 @@ public class Authentication2FATest extends BaseTestSetup {
         requestFunctions.sendPostRequest(objectMapper.writeValueAsString(loginReq), 202, "/api/auth/login", jsonHeaders);
 
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
-        verify(emailService, times(1)).send2FAuthEmail(tokenCaptor.capture(), eq(login + "@example.com"));
+        verify(emailService, times(1)).send2FAuthEmail(tokenCaptor.capture(), eq(login + "@example.com"), any());
         String validCode = tokenCaptor.getValue();
 
         assertTrue(validCode.matches("^\\d{8}$"));
@@ -133,7 +133,7 @@ public class Authentication2FATest extends BaseTestSetup {
 
         requestFunctions.sendPostRequest(objectMapper.writeValueAsString(new LoginRequestDTO(userA, "Password123!")), 202, "/api/auth/login", jsonHeaders);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
-        verify(emailService).send2FAuthEmail(tokenCaptor.capture(), eq(userA + "@example.com"));
+        verify(emailService).send2FAuthEmail(tokenCaptor.capture(), eq(userA + "@example.com"), any());
         String codeForA = tokenCaptor.getValue();
 
         Verify2FARequestDTO verifyReq = new Verify2FARequestDTO(userB, codeForA);
@@ -148,7 +148,7 @@ public class Authentication2FATest extends BaseTestSetup {
 
         requestFunctions.sendPostRequest(objectMapper.writeValueAsString(new LoginRequestDTO(login, "Password123!")), 202, "/api/auth/login", jsonHeaders);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
-        verify(emailService).send2FAuthEmail(tokenCaptor.capture(), anyString());
+        verify(emailService).send2FAuthEmail(tokenCaptor.capture(), anyString(), any());
         String code = tokenCaptor.getValue();
 
         requestFunctions.sendPostRequest(objectMapper.writeValueAsString(new Verify2FARequestDTO(login, code)), 200, "/api/auth/check2FA", jsonHeaders);
@@ -160,7 +160,7 @@ public class Authentication2FATest extends BaseTestSetup {
     public void NEG03_Resend2FA_NonExistentUser() throws Exception {
         Resend2FARequestDTO resendReq = new Resend2FARequestDTO("nonexistent_user_999");
         requestFunctions.sendPostRequest(objectMapper.writeValueAsString(resendReq), 202, "/api/auth/resend2FA", jsonHeaders);
-        verify(emailService, never()).send2FAuthEmail(anyString(), anyString());
+        verify(emailService, never()).send2FAuthEmail(anyString(), anyString(), any());
     }
 
     @Test

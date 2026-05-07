@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.rest.handlers;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.i18n.Translator;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 
 /**
@@ -23,8 +25,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
  * Przez to adnotacja @ResponseBody nie jest potrzebna.
  */
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
+    private final Translator translator;
     /**
      * Obsługuje działanie wyjątków bazowych aplikacji (AppBaseException).
      * Zwraca bezpośrednio ResponseEntity, co jest dobrą praktyką, ponieważ
@@ -35,7 +39,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AppBaseException.class)
     public ResponseEntity<String> handleAppBaseException(AppBaseException exception) {
-        return ResponseEntity.status(exception.getStatusCode()).body(exception.getReason());
+        String translatedMessage = translator.translate(exception.getReason());
+        return ResponseEntity.status(exception.getStatusCode()).body(translatedMessage);
     }
 
     /**

@@ -91,7 +91,7 @@ public class AccountServiceBlockAccountTest {
 
         assertThrows(AccountNotFoundException.class, () -> accountService.blockUserAccount(accountId, validHash));
 
-        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString(), any());
     }
 
     @Test
@@ -103,7 +103,7 @@ public class AccountServiceBlockAccountTest {
 
         assertThrows(AccountIsBlockedException.class, () -> accountService.blockUserAccount(accountId, validHash));
 
-        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString(), any());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class AccountServiceBlockAccountTest {
 
         assertThrows(ConcurrentUpdateException.class, () -> accountService.blockUserAccount(accountId, "invalid-hash"));
 
-        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsBlockedInfo(anyString(), anyString(), any());
         verify(accountRepository, never()).saveAndFlush(any());
     }
 }

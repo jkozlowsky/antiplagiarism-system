@@ -12,12 +12,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 public class RegisterAccountDTO {
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "Imię musi zaczynać się od litery...")
+    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "validation.name.pattern")
     private String name;
 
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "Nazwisko musi zaczynać się od litery...")
+    @Pattern(regexp = "^[\\p{L}][\\p{L}\\s\\-']+$", groups = OnCreate.class, message = "validation.surname.pattern")
     private String surname;
 
     @NotBlank(groups = OnCreate.class)
@@ -26,7 +26,7 @@ public class RegisterAccountDTO {
 
     @NotBlank(groups = OnCreate.class)
     @Size(min = 3, max = 32, groups = OnCreate.class)
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", groups = OnCreate.class, message = "Login może zawierać tylko litery i cyfry")
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", groups = OnCreate.class, message = "validation.login.pattern")
     private String login;
 
     @ToString.Exclude
@@ -35,7 +35,7 @@ public class RegisterAccountDTO {
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).*$",
             groups = OnCreate.class,
-            message = "Hasło musi zawierać co najmniej jedną wielką literę i znak specjalny (!@#$%^&*(),.?\":{}|<>)"
+            message = "validation.password.complex"
     )
     private String password;
 }
