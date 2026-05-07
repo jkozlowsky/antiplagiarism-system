@@ -1,0 +1,1 @@
+ALTER TABLE one_time_token ADD COLUMN secondary_data VARCHAR(255);

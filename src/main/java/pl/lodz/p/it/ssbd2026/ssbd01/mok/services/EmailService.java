@@ -113,5 +113,11 @@ public class EmailService {
         sendEmail(toAddres, subject, content);
     }
 
+    @Async
+    public void sendComebackEmailAddressLink(String toAddress, String login, String newEmail, String url, String langCode) {
+        String subject = translator.translateForUser("email.email.revert.subject", langCode);
+        String content = translator.translateForUser("email.email.revert.content", langCode, login, newEmail, url);
+        sendEmail(toAddress, subject, content);
+    }
 }
 

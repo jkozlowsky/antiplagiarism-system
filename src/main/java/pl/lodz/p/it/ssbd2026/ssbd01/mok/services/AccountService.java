@@ -419,13 +419,63 @@ public class AccountService {
             throw new InvalidCredentialsProvidedException();
         }
 
+        String oldEmail = account.getEmail();
+
         account.setEmail(newEmail);
         tokenEntity.setUsed(true);
-        tokenEntity.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
 
+        String revertUrlToken = UUID.randomUUID().toString();
+        OneTimeTokenEnt revertToken = new OneTimeTokenEnt();
+        revertToken.setTokenValue(revertUrlToken);
+        revertToken.setUsername(account.getLogin());
+
+        revertToken.setSecondaryData(oldEmail);
+
+        revertToken.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
+        revertToken.setTokenType(OneTimeTokenType.COMEBACK_TO_PREVIOUS_EMAIL);
+        revertToken.setUsed(false);
 
         accountRepository.saveAndFlush(account);
         tokenRepository.saveAndFlush(tokenEntity);
+        tokenRepository.saveAndFlush(revertToken);
+
+        String revertUrl = frontendUrl + "/revert-email?token=" + revertUrlToken;
+        postCommitTransactionManager.register(() ->
+                emailService.sendComebackEmailAddressLink(oldEmail, account.getLogin(), newEmail, revertUrl, account.getLanguageVersion().getLanguage()));
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void revertEmailChange(String token) {
+        OneTimeTokenEnt tokenEntity = tokenRepository
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.COMEBACK_TO_PREVIOUS_EMAIL, LocalDateTime.now())
+                .orElseThrow(() -> new OneTimeTokenInvalidException());
+
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(() -> new AccountNotFoundException());
+
+        String oldEmail = tokenEntity.getSecondaryData();
+        account.setEmail(oldEmail);
+
+        tokenEntity.setUsed(true);
+
+        accountRepository.saveAndFlush(account);
+        tokenRepository.saveAndFlush(tokenEntity);
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void resendUrlOwnEmailChange(String login) {
+        tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(login, OneTimeTokenType.OWN_EMAIL_CHANGE)
+                .forEach(token -> {
+                    token.setUsed(true);
+                    tokenRepository.save(token);
+                });
+
+        tokenRepository.flush();
+        createUrlOwnEmailChange(login);
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
