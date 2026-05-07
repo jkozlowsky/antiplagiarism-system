@@ -51,4 +51,11 @@ public class AuthController {
         AuthResponseDTO response = authService.refreshToken(requestDTO.refreshToken(), ipAddress);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponseDTO> loginWithGoogle(@Valid @RequestBody GoogleLoginRequestDTO requestDTO, HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        AuthResponseDTO response = authService.authenticateWithGoogle(requestDTO.idToken(), ipAddress);
+        return ResponseEntity.ok(response);
+    }
 }
