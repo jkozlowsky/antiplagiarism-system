@@ -25,16 +25,16 @@ public record AccountDTO(
         @Size(min = 12, groups = OnCreate.class)
         @Pattern(
                 regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
-                message = "Hasło musi zawierać co najmniej jedną małą literę, jedną dużą literę i jedną cyfrę",
+                message = "{validation.password.pattern}",
                 groups = OnCreate.class
         )
         String password,
 
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Boolean verified,
+        Boolean isVerified,
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Boolean active,
+        Boolean isBlocked,
 
         @NotBlank(groups = OnCreate.class)
         @Size(min = 3, max = 32, groups = {OnCreate.class, OnUpdate.class})
@@ -44,12 +44,25 @@ public record AccountDTO(
         @Size(min = 3, max = 32, groups = {OnCreate.class, OnUpdate.class})
         String surname,
 
+        @Null(groups = OnUpdate.class)
         @NotBlank(groups = OnCreate.class)
-        @Email(groups = {OnCreate.class, OnUpdate.class})
-        @Size(max = 128, groups = {OnCreate.class, OnUpdate.class})
+        @Email(groups = {OnCreate.class})
+        @Size(max = 128, groups = {OnCreate.class})
         String email,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
         LocalDateTime lastLoginSuccessDateTime
+//
+//        @Null(groups = {OnCreate.class, OnUpdate.class})
+//        LocalDateTime lastLoginFailureDateTime,
+//
+//        @Null(groups = {OnCreate.class, OnUpdate.class})
+//        String lastSuccessfulLoginIp,
+//
+//        @Null(groups = {OnCreate.class, OnUpdate.class})
+//        String lastFailedLoginIp,
+//
+//        @Null(groups = {OnCreate.class, OnUpdate.class})
+//        String language
 ) {
 }

@@ -9,10 +9,10 @@ import org.springframework.http.HttpStatus;
 public class InvalidCredentialsProvidedException extends AppBaseException {
 
     public InvalidCredentialsProvidedException() {
-        super(HttpStatus.ACCEPTED, "Invalid login or password provided");
+        super(HttpStatus.ACCEPTED, "error.invalid.credentials");
     }
 
     public InvalidCredentialsProvidedException(Throwable cause) {
-        super(HttpStatus.ACCEPTED, "Invalid login or password provided");
+        super(HttpStatus.ACCEPTED, "error.invalid.credentials");
     }
 }

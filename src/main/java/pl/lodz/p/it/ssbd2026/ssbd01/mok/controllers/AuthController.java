@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,10 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<MessageResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
+    public ResponseEntity<MessageResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest,
+                                                    HttpServletRequest request)
+
+    {
         String ipAddress = request.getRemoteAddr();
         authService.authenticate(loginRequest.login(), loginRequest.password(), ipAddress);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MessageResponseDTO("mfa.required"));
@@ -33,9 +37,11 @@ public class AuthController {
     }
 
     @PostMapping("/check2FA")
-    public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO, HttpServletRequest request) {
+    public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO,
+                                                         HttpServletRequest request,
+                                                         @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = "pl") String langHeader) {
         String ipAddress = request.getRemoteAddr();
-        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.auth2F(), requestDTO.login(), ipAddress);
+        AuthResponseDTO response = authService.verify2FactorCode(requestDTO.auth2F(), requestDTO.login(), ipAddress, langHeader);
         return ResponseEntity.ok(response);
     }
 

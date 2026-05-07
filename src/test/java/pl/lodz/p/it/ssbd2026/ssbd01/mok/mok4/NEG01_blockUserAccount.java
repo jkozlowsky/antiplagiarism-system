@@ -82,7 +82,7 @@ public class NEG01_blockUserAccount extends BaseTestSetup {
 
             assertAll(
                     () -> assertTrue(accountToBlock.getIsBlocked(), "Assert that account is blocked"),
-                    () -> assertEquals("Account is already blocked", responseBody, "Assert that correct error message is returned")
+                    () -> assertEquals("Account is already blocked.", responseBody, "Assert that correct error message is returned")
                     //TODO: informacje o błędzie dodać do enuma np, żeby korzystać z odczytu ze zmiennych a nie tak manualnie
             );
             return null;

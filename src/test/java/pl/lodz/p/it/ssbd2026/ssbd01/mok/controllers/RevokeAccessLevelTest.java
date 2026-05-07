@@ -130,7 +130,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
         verify(emailService, times(1)).sendAccessLevelRevokedInfo(
                 eq(testAccount.getEmail()),
                 eq(testAccount.getLogin()),
-                eq(AccountConsts.ROLE_TEACHER)
+                eq(AccountConsts.ROLE_TEACHER), any()
         );
     }
 
@@ -147,7 +147,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 new Headers(new Header("if-Match", "any-hash"))
         );
 
-        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
+        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any(), any());
     }
 
     @Test
@@ -165,7 +165,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
                 new Headers(new Header("if-Match", invalidHash))
         );
 
-        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
+        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any(), any());
     }
 
     @Test

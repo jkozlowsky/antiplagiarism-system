@@ -172,16 +172,15 @@ public class AccountController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/change")
+    @PostMapping("/email/change")
     public ResponseEntity<Void> requestEmailChange(
-            Authentication authentication,
-            @RequestHeader("If-Match") String ifMatch) {
+            Authentication authentication) {
         String login = authentication.getName();
-        accountService.createUrlOwnEmailChange(login, ifMatch);
+        accountService.createUrlOwnEmailChange(login);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/confirm")
+    @PostMapping("/email/confirm")
     public ResponseEntity<String> confirmEmailChange(@Valid @RequestBody OwnEmailChangeDTO request) {
         accountService.confirmOwnEmailChange(request.token(), request.password(), request.newEmail());
         return ResponseEntity.ok().build();

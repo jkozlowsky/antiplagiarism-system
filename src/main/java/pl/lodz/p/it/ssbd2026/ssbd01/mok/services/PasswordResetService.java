@@ -26,6 +26,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -52,7 +53,8 @@ public class PasswordResetService {
      * @param email: adres email na który będzie wysłany jednorazowy adres url
      */
     public void initiatePasswordReset(String email) {
-        if (accountRepository.findByEmail(email).isEmpty()) {
+        Optional<Account> accountOpt = accountRepository.findByEmail(email);
+        if (accountOpt.isEmpty()) {
             //Po prostu zwracamy bo użytkownik nie powinien wiedzieć czy podany mail jest w bazie.
             return;
         }
@@ -73,7 +75,7 @@ public class PasswordResetService {
         token.setUsed(false);
         tokenRepository.saveAndFlush(token);
 
-        emailService.sendResetPasswordEmail(email, rawToken);
+        emailService.sendResetPasswordEmail(email, rawToken, accountOpt.get().getLanguageVersion().getLanguage());
     } //TODO: i18n
 
     /**
@@ -84,7 +86,7 @@ public class PasswordResetService {
         String hashedTokenInput = hashToken(token);
         OneTimeTokenEnt tokenEntity = tokenRepository
                 .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(hashedTokenInput, OneTimeTokenType.PASSWORD_RESET, LocalDateTime.now())
-                .orElseThrow(() -> new OneTimeTokenInvalidException("Time to reset password has expired or the token is used"));
+                .orElseThrow(() -> new OneTimeTokenInvalidException("error.token.reset.expired"));
         //TODO: i18n
 
         tokenEntity.setUsed(true);

@@ -20,6 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 
 import java.nio.charset.StandardCharsets;
@@ -41,12 +42,14 @@ public class AuthService {
     private final PostCommitTransactionManager postCommitTransactionManager;
     private final TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
     private final OneTimeTokenRepository tokenRepository;
+    private final LanguageDictRepository languageDictRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
     @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
     public void authenticate(String login, String password, String ipAddress) {
         Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
+//        System.out.println(account.getIsBlocked());
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
@@ -59,14 +62,13 @@ public class AuthService {
             handleFailedLogin(account, ipAddress);
             throw new InvalidCredentialsProvidedException();
         }
-
         generate2FactorCode(account);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW,
             transactionManager = "mokTransactionManager",
             noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
-    public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress) {
+    public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress, String langHeader) {
 
         String hashedToken = hashToken(token);
 
@@ -88,7 +90,7 @@ public class AuthService {
         tokenEntity.setUsed(true);
         tokenRepository.saveAndFlush(tokenEntity);
 
-        return handleSuccessfulLogin(account, ipAddress);
+        return handleSuccessfulLogin(account, ipAddress, langHeader);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -128,7 +130,7 @@ public class AuthService {
 
         OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
         String twoFactorCode = tokenValueGenerator.generate2FAToken();
-        postCommitTransactionManager.register(() -> emailService.send2FAuthEmail(twoFactorCode, account.getEmail()));
+        postCommitTransactionManager.register(() -> emailService.send2FAuthEmail(twoFactorCode, account.getEmail(), account.getLanguageVersion().getLanguage()));
 
         tokenEnt.setTokenValue(hashToken(twoFactorCode));
         tokenEnt.setUsername(account.getLogin());
@@ -170,22 +172,25 @@ public class AuthService {
 
         if (newFailures >= 3) {
             account.setIsBlocked(true);
-            postCommitTransactionManager.register(() -> emailService.sendAutoBlockEmail(account.getEmail(), account.getLogin()));
+            postCommitTransactionManager.register(() -> emailService.sendAutoBlockEmail(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
         }
 
         accountRepository.saveAndFlush(account);
     }
 
-    private AuthResponseDTO handleSuccessfulLogin(Account account, String ipAddress) {
+    private AuthResponseDTO handleSuccessfulLogin(Account account, String ipAddress, String langHeader) {
         account.setFailedAttempts(0);
         account.setLastSuccessfulLoginIp(ipAddress);
         account.setLastLoginSuccessDateTime(LocalDateTime.now());
+        String langCode = (langHeader != null && langHeader.length() >= 2) ? langHeader.substring(0, 2).toLowerCase() : "en";
+        languageDictRepository.findByLanguage(langCode)
+                .ifPresent(account::setLanguageVersion);
         accountRepository.saveAndFlush(account);
 
         List<String> roles = account.getAccessLevelList().stream().filter(AccessLevel::getActive).map(al -> al.getAccessLevelDict().getAccessLevelName()).toList();
 
         if (roles.contains(AccountConsts.ROLE_ADMIN)) {
-            postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress));
+            postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress, account.getLanguageVersion().getLanguage()));
         }
         String token = jwtAuthService.generateToken(account.getLogin(), roles);
         String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);

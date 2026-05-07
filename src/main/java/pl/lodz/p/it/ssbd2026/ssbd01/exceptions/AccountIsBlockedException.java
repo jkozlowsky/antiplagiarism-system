@@ -9,10 +9,10 @@ import org.springframework.http.HttpStatus;
 public class AccountIsBlockedException extends AppBaseException {
 
     public AccountIsBlockedException() {
-        super(HttpStatus.CONFLICT, "Account is already blocked");
+        super(HttpStatus.CONFLICT, "error.account.already.blocked");
     }
 
     public AccountIsBlockedException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Account is already blocked", cause);
+        super(HttpStatus.CONFLICT, "error.account.already.blocked", cause);
     }
 }

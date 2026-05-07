@@ -91,7 +91,7 @@ public class AccountServiceUnblockAccountTest {
 
         assertThrows(AccountNotFoundException.class, () -> accountService.unblockUserAccount(accountId, validHash));
 
-        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString(), any());
     }
 
     @Test
@@ -104,7 +104,7 @@ public class AccountServiceUnblockAccountTest {
 
         assertThrows(AccountIsNotBlockedException.class, () -> accountService.unblockUserAccount(accountId, validHash));
 
-        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString(), any());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class AccountServiceUnblockAccountTest {
 
         assertThrows(ConcurrentUpdateException.class, () -> accountService.unblockUserAccount(accountId, "invalid-hash"));
 
-        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString());
+        verify(emailService, never()).sendAccountIsUnblockedInfo(anyString(), anyString(), any());
         verify(accountRepository, never()).saveAndFlush(any());
     }
 }

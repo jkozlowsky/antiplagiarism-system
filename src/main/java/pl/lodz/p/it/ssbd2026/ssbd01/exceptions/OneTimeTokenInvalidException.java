@@ -5,6 +5,9 @@ import org.springframework.http.HttpStatusCode;
 
 public class OneTimeTokenInvalidException extends AppBaseException {
 
+    public OneTimeTokenInvalidException() {
+        super(HttpStatus.CONFLICT, "error.token.jwt.expired");
+    }
     public OneTimeTokenInvalidException(String reason) {
         super(HttpStatus.CONFLICT, reason);
     }

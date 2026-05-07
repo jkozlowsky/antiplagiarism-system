@@ -6,10 +6,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 public class AccessLevelAlreadyAssignedException extends AppBaseException {
 
     public AccessLevelAlreadyAssignedException() {
-        super(HttpStatus.CONFLICT, "Account already possesses this access level");
+        super(HttpStatus.CONFLICT, "error.accesslevel.already.assigned");
     }
 
     public AccessLevelAlreadyAssignedException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Account already possesses this access level", cause);
+        super(HttpStatus.CONFLICT, "error.accesslevel.already.assigned", cause);
     }
 }

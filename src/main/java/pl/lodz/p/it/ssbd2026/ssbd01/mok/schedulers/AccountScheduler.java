@@ -31,13 +31,15 @@ public class AccountScheduler {
 
         accountRepository.findAllByIsVerifiedFalseAndSecondEmailSentFalseAndCreationDateBefore(now.minusHours(reminderHours))
                 .forEach(acc -> {
-                    emailService.sendActivationReminderEmail(acc.getEmail(), acc.getActivationToken());
+                    String lang = acc.getLanguageVersion().getLanguage();
+                    emailService.sendActivationReminderEmail(acc.getEmail(), acc.getActivationToken(), lang);
                     acc.setSecondEmailSent(true);
                 });
 
         accountRepository.findAllByIsVerifiedFalseAndCreationDateBefore(now.minusHours(expirationHours))
                 .forEach(acc -> {
-                    emailService.sendAccountDeletedEmail(acc.getEmail());
+                    String lang = acc.getLanguageVersion().getLanguage();
+                    emailService.sendAccountDeletedEmail(acc.getEmail(), lang);
                     accountRepository.delete(acc);
                 });
     }
@@ -50,9 +52,10 @@ public class AccountScheduler {
                 .findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(3, threshold);
 
         accountsToUnblock.forEach(acc -> {
+            String lang = acc.getLanguageVersion().getLanguage();
             acc.setIsBlocked(false);
             acc.setFailedAttempts(0);
-            emailService.sendAccountIsUnblockedInfo(acc.getEmail(), acc.getLogin());
+            emailService.sendAccountIsUnblockedInfo(acc.getEmail(), acc.getLogin(), lang);
         });
 
         accountRepository.saveAllAndFlush(accountsToUnblock);

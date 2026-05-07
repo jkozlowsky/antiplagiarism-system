@@ -91,7 +91,7 @@ public class AccountService {
 
         accountRepository.saveAndFlush(account);
         postCommitTransactionManager.register(() ->
-                emailService.sendActivationEmail(account.getEmail(), account.getActivationToken()));
+                emailService.sendActivationEmail(account.getEmail(), account.getActivationToken(), defaultLang.getLanguage()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -206,7 +206,10 @@ public class AccountService {
                 Account saved = accountRepository.saveAndFlush(account);
 
                 postCommitTransactionManager.register(() ->
-                        emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
+                        emailService.sendAccessLevelGrantedInfo(account.getEmail(),
+                                account.getLogin(),
+                                accessLevelName,
+                                account.getLanguageVersion().getLanguage()));
                 return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
                         saved,
                         versionHashService.hashObjectVersion(saved.getId(), saved.getVersion())
@@ -229,7 +232,7 @@ public class AccountService {
         Account saved = accountRepository.saveAndFlush(account);
 
         postCommitTransactionManager.register(() ->
-                emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName));
+                emailService.sendAccessLevelGrantedInfo(account.getEmail(), account.getLogin(), accessLevelName, account.getLanguageVersion().getLanguage()));
         return accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
                 saved,
                 versionHashService.hashObjectVersion(saved.getId(), saved.getVersion())
@@ -269,7 +272,7 @@ public class AccountService {
         accountRepository.saveAndFlush(account);
 
         postCommitTransactionManager.register(() ->
-                emailService.sendAccessLevelRevokedInfo(account.getEmail(), account.getLogin(), accessLevelName));
+                emailService.sendAccessLevelRevokedInfo(account.getEmail(), account.getLogin(), accessLevelName, account.getLanguageVersion().getLanguage()));
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -293,14 +296,16 @@ public class AccountService {
         String oldEmail = account.getEmail();
         account.setEmail(newEmail);
 
-        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(oldEmail));
-        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(oldEmail, account.getLanguageVersion().getLanguage()));
+        postCommitTransactionManager.register(() -> emailService.sendEmailAddressChangedByAdmin(newEmail, account.getLanguageVersion().getLanguage()));
 
         return accountRepository.saveAndFlush(account);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @Transactional(propagation = Propagation.MANDATORY)
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            readOnly = false,
+            transactionManager = "mokTransactionManager")
     @Retryable(
             retryFor = {ConcurrentUpdateException.class},
             backoff = @Backoff(delay = 1000)
@@ -346,7 +351,7 @@ public class AccountService {
         account.setIsBlocked(true);
         accountRepository.saveAndFlush(account);
         postCommitTransactionManager.register(() ->
-                emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin()));
+                emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
@@ -368,20 +373,20 @@ public class AccountService {
         account.setIsBlocked(false);
         accountRepository.saveAndFlush(account);
         postCommitTransactionManager.register(() ->
-                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin()));
+                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void createUrlOwnEmailChange(String login, String versionHash) {
+    public void createUrlOwnEmailChange(String login) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException());
 
-        mokRefreshRepository.refresh(account);
-        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
-            throw new ConcurrentUpdateException();
-        }
+//        mokRefreshRepository.refresh(account);
+//        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
+//            throw new ConcurrentUpdateException();
+//        }
 
         String generateUrl = UUID.randomUUID().toString();
         OneTimeTokenEnt token = new OneTimeTokenEnt();
@@ -395,7 +400,7 @@ public class AccountService {
 
         String changeUrl = frontendUrl + "/change-email?token=" + generateUrl;
         postCommitTransactionManager.register(() ->
-                emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl));
+                emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl, account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
@@ -405,7 +410,7 @@ public class AccountService {
 
         OneTimeTokenEnt tokenEntity = tokenRepository
                 .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.OWN_EMAIL_CHANGE, LocalDateTime.now())
-                .orElseThrow(() -> new OneTimeTokenInvalidException("Token is invalid"));
+                .orElseThrow(() -> new OneTimeTokenInvalidException());
 
         Account account = accountRepository.findByLogin(tokenEntity.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException());
@@ -456,7 +461,7 @@ public class AccountService {
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
-    @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void changeOtherPassword(UUID id, String newPassword, String ifMatch) {
         Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
 

@@ -103,7 +103,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 () -> verify(emailService, times(1)).sendAccessLevelGrantedInfo(
                         eq(testAccount.getEmail()),
                         eq(testAccount.getLogin()),
-                        eq("TEACHER")
+                        eq("TEACHER"), any()
                 )
         );
     }
@@ -154,7 +154,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 new Headers(new Header("if-Match", invalidHash))
         );
 
-        verify(emailService, never()).sendAccessLevelGrantedInfo(any(), any(), any());
+        verify(emailService, never()).sendAccessLevelGrantedInfo(any(), any(), any(), any());
     }
 
     @Test

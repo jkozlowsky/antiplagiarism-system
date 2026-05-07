@@ -13,10 +13,10 @@ public class AccountConstraintViolationException extends AppBaseException {
     }
 
     public AccountConstraintViolationException() {
-        super(HttpStatus.CONFLICT, "Unspecified account constraint violation");
+        super(HttpStatus.CONFLICT, "error.account.constraint.violation");
     }
 
     public AccountConstraintViolationException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Unspecified account constraint violation", cause);
+        super(HttpStatus.CONFLICT, "error.account.constraint.violation", cause);
     }
 }

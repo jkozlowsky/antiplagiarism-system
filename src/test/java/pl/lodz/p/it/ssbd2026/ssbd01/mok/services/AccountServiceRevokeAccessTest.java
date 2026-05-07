@@ -11,10 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevel;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyRevokedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
@@ -65,7 +62,9 @@ public class AccountServiceRevokeAccessTest {
     void setUp() {
         accountId = UUID.randomUUID();
         account = new Account();
-
+        LanguageDict langDict = new LanguageDict();
+        langDict.setLanguage("pl");
+        account.setLanguageVersion(langDict);
         ReflectionTestUtils.setField(account, "id", accountId);
         ReflectionTestUtils.setField(account, "version", 0);
         account.setLogin("testUser");
@@ -102,7 +101,7 @@ public class AccountServiceRevokeAccessTest {
                 () -> verify(accountRepository, times(1)).saveAndFlush(account),
                 () -> assertEquals(1, account.getAccessLevelList().size()),
                 () -> assertFalse(account.getAccessLevelList().getFirst().getActive()),
-                () -> verify(emailService, times(1)).sendAccessLevelRevokedInfo(account.getEmail(), account.getLogin(), AccountConsts.ROLE_TEACHER)
+                () -> verify(emailService, times(1)).sendAccessLevelRevokedInfo(eq(account.getEmail()), eq(account.getLogin()), eq(AccountConsts.ROLE_TEACHER), anyString())
         );
     }
 
@@ -129,7 +128,7 @@ public class AccountServiceRevokeAccessTest {
 
         assertThrows(AccountNotFoundException.class, () ->
                 accountService.revokeAccessLevel(accountId, AccountConsts.ROLE_TEACHER, VALID_HASH));
-        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any());
+        verify(emailService, never()).sendAccessLevelRevokedInfo(any(), any(), any(), any());
     }
 
     @Test

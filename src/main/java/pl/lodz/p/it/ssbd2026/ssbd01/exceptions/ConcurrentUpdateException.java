@@ -9,10 +9,10 @@ import org.springframework.http.HttpStatus;
 public class ConcurrentUpdateException extends AppBaseException {
 
     public ConcurrentUpdateException() {
-        super(HttpStatus.CONFLICT, "The object was modified since read for update (version conflict)");
+        super(HttpStatus.CONFLICT, "error.concurrent.update");
     }
 
     public ConcurrentUpdateException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "The object was modified since read for update (version conflict)", cause);
+        super(HttpStatus.CONFLICT, "error.concurrent.update", cause);
     }
 }
