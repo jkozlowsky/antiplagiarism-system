@@ -28,6 +28,7 @@
    * Metoda `DeleteExpiredTokens()` uruchamia się cyklicznie i fizycznie usuwa z bazy danych wszystkie rekordy z tabeli **one_time_token**, których czas ważności (z pola `expiresAt`) minął.
 
 ![Zrzut ekranu z bazy danych - tokeny](etap2/img/2.5.1.png)
+
 Rysunek 2.5.1. Widok tabeli **one_time_token** w bazie danych, prezentujący mechanizm zarządzania żetonami. Widoczne są na nim dwa kody autoryzacji dwuetapowej wygenerowane dla tego samego użytkownika (cyber123). Starszy z nich został automatycznie oznaczony jako zużyty (`is_used = true`) w momencie wygenerowania nowego żądania, co uniemożliwia jego ponowne wykorzystanie przy próbie autoryzacji.
 
 3. **Unieważnianie poprzednich żądań resetu hasła:** 
@@ -48,15 +49,17 @@ Każda encja w systemie (np. `Account`, `Subject`, `Report`) dziedziczy po klasi
 
 2. **Rejestrowanie zdarzeń i parametrów:**
 Aktywność użytkownika jest rejestrowana na podstawie szczegółowych zapisów w dzienniku zdarzeń (logach). Proces ten realizują specjalne komponenty oparte na programowaniu zorientowanym aspektowo (AOP), które w tle nasłuchują akcji wykonywanych w systemie:
-   *  `MethodCallLoggingInterceptor` przechwytuje wywołania metod oznaczonych adnotacją `@MethodCallLogged` lub metod z klas oznaczonych tak samo. W logach zapisywana jest sygnatura metody, przekazane argumenty, wartości zwracane, ewentualne wyjątki oraz login zalogowanego użytkownika, z którego kontekstu (Spring Security `SecurityContextHolder`) pochodzi wywołanie. Dla zachowania bezpieczeństwa interceptor filtruje i maskuje argumenty wrażliwe (np. hasła) poprzez podmienianie ich na napis: *** UKRYTE ***.
-   * `TransactionLoggingInterceptor` monitoruje cykl życia transakcji bazodanowych, co pozwala na śledzenie, czy zmiany zainicjowane przez użytkownika zostały faktycznie zatwierdzone (**COMMITTED**), czy odrzucone (**ROLLED_BACK**).
+   *  `MethodCallLoggingInterceptor` przechwytuje wywołania metod oznaczonych adnotacją `@MethodCallLogged` lub metod z klas oznaczonych tak samo. W logach zapisywana jest sygnatura metody, przekazane argumenty, wartości zwracane, ewentualne wyjątki oraz login zalogowanego użytkownika, z którego kontekstu (Spring Security `SecurityContextHolder`) pochodzi wywołanie. Dla zachowania bezpieczeństwa interceptor filtruje i maskuje argumenty wrażliwe (np. hasła) poprzez podmienianie ich na napis: \*\*\* UKRYTE \*\*\*.
+   * `TransactionLoggingInterceptor` monitoruje cykl życia transakcji bazodanowych, co pozwala na śledzenie, czy zmiany zainicjowane przez użytkownika zostały faktycznie zatwierdzone (COMMITTED), czy odrzucone (ROLLED_BACK).
 
 
 ![Zrzut ekranu z dziennika zdarzeń](etap2/img/2.5.2.png)
-Rysunek 2.5.2. Przykładowy wykaz wpisów w dzienniku zdarzeń (fragment wygenerowany przez intercepotory AOP). Zarejestrowano tu akcję zmiany hasła zainicjowaną przez zalogowanego użytkownika (rbartczak05). Widoczna jest skuteczna filtracja wrażliwych argumentów wejściowych (hasła zastąpione są napisem *** UKRYTE ***) oraz śledzenie statusu synchronizacji transakcji bazodanowej aż do momentu jej pomyślnego zatwierdzenia (**COMMITTED**).
+
+Rysunek 2.5.2. Przykładowy wykaz wpisów w dzienniku zdarzeń (fragment wygenerowany przez intercepotory AOP). Zarejestrowano tu akcję zmiany hasła zainicjowaną przez zalogowanego użytkownika (rbartczak05). Widoczna jest skuteczna filtracja wrażliwych argumentów wejściowych (hasła zastąpione są napisem \*\*\* UKRYTE \*\*\*) oraz śledzenie statusu synchronizacji transakcji bazodanowej aż do momentu jej pomyślnego zatwierdzenia (COMMITTED).
 
 * **Śledzenie adresów IP i blokady prewencyjne**:
 Podczas każdej próby logowania (zarówno udanej, jak i nieudanej), w encji `Account` zapisywany jest adres IP nadawcy (`lastSuccessfulLoginIp`, `lastFailedLoginIp`) oraz dokładna data zdarzenia. Ponadto trzykrotne wprowadzenie błędnego hasła skutkuje automatyczną blokadą konta (`isBlocked = true`) i wysłaniem powiadomienia e-mail (Zabezpieczenie przed włamaniem na konto metodą Brute Force).
 
 ![Zrzut ekranu z bazy danych - zablokowane konto](etap2/img/2.5.3.png)
+
 Rysunek 2.5.3. Widok rekordu w tabeli `Account` pokazujący działanie mechanizmu zapobiegającego atakom typu Brute Force. Zauważalny jest użytkownik cyber123, dla którego system odnotował trzy błędne próby autoryzacji (wartość 3 w kolumnie `failed_attempts`). Doprowadziło to do natychmiastowej blokady konta (zmiana flagi `is_blocked` na `true`) oraz zapisania dokładnego czasu wystąpienia tego zdarzenia.

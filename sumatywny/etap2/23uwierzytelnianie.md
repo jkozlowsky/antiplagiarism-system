@@ -16,10 +16,15 @@ Proces pozyskiwania poświadczeń w aplikacji oparty jest na mechanizmie tokenó
 5. Serwer zwraca wygenerowane tokeny do klienta. Od tego momentu aplikacja kliencka dołącza Access Token do nagłówka każdego żądania wymagającego autoryzacji, stosując format: Authorization: Bearer <token>
 
 ![loginForm](etap2/img/formularz_logowania.png)
+
 _Rys. 2.3.1. Formularz logowania w interfejsie użytkownika._
+
 ![loginPayload](etap2/img/logowanie_payload.png)
+
 _Rys. 2.3.2. Żądanie HTTP POST zawierające poświadczenia logowania (JSON)._
+
 ![token](etap2/img/token.png)
+
 _Rys. 2.3.3. Odpowiedź serwera z wygenerowanym tokenem dostępu (Access Token)._
 
 ### Przykładowe poświadczenie, identyfikacja i autoryzacja
