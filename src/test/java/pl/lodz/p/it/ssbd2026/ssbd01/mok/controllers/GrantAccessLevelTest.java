@@ -184,7 +184,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
         requestFunctions.sendPostRequest(
                 requestBody,
-                403,
+                401,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
                 unauthenticatedHeaders
         );
@@ -195,6 +195,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldFailWithStudentToken() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("priv");
+        String studentToken = jwtAuthService.generateToken(testAccount.getLogin(), List.of(AccountConsts.ROLE_STUDENT));
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
         String requestBody = "{\"versionHash\": \"" + validHash + "\"}";
@@ -203,7 +204,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
                 requestBody,
                 403,
                 "/api/account/" + accountId + "/access-levels/TEACHER/grant",
-                new Headers(new Header("if-Match", validHash))
+                new Headers(new Header("if-Match", validHash), new Header("Authorization", "Bearer " + studentToken))
         );
     }
 

@@ -124,7 +124,7 @@ public class GetAccountTest extends BaseTestSetup {
         UUID accountId = testAccount.getId();
 
         requestFunctions.sendGetRequest(
-                403,
+                401,
                 "/api/account/" + accountId,
                 unauthenticatedHeaders
         );

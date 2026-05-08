@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
+import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +31,16 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     private VersionHashService versionHashService;
 
     private RequestFunctions requestFunctions;
-    private Headers adminHeaders;
-    private Headers studentHeaders;
+    private Header adminHeader;
+    private Header studentHeader;
     private Headers unauthenticatedHeaders;
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
         String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
         String studentToken = jwtAuthService.generateToken("anowak", List.of(AccountConsts.ROLE_STUDENT));
-        adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
-        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
+        adminHeader = new Header("Authorization", "Bearer " + adminToken);
+        studentHeader = new Header("Authorization", "Bearer " + studentToken);
         unauthenticatedHeaders = new Headers();
         requestFunctions = new RequestFunctions();
     }
@@ -64,16 +65,19 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
 
     @Test
     public void NEG01_ChangeEmailByAdmin_ShouldFail_AsStudent() {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account account = accountTestRepository.findByLogin("admin").orElseThrow();
         String hash = versionHashService.hashObjectVersion(account.getId(), account.getVersion());
         String newEmail = "new2@edu.p.lodz.pl";
         String reqBody = createRequestBody(newEmail, hash);
 
+        Headers headers = new Headers(studentHeader, new  Header("if-Match", hash));
+
         sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
                 HttpStatus.FORBIDDEN.value(),
                 "/api/account/" + account.getId() + "/email",
-                studentHeaders
+                headers
         );
     }
 
@@ -86,7 +90,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
 
         sendPatchRequestWithoutGlobalAdminToken(
                 reqBody,
-                HttpStatus.FORBIDDEN.value(), //TODO: UNAUTHORIZED?
+                HttpStatus.UNAUTHORIZED.value(),
                 "/api/account/" + account.getId() + "/email",
                 unauthenticatedHeaders
         );
@@ -128,11 +132,13 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         String newEmail = "????.edu.p.lodz.pl";
         String reqBody = createRequestBody(newEmail, hash);
 
+        Headers headers = new Headers(adminHeader, new  Header("if-Match", hash));
+
         requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.BAD_REQUEST.value(),
                 "/api/account/" + account.getId() + "/email",
-                adminHeaders
+                headers
         );
     }
 
@@ -158,7 +164,6 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
     public void sendPatchRequestWithoutGlobalAdminToken(String body, int expectedStatusCode, String url, Headers headers) {
         RestAssured.given()
                 .auth().none()
-                .header("Authorization", "")
                 .headers(headers)
                 .body(body)
                 .when()
