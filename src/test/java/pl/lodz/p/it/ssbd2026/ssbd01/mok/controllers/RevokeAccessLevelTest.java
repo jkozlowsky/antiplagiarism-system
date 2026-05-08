@@ -179,7 +179,7 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
 
         requestFunctions.sendPostRequest(
                 requestBody,
-                403,
+                401,
                 "/api/account/" + accountId + "/access-levels/" + AccountConsts.ROLE_TEACHER + "/revoke",
                 new Headers(new Header("if-Match", validHash)));
     }

@@ -204,7 +204,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
     public void shouldFailWithoutToken() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         requestFunctions.sendGetRequest(
-                403,
+                401,
                 "/api/account?page=0&size=10",
                 unauthenticatedHeaders
         );
