@@ -1,7 +1,7 @@
 
 ## 2.1. Szczegółowy diagram perspektywy wdrożenia
 
-![Diagram perspektywy wdrożenia](/etap2/img/DiagramPerspektywyWdrozenia.drawio.png)
+![Diagram perspektywy wdrożenia](etap2/img/DiagramPerspektywyWdrozenia.drawio.png)
 
 Rys 2.1.1 Diagram perspektywy wdrożenia.
 

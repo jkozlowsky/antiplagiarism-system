@@ -55,6 +55,8 @@ public class RestSetupInit {
 }
 ```
 
+Listing 2.7.1. Fragment kodu przedstawiający klasę RestSetupInit.
+
 Przygotowane zostało typowe połączenie testowe - zdefiniowany odpowiedni port i podstawowy URL. Dodatkowo nagłówki takie jak Content-Type czy Accept header również zostały podane w celu uproszczenia dalszego testowania. Z uwagi na występowanie ról w aplikacji, funkcja `generateToken()` ma na celu utworzyć żeton w celu umożliwienia uwierzytelnienia użytkownikowi testowemu jako każda z ról. W przypadku, gdy użytkownik chce przetestować tylko jedną z ról np. Studenta, należy nadpisać obecną konfigurację w bezpośrednio w klasie testowej. 
 
 Sama klasa `BaseTestSetup` wykorzystuje komponent `RestSetupInit` oraz tak jak zostało to wspomniane, jest początkowym elementem wszystkich testów w projekcie. Wygląda ona następująco:
@@ -113,6 +115,8 @@ public abstract class BaseTestSetup extends TestContainersSetupInit {
     }
 }
 ```
+
+Listing 2.7.2. Fragment kodu przedstawiający klasę BaseTestSetup.
 
 Należy tutaj podkreślić, że z uwagi na wykorzystanie Testcontainers numer portu jest losowy i trzeba zadbać o jego poprawne przypisanie.
 
@@ -185,6 +189,8 @@ public class RequestFunctions {
 }
 ```
 
+Listin 2.7.3. Fragment kodu przedstawiający klasę RequestFunctions.
+
 Dodatkowym aspektem są funkcje w pliku `CommonFunctions`, które przydatne są do szybkiego testowania wyrażeń regularnych (regex) poprzez wybranie odpowiedniej, wcześniej zdefiniowanej funkcji:
 
 ```java
@@ -216,6 +222,8 @@ public class CommonFunctions {
 }
 ```
 
+Listing 2.7.4. Fragment kodu przedstawiający klasę CommonFunctions.
+
 Jesli chodzi o powtarzające się fragmenty kodu np. endpointy są one docelowo przetrzymywane w pliku `TestConsts`:
 
 ```java
@@ -238,6 +246,7 @@ TestConsts(String keyName) {
 }
 ```
 
+Listinig 2.7.5. Fragment kodu przedstawiający klasę TestConsts.
 ### Sposób wdrażania aplikacji
 
 Środowisko testowe zostało skonfigurowane z wykorzystaniem Testcontainers działając na obrazie relacyjnej bazy danych PostgreSQL w wersji 18.3. Środowisko z wykorzystaniem kontenerów ma na celu umożliwienie testowania aplikacji bez potrzeby rzeczywistego wdrażania aplikacji na serwer produkcyjny. Dlatego też został utworzony odpowiedni plik z wykorzystaniem Docker Compose, który umożliwia łatwe i powtarzalne uruchamianie kompletnej aplikacji w środowisku lokalnym (deweloperskim). Jest to szerzej opisane w rozdziale 2.8 w części z rozszerzeniem *S2_INFRTEST*. Rozszerzenie zostało wykonane w celu uniknięcia jedynej możliwości testowania aplikacji na środowisku produkcyjnym, co nie jest dobrym pomysłem. Dlatego nie posiadając docelowych środowisk testowych, zostały skonfigurowane kontenery testowe Testcontainers. Sama konfiguracja kontenera wygląda następująco:
@@ -322,7 +331,7 @@ public abstract class TestContainersSetupInit {
 }
 ```
 
-
+Listing 2.7.6. Fragment kodu przedstawiający klasę TestContainersSetupInit.
 ### Zapewnienie powtarzalnego zestawu danych początkowych dla testów
 
 Z uwagi na wykorzystanie narzędzia Flyway do zapewnienia możliwości migracji bazy danych, kontenery testowe są zintegrowane z kwerendami `.sql` obsługiwanymi przez to rozwiązanie i w taki sposób możemy uzyskać przy każdym uruchomieniu taki sam zestaw danych testowych. Poniżej przykład fragmentu jednego z zestawów kwerend z uzupełnionymi danymi testowymi:
@@ -332,12 +341,14 @@ INSERT INTO public.account (id, login, email, password_hash, name, surname, lang
         VALUES (admin_id, 'admin', 'admin@ssbd.edu.pl', '$2a$12$NqL7C7wYxGz4mFhX1Rj8dO2Bw4oF7h.v5.1oZq4e6xZ2o2X0X3z6e', 'Adam', 'Root', lang_pl_id, false, 0, admin_id, czas_obecny);
 ```
 
+Listing 2.7.7 Fragment skryptu V3__Insert-values-sql.sql przedstawiający dane administratora w bazie danych. 
 ### Pokrycie kodu testami
 
 W aplikacji wykorzystujemy narzędzie JaCoCo, które po wygenerowaniu raportu wskazuje stan pokrycia kodu testami. Na ten moment jest to 69% co jest wynikiem dobrym, ponieważ 100% pokrycie jest nie możliwe, a wynik satysfakcjonujący możemy przyjąć już od około 70%. Wartość ta w przyszłości powinna przynajmniej utrzymać się na tym poziomie wraz z dodaniem kolejnych przypadków użycia do aplikacji. Sam raport wygląda następująco:
 
 ![alt text](etap2/img/jacoco.png)
 
+Rys. 2.7.1. Strona główna raportu wygenerowanego raportu jacoco.
 ### Przykład testów integracyjnych - MOK.1 Rejestracja konta użytkownika
 
 Poniżej przedstawiamy kod testów przypadku użycia `Rejestracja konta użytkownika` - wykorzystujemy dziedziczenie po `BaseTestSetup` oraz wyżej wspomniane mocki. Każdy z testów posiada adnotację `@DisplayName`, dzięki której w łatwy sposób można rozpoznać cel testu.
@@ -662,3 +673,5 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
     }
 }
 ```
+
+Listing 2.7.9. Przykładowa klasa testowa MOK01_RegistrationAndActivation.
