@@ -54,6 +54,7 @@ deploy-backend:
   script:
     - cd /opt/api
     - git pull origin main
+    - export GOOGLE_CLIENT_ID=$CI_GOOGLE_CLIENT_ID
     - docker compose -f docker-compose.prod.yml pull backend
     - docker compose -f docker-compose.prod.yml up -d
   only:
