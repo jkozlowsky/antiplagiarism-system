@@ -52,7 +52,6 @@ public class NEG02_ConstraintViolationTest extends BaseTestSetup {
 
         AccountDTO accountDTO = new AccountDTO(
                 null,
-                null,
                 getAccount.versionHash(),
                 null,
                 null,

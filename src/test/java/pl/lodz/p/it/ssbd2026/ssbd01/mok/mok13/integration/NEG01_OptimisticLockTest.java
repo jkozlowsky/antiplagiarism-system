@@ -83,7 +83,6 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 null,
                 null,
                 null,
-                null,
                 changedName,
                 changedSurname,
                 null,

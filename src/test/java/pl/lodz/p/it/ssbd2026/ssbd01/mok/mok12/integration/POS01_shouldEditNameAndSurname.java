@@ -53,7 +53,6 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 null,
                 null,
                 null,
-                null,
                 changedName,
                 changedSurname,
                 null,
