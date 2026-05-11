@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import java.security.Principal;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
@@ -243,6 +245,12 @@ public class AccountController {
                 dto.getNewPassword(),
                 ifMatch
         );
+    }
+
+    @PostMapping("/role/change")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeRoleLog(@RequestBody String role, Principal principal){
+        log.info("{} changed his active role to: {}", principal.getName(), role);
     }
 
 }
