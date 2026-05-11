@@ -12,9 +12,6 @@ public record AccountDTO(
         UUID id,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Integer version,
-
-        @Null(groups = {OnCreate.class, OnUpdate.class})
         String versionHash,
 
         @Null(groups = OnUpdate.class)

@@ -79,4 +79,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
     }
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/auth/refresh");
+    }
 }
