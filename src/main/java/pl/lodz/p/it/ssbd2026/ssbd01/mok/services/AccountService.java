@@ -27,6 +27,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
@@ -67,10 +69,26 @@ public class AccountService {
 
     private final LanguageDictRepository languageDictRepository;
 
+    private void validateAndSetNewPassword(Account account, String newPassword) {
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        for (PasswordHistory history : account.getPasswordHistoryList()) {
+            if (passwordEncoder.matches(newPassword, history.getPasswordHash())) {
+                throw new PasswordAlreadyUsedInPastException();
+            }
+        }
+
+        String newHash = passwordEncoder.encode(newPassword);
+        account.setPasswordHash(newHash);
+        account.getPasswordHistoryList().add(new PasswordHistory(account, newHash));
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void registerAccount(Account account) {
         account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
+        account.getPasswordHistoryList().add(new PasswordHistory(account, account.getPasswordHash()));
 
         account.setIsVerified(false);
         account.setIsBlocked(false);
@@ -338,13 +356,10 @@ public class AccountService {
             throw new InvalidOldPasswordException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
-        }
-
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        validateAndSetNewPassword(account, newPassword);
         accountRepository.saveAndFlush(account);
     }
+
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -531,13 +546,8 @@ public class AccountService {
             throw new ConcurrentUpdateException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
-        }
-
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        validateAndSetNewPassword(account, newPassword);
         accountRepository.saveAndFlush(account);
-
     }
 
     private void updatePreferencesIfProvided(Account admin, Integer size, String sortBy, Boolean sortDesc) {
