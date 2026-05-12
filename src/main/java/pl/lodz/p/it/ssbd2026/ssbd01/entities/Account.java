@@ -59,6 +59,9 @@ public class Account extends AbstractEntity {
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    private List<PasswordHistory> passwordHistoryList = new ArrayList<>();
+
     @Column(name = "name", nullable = false, length = AccountConsts.NAME_LENGTH)
     private String name;
 
