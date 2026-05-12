@@ -1,4 +1,3 @@
-Danylo
 ## 12 Interfejs użytkownika 3 pkt
 
 ### Szablon GUI
