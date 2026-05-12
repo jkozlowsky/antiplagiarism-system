@@ -27,6 +27,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -130,15 +131,20 @@ public class AccountService {
         return account;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Page<Account> getAllAccounts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<Account> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
         return accountRepository.findAll(pageable);
     }
 
@@ -162,17 +168,22 @@ public class AccountService {
         return account;
     }
 
-    /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Page<Account> searchAccounts(String phrase, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
+    public Page<Account> searchAccounts(String phrase, Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(
+                phrase, phrase, phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -525,6 +536,41 @@ public class AccountService {
         account.setPasswordHash(passwordEncoder.encode(newPassword));
         accountRepository.saveAndFlush(account);
 
+    }
+
+    private void updatePreferencesIfProvided(Account admin, Integer size, String sortBy, Boolean sortDesc) {
+        boolean updated = false;
+
+        if (size != null && !size.equals(admin.getListPageSize())) {
+            admin.setListPageSize(size);
+            updated = true;
+        }
+        if (sortBy != null && !sortBy.equals(admin.getListSortBy())) {
+            admin.setListSortBy(sortBy);
+            updated = true;
+        }
+        if (sortDesc != null && !sortDesc.equals(admin.getListSortDesc())) {
+            admin.setListSortDesc(sortDesc);
+            updated = true;
+        }
+
+        if (updated) {
+            accountRepository.saveAndFlush(admin);
+        }
+    }
+
+    private Pageable createPageable(Integer page, Account admin) {
+        int finalSize = (admin.getListPageSize() != null) ? admin.getListPageSize() : 10;
+        String sortByField = (admin.getListSortBy() != null) ? admin.getListSortBy() : "login";
+
+        if ("accessLevel".equals(sortByField)) {
+            sortByField = "accessLevelList.accessLevelDict.accessLevelName";
+        }
+
+        boolean finalSortDesc = (admin.getListSortDesc() != null) ? admin.getListSortDesc() : false;
+        int finalPage = (page != null) ? page : 0;
+        Sort sort = finalSortDesc ? Sort.by(sortByField).descending() : Sort.by(sortByField).ascending();
+        return PageRequest.of(finalPage, finalSize, sort);
     }
 
 }
