@@ -116,14 +116,14 @@ public class AccountServiceGetAllAccountsTest {
         PageRequest pageRequest = PageRequest.of(0, 10);
         Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(1)), pageRequest, 1);
 
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
 
         assertAll(
                 () -> assertEquals(1, result.getTotalElements()),
                 () -> assertEquals("Nowak", result.getContent().get(0).getSurname()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+                () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
     }
 
@@ -156,12 +156,12 @@ public class AccountServiceGetAllAccountsTest {
     }
 
     @Test
-    @DisplayName("Zwrócenie pustej listy, gdy żadne pole nie pasuje do frazy")
-    void shouldReturnEmptyListWhenNoFieldsMatch() {
+    @DisplayName("Zwrócenie pustej listy, gdy imię i nazwisko nie pasują do frazy")
+    void shouldReturnEmptyListWhenNameAndSurnameDoNotMatch() {
         String phrase = "nieistniejący_użytkownik_123";
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
 
