@@ -96,16 +96,16 @@ public class AccountServiceGetAllAccountsTest {
     void shouldReturnAccountsFilteredByName() {
         String phrase = "Ja";
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(0), mockAccounts.get(2)), pageRequest, 2);
+        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(0)), pageRequest, 1);
 
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
 
         assertAll(
-                () -> assertEquals(2, result.getTotalElements()),
+                () -> assertEquals(1, result.getTotalElements()),
                 () -> assertTrue(result.getContent().stream().anyMatch(a -> a.getName().equals("Jan"))),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+                () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
     }
 
