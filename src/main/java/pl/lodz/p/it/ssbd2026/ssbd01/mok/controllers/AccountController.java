@@ -253,8 +253,7 @@ public class AccountController {
 
     @PostMapping("/role/change")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeRoleLog(@RequestBody String role, Principal principal){
+    public void changeRoleLog(@RequestBody String role, Principal principal) {
         log.info("{} changed his active role to: {}", principal.getName(), role);
     }
-
 }

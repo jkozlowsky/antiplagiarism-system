@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok12.integration;
+package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok13.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,24 +24,57 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
     @Autowired
     RequestFunctions requestFunctions;
 
+    @Autowired
+    AccountRepository accountRepository;
+
+    @Autowired
+    VersionHashService versionHashService;
+
+    @Autowired
+    @Qualifier("mokTransactionManager")
+    private PlatformTransactionManager transactionManager;
+
+    Account testAccount;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    CommonFunctions commonFunctions;
+    private String accountEmail;
+    private String accountLogin;
+
     @BeforeEach
     void testSetup() {
-        commonFunctions = new CommonFunctions();
+        CommonFunctions commonFunctions = new CommonFunctions();
+        accountEmail = commonFunctions.generateRandomEmail();
+        accountLogin = commonFunctions.generateRandomStringOfLength(8);
+
+        TransactionTemplate transTemp = new TransactionTemplate(transactionManager);
+        testAccount = transTemp.execute(status -> {
+            Account adminUser = accountRepository.findByLogin("admin").get();
+            LanguageDict ld = adminUser.getLanguageVersion();
+
+            Account account = new Account();
+            account.setName("Tester");
+            account.setSurname("Surname");
+            account.setEmail(accountEmail);
+            account.setLogin(accountLogin);
+            account.setIsBlocked(false);
+            account.setLanguageVersion(ld);
+            account.setPasswordHash("testcontainers_hash");
+
+            return accountRepository.saveAndFlush(account);
+        });
     }
 
     @Test
     void NEG01_OptimisticLockTest() throws JsonProcessingException {
-        String changedName = commonFunctions.generateRandomStringOfLength(10);
-        String changedSurname = commonFunctions.generateRandomStringOfLength(10);
+        String changedName = "changed_name";
+        String changedSurname = "changed_surname";
         String value1 = requestFunctions.sendGetRequest(
                 200,
-                "/api/account/login/no-access-level/admin",
+                "/api/account/login/" + accountLogin,
                 new Headers()
         );
-        AccountDTO getAccount = objectMapper.readValue(value1, AccountDTO.class);
+        AccountWithAccessLevelsDTO getAccount = objectMapper.readValue(value1, AccountWithAccessLevelsDTO.class);
 
         AccountDTO accountDTO = new AccountDTO(
                 null,
@@ -61,15 +94,15 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
         String response = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 200,
-                "/api/account/update-myself",
-                new Headers(new Header("if-Match",getAccount.versionHash()))
+                "/api/account/" + testAccount.getId(),
+                new Headers(new Header("if-Match", getAccount.account().versionHash()))
         );
 
         String response2 = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 409,
-                "/api/account/update-myself",
-                new Headers(new Header("if-Match",getAccount.versionHash()))
+                "/api/account/" + testAccount.getId(),
+                new Headers(new Header("if-Match", getAccount.account().versionHash()))
         );
     }
 }
