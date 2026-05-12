@@ -68,16 +68,20 @@ public class AccountController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Page<AccountWithAccessLevelsDTO> getAllAccounts(
-            @RequestParam(required = false) String phrase,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(required = false, name = "page") Integer page,
+            @RequestParam(required = false, name = "size") Integer size,
+            @RequestParam(required = false, name = "sortBy") String sortBy,
+            @RequestParam(required = false, name = "sortDesc") Boolean sortDesc,
+            @RequestParam(required = false, name = "phrase") String phrase,
+            Principal principal) {
 
+        String username = principal.getName();
         Page<Account> accountPage;
 
         if (phrase == null || phrase.trim().isEmpty()) {
-            accountPage = accountService.getAllAccounts(page, size);
+            accountPage = accountService.getAllAccounts(page, size, sortBy, sortDesc, username);
         } else {
-            accountPage = accountService.searchAccounts(phrase, page, size);
+            accountPage = accountService.searchAccounts(phrase, page, size, sortBy, sortDesc, username);
         }
 
         return accountPage.map(account -> accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
