@@ -119,5 +119,13 @@ public class EmailService {
         String content = translator.translateForUser("email.email.revert.content", langCode, login, newEmail, url);
         sendEmail(toAddress, subject, content);
     }
+
+    @Async
+    public void sendUnblockEmailLinkAfterInactivity(String toAddress, String login, String token, String langCode) {
+        String url = frontendUrl + "/unblock-account?token=" + token;
+        String subject = translator.translateForUser("email.account.inactive.unblock.subject", langCode);
+        String content = translator.translateForUser("email.account.inactive.unblock.content", langCode, login, url);
+        sendEmail(toAddress, subject, content);
+    }
 }
 

@@ -253,4 +253,10 @@ public class AccountController {
         log.info("{} changed his active role to: {}", principal.getName(), role);
     }
 
+    @PostMapping("/unblock-inactive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> unblockAccountViaToken(@RequestParam String token) {
+        accountService.unblockAccountViaEmailToken(token);
+        return ResponseEntity.noContent().build();
+    }
 }

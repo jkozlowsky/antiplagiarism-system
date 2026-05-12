@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/reset/request", "/auth/reset/confirm").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/loggers", "/actuator/loggers/**").permitAll()
                         .requestMatchers("/account/email/confirm").permitAll()
+                        .requestMatchers("/account/unblock-inactive").permitAll()
                         .requestMatchers("/error").permitAll()
                         //TODO: trzeba zmienić ścieżki dodając wersje do nich
                         .anyRequest().authenticated()
