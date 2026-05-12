@@ -27,9 +27,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
+import org.springframework.data.domain.Sort;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
