@@ -32,6 +32,8 @@ import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
+
 @RequiredArgsConstructor
 @Service
 @MethodCallLogged
@@ -560,17 +562,18 @@ public class AccountService {
     }
 
     private Pageable createPageable(Integer page, Account admin) {
-        int finalSize = (admin.getListPageSize() != null) ? admin.getListPageSize() : 10;
-        String sortByField = (admin.getListSortBy() != null) ? admin.getListSortBy() : "login";
+        int finalPage = (page != null) ? page : DEFAULT_PAGE;
+        int finalSize = (admin.getListPageSize() != null) ? admin.getListPageSize() : DEFAULT_PAGE_SIZE;
 
-        if ("accessLevel".equals(sortByField)) {
-            sortByField = "accessLevelList.accessLevelDict.accessLevelName";
+        String sortByField = (admin.getListSortBy() != null) ? admin.getListSortBy() : DEFAULT_SORT_BY;
+        if (SORT_ACCESS_LEVEL_ALIAS.equals(sortByField)) {
+            sortByField = SORT_ACCESS_LEVEL_PATH;
         }
 
-        boolean finalSortDesc = (admin.getListSortDesc() != null) ? admin.getListSortDesc() : false;
-        int finalPage = (page != null) ? page : 0;
-        Sort sort = finalSortDesc ? Sort.by(sortByField).descending() : Sort.by(sortByField).ascending();
-        return PageRequest.of(finalPage, finalSize, sort);
+        boolean isDescending = Boolean.TRUE.equals(admin.getListSortDesc());
+        Sort.Direction direction = isDescending ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        return PageRequest.of(finalPage, finalSize, Sort.by(direction, sortByField));
     }
 
 }
