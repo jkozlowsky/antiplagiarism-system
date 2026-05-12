@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GetAllAccountsTest extends BaseTestSetup {
 
@@ -103,11 +102,10 @@ public class GetAllAccountsTest extends BaseTestSetup {
         );
 
         List<String> names = JsonPath.from(responseBody).getList("content.account.name", String.class);
-        List<String> logins = JsonPath.from(responseBody).getList("content.account.login", String.class);
 
         assertAll(
                 () -> assertFalse(names.isEmpty()),
-                () -> assertTrue(names.stream().anyMatch(n -> n.equals("Anna")) || logins.stream().anyMatch(l -> l.contains("anna")))
+                () -> assertTrue(names.stream().anyMatch(n -> n.equalsIgnoreCase("Anna")))
         );
     }
 
@@ -129,21 +127,17 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Pomyślne wyszukiwanie po adresie e-mail (częściowe)")
-    public void shouldSearchByEmailPartial() {
+    @DisplayName("Zwrócenie pustej listy podczas próby wyszukiwania po adresie e-mail")
+    public void shouldReturnEmptyListWhenSearchingByEmail() {
         String responseBody = requestFunctions.sendGetRequest(
                 200,
                 "/api/account?phrase=@p.lodz.pl&page=0&size=10",
                 adminHeaders
         );
 
-        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+        List<Object> accounts = JsonPath.from(responseBody).getList("content");
 
-        assertAll(
-                () -> assertFalse(emails.isEmpty()),
-                () -> assertTrue(emails.size() >= 4),
-                () -> assertTrue(emails.stream().allMatch(e -> e.endsWith("@p.lodz.pl")))
-        );
+        assertTrue(accounts.isEmpty());
     }
 
     @Test
