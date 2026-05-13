@@ -2,7 +2,7 @@
 
 ### Szablon GUI
 
-Widok GUI jest utworzony za pomocą TypeScript biblioteki React z dodatkowym wykorzystaniem bibliotek:
+Widok GUI jest utworzony w języku TypeScript za pomocą biblioteki React z dodatkowym wykorzystaniem bibliotek:
 - Tailwind: dla ostylowania elementów.
 - i18next: dla internacjonalizacji widoku.
 Szablon strony po pomyślnym uwierzytelnieniu użytkownika znajduje się w pliku `layout.tsx`, zaprezentowany poniżej w listingu 12.1.
