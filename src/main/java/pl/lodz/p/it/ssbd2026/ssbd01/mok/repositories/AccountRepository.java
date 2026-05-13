@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,5 +51,10 @@ public interface AccountRepository extends AbstractRepository<Account> {
     UUID id(UUID id);
 
     List<Account> findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(Integer failedAttempts, LocalDateTime date);
+
+    @Query("SELECT a FROM Account a WHERE a.isBlocked = false AND " +
+            "((a.lastLoginSuccessDateTime IS NOT NULL AND a.lastLoginSuccessDateTime < :lastTimeLogged) OR " +
+            "(a.lastLoginSuccessDateTime IS NULL AND a.creationDate < :lastTimeLogged))")
+    List<Account> findInactiveAccountsToBlock(@Param("lastTimeLogged") LocalDateTime lastTimeLogged);
 }
 
