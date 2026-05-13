@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication()
 @EnableScheduling
 @EnableRetry
-@EnableJpaAuditing
+@EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class Ssbd01api {
 
     static void main(String[] args) {

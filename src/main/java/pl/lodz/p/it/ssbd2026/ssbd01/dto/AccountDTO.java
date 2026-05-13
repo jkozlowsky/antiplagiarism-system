@@ -7,6 +7,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 public record AccountDTO(
         @Null(groups = {OnCreate.class, OnUpdate.class})
         UUID id,
@@ -51,23 +52,26 @@ public record AccountDTO(
         LocalDateTime lastLoginSuccessDateTime,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Integer listPageSize,
+        LocalDateTime lastLoginFailureDateTime,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        String listSortBy,
+        String lastSuccessfulLoginIp,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Boolean listSortDesc
-//
-//        @Null(groups = {OnCreate.class, OnUpdate.class})
-//        LocalDateTime lastLoginFailureDateTime,
-//
-//        @Null(groups = {OnCreate.class, OnUpdate.class})
-//        String lastSuccessfulLoginIp,
-//
-//        @Null(groups = {OnCreate.class, OnUpdate.class})
-//        String lastFailedLoginIp,
-//
+        String lastFailedLoginIp,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        LocalDateTime createdAt,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        LocalDateTime updatedAt,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        String createdBy,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        String modifiedBy
+
 //        @Null(groups = {OnCreate.class, OnUpdate.class})
 //        String language
 ) {

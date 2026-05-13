@@ -99,7 +99,7 @@ class AuthService2FAPositiveTest {
 
         assertEquals(testAccount.getLogin(), savedToken.getUsername());
         assertEquals(OneTimeTokenType.CODE_2FA, savedToken.getTokenType());
-        assertFalse(savedToken.isUsed());
+        assertFalse(savedToken.getIsUsed());
         assertNotNull(savedToken.getTokenValue());
 
         verify(emailService, times(1)).send2FAuthEmail(eq(OTP_CODE), eq(testAccount.getEmail()), any());
@@ -110,7 +110,7 @@ class AuthService2FAPositiveTest {
         OneTimeTokenEnt validToken = new OneTimeTokenEnt();
         validToken.setUsername(testAccount.getLogin());
         validToken.setTokenType(OneTimeTokenType.CODE_2FA);
-        validToken.setUsed(false);
+        validToken.setIsUsed(false);
         validToken.setExpiresAt(LocalDateTime.now().plusMinutes(5));
 
         when(tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
@@ -128,7 +128,7 @@ class AuthService2FAPositiveTest {
         assertEquals("accessToken123", response.token());
         assertEquals("refreshToken123", response.refreshToken());
 
-        assertTrue(validToken.isUsed());
+        assertTrue(validToken.getIsUsed());
         verify(tokenRepository, times(1)).saveAndFlush(validToken);
 
         assertEquals(0, testAccount.getFailedAttempts());

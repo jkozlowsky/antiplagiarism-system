@@ -94,7 +94,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
     public void shouldRememberPaginationAndSortingPreferences() {
         requestFunctions.sendGetRequest(
                 200,
-                "/api/account?size=2&sortBy=email&sortDesc=true",
+                "/api/account?size=5&sortBy=email&sortDesc=true",
                 adminHeaders
         );
 
@@ -107,7 +107,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
         int size = JsonPath.from(responseBody).getInt("size");
         List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
 
-        assertEquals(2, size);
+        assertEquals(5, size);
 
         if (emails.size() > 1) {
             assertTrue(emails.get(0).compareTo(emails.get(1)) >= 0, "Obiekty nie są poprawnie posortowane malejąco względem adresu email");

@@ -59,7 +59,7 @@ public class AccountServiceUnblockAfterInactivity {
         mockToken.setUsername("inactiveias64user");
         mockToken.setTokenType(OneTimeTokenType.ACCOUNT_UNBLOCK);
         mockToken.setExpiresAt(LocalDateTime.now().plusDays(1));
-        mockToken.setUsed(false);
+        mockToken.setIsUsed(false);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class AccountServiceUnblockAfterInactivity {
         accountService.unblockAccountViaEmailToken(tokenString);
 
         assertFalse(mockAccount.getIsBlocked());
-        assertTrue(mockToken.isUsed());
+        assertTrue(mockToken.getIsUsed());
         assertNotNull(mockAccount.getLastLoginSuccessDateTime());
 
         verify(accountRepository).saveAndFlush(mockAccount);

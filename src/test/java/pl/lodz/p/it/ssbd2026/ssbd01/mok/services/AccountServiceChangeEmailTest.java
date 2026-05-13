@@ -12,6 +12,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +43,10 @@ public class AccountServiceChangeEmailTest {
     @InjectMocks
     private AccountService accountService;
 
+    private final CommonFunctions commonFunctions = new CommonFunctions();
     private Account mockAccount;
     private final UUID accountId = UUID.randomUUID();
+    private String accountLogin;
     private final String validVersionHash = "valid-hash-123";
 
     @BeforeEach
@@ -51,8 +54,8 @@ public class AccountServiceChangeEmailTest {
         mockAccount = new Account();
 
         mockAccount.setEmail("test@example.com");
-        mockAccount.setLogin("testUser");
-
+        accountLogin = commonFunctions.generateRandomLettersOfLength(12);
+        mockAccount.setLogin(accountLogin);
         LanguageDict languageDict = new LanguageDict();
         languageDict.setLanguage("en");
         mockAccount.setLanguageVersion(languageDict);
@@ -63,11 +66,11 @@ public class AccountServiceChangeEmailTest {
         String newEmail = "new_admin_email@example.com";
         String oldEmail = mockAccount.getEmail();
 
-        when(accountRepository.findById(accountId)).thenReturn(Optional.of(mockAccount));
-        when(versionHashService.hashObjectVersion(accountId, mockAccount.getVersion())).thenReturn(validVersionHash);
+        when(accountRepository.findByLogin(accountLogin)).thenReturn(Optional.of(mockAccount));
+        when(versionHashService.hashObjectVersion(mockAccount.getId(), mockAccount.getVersion())).thenReturn(validVersionHash);
         when(accountRepository.saveAndFlush(any(Account.class))).thenReturn(mockAccount);
 
-        Account updatedAccount = accountService.changeEmailByAdmin(accountId, newEmail, validVersionHash);
+        Account updatedAccount = accountService.changeEmailByAdmin(accountLogin, newEmail, validVersionHash);
 
         assertNotNull(updatedAccount);
         assertEquals(newEmail, updatedAccount.getEmail(), "Email should be updated to the new email");
@@ -79,10 +82,10 @@ public class AccountServiceChangeEmailTest {
 
     @Test
     void changeEmailByAdmin_ShouldThrowAccountNotFoundException_WhenAccountDoesNotExist() {
-        when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+        when(accountRepository.findByLogin(accountLogin)).thenReturn(Optional.empty());
 
         assertThrows(AccountNotFoundException.class,
-                () -> accountService.changeEmailByAdmin(accountId, "new@example.com", validVersionHash)
+                () -> accountService.changeEmailByAdmin(accountLogin, "new@example.com", validVersionHash)
         );
 
         verify(versionHashService, never()).hashObjectVersion(any(), any());

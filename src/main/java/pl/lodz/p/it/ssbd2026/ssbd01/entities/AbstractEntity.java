@@ -1,7 +1,9 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
@@ -33,11 +35,15 @@ public abstract class AbstractEntity {
     private LocalDateTime updatedAt;
 
     @CreatedBy
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", updatable = false)
     private Account createdBy;
 
     @LastModifiedBy
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "modified_by")
     private Account modifiedBy;

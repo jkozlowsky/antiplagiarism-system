@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok9.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,9 @@ public class POS01_ChangeOtherPasswordTest extends BaseTestSetup {
     @Autowired
     private AccountTestRepository accountTestRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+//    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void POS01_shouldChangeOtherPassword() throws Exception {
@@ -35,7 +38,7 @@ public class POS01_ChangeOtherPasswordTest extends BaseTestSetup {
                 new Headers()
         );
         AccountDTO getAccount = objectMapper.readValue(value1, AccountDTO.class);
-        UUID targetId = getAccount.id();
+        String targetLogin = getAccount.login();
 
         ChangeOtherPasswordDto dto = new ChangeOtherPasswordDto();
         dto.setNewPassword("NoweWymuszoneHaslo123!");
@@ -43,7 +46,7 @@ public class POS01_ChangeOtherPasswordTest extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(dto),
                 204,
-                "/api/account/" + targetId + "/password",
+                "/api/account/" + targetLogin + "/password",
                 new Headers(new Header("If-Match", getAccount.versionHash()))
         );
 

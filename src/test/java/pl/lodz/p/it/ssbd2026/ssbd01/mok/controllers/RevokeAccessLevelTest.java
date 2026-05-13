@@ -8,12 +8,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AccessLevelDict;
@@ -69,6 +73,10 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     private Headers studentHeaders;
     private Headers unauthenticatedHeaders;
 
+    @Autowired
+    @Qualifier("mokTransactionManager")
+    private PlatformTransactionManager transactionManager;
+
     @BeforeEach
     public void setUpAuth() {
         requestFunctions = new RequestFunctions();
@@ -86,30 +94,35 @@ public class RevokeAccessLevelTest extends BaseTestSetup {
     }
 
     private Account createTestAccountWithRoleState(String prefix, String roleName, boolean isActive) {
-        Account admin = accountRepository.findByLogin("admin").get();
-        LanguageDict language = admin.getLanguageVersion();
-        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        Account testAccount = new Account();
-        testAccount.setLogin(prefix + "_" + uniqueId);
-        testAccount.setEmail(prefix + "_" + uniqueId + "@example.com");
-        testAccount.setPasswordHash("password_hash");
-        testAccount.setName("TestName");
-        testAccount.setSurname("TestSurname");
-        testAccount.setIsBlocked(false);
-        testAccount.setLanguageVersion(language);
-        testAccount = accountRepository.save(testAccount);
+        return transactionTemplate.execute(status -> {
+            Account admin = accountRepository.findByLogin("admin").get();
+            LanguageDict language = admin.getLanguageVersion();
+            String uniqueId = UUID.randomUUID().toString().substring(0, 8);
 
-        if (roleName != null) {
-            AccessLevelDict dict = accessLevelDictRepository.findByAccessLevelName(roleName).get();
-            Teacher accessLevel = new Teacher();
-            accessLevel.setAccount(testAccount);
-            accessLevel.setAccessLevelDict(dict);
-            accessLevel.setActive(isActive);
-            accessLevelRepository.save(accessLevel);
-        }
+            Account testAccount = new Account();
+            testAccount.setLogin(prefix + "_" + uniqueId);
+            testAccount.setEmail(prefix + "_" + uniqueId + "@example.com");
+            testAccount.setPasswordHash("password_hash");
+            testAccount.setName("TestName");
+            testAccount.setSurname("TestSurname");
+            testAccount.setIsBlocked(false);
+            testAccount.setLanguageVersion(language);
+            testAccount = accountRepository.save(testAccount);
 
-        return accountRepository.findById(testAccount.getId()).get();
+            if (roleName != null) {
+                AccessLevelDict dict = accessLevelDictRepository.findByAccessLevelName(roleName).get();
+                Teacher accessLevel = new Teacher();
+                accessLevel.setAccount(testAccount);
+                accessLevel.setAccessLevelDict(dict);
+                accessLevel.setActive(isActive);
+                accessLevelRepository.save(accessLevel);
+            }
+
+            return accountRepository.findById(testAccount.getId()).get();
+        });
     }
 
     @Test

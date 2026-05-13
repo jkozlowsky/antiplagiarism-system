@@ -5,12 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.i18n.Translator;
 
 
 @RequiredArgsConstructor
 @Service
+@PreAuthorize("permitAll()")
 public class EmailService {
     private final JavaMailSender mailSender;
 
@@ -19,6 +21,7 @@ public class EmailService {
 
     private final Translator translator;
 
+    @PreAuthorize("permitAll()")
     public void sendEmail(String toAddress, String subject, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("ssbd01.2026@gmail.com");
@@ -29,24 +32,28 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendActivationEmail(String toAddress, String token, String langCode) {
         String subject = translator.translateForUser("email.activation.subject", langCode);
         String content = translator.translateForUser("email.activation.content", langCode, frontendUrl, token);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendActivationReminderEmail(String toAddress, String token, String langCode) {
         String subject = translator.translateForUser("email.activation.reminder.subject", langCode);
         String content = translator.translateForUser("email.activation.reminder.content", langCode, frontendUrl, token);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendAccountDeletedEmail(String toAddress, String langCode) {
         String subject = translator.translateForUser("email.account.deleted.subject", langCode);
         String content = translator.translateForUser("email.account.deleted.content", langCode);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void sendEmailAddressChangedByAdmin(String toAddress, String langCode) {
         String subject = translator.translateForUser("email.email.changed.subject", langCode);
@@ -54,24 +61,28 @@ public class EmailService {
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendAccountIsBlockedInfo(String toAddress, String login, String langCode) {
         String subject = translator.translateForUser("email.account.blocked.subject", langCode);
         String content = translator.translateForUser("email.account.blocked.content", langCode, login);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendAccountIsUnblockedInfo(String toAddress, String login, String langCode) {
         String subject = translator.translateForUser("email.account.unblocked.subject", langCode);
         String content = translator.translateForUser("email.account.unblocked.content", langCode, login);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendUrlToChangeOwnEmail(String toAddress, String login, String url, String langCode) {
         String subject = translator.translateForUser("email.email.change.request.subject", langCode);
         String content = translator.translateForUser("email.email.change.request.content", langCode, login, url);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void sendAccessLevelRevokedInfo(String toAddress, String login, String accessLevelName, String langCode) {
         String subject = translator.translateForUser("email.accesslevel.revoked.subject", langCode);
@@ -79,12 +90,14 @@ public class EmailService {
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendAccessLevelGrantedInfo(String toAddress, String login, String accessLevelName, String langCode) {
         String subject = translator.translateForUser("email.accesslevel.granted.subject", langCode);
         String content = translator.translateForUser("email.accesslevel.granted.content", langCode, login, accessLevelName);
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     public void sendResetPasswordEmail(String toAddress, String token, String langCode) {
         String magicLink = frontendUrl + "/reset-password?token=" + token;
         String subject = translator.translateForUser("email.password.reset.subject", langCode);
@@ -92,6 +105,7 @@ public class EmailService {
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void sendAutoBlockEmail(String toAddress, String login, String langCode) {
         String subject = translator.translateForUser("email.autoblock.subject", langCode);
@@ -99,6 +113,7 @@ public class EmailService {
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void sendAdminLoginNotification(String toAddress, String login, String ipAddress, String langCode) {
         String subject = translator.translateForUser("email.admin.login.subject", langCode);
@@ -106,6 +121,7 @@ public class EmailService {
         sendEmail(toAddress, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void send2FAuthEmail(String Auth2F, String toAddres, String langCode) {
         String subject = translator.translateForUser("email.2fa.subject", langCode);
@@ -113,6 +129,7 @@ public class EmailService {
         sendEmail(toAddres, subject, content);
     }
 
+    @PreAuthorize("permitAll()")
     @Async
     public void sendComebackEmailAddressLink(String toAddress, String login, String newEmail, String url, String langCode) {
         String subject = translator.translateForUser("email.email.revert.subject", langCode);

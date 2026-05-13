@@ -5,6 +5,7 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -36,6 +37,7 @@ import java.util.UUID;
 @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("permitAll()")
 public class PasswordResetService {
 
     private final OneTimeTokenRepository tokenRepository;
@@ -55,6 +57,7 @@ public class PasswordResetService {
      * Żeby zapobiec zaśmieceniu bazy danych utworzono TokenScheduler który czyści martwe tokeny co minutę.
      * @param email: adres email na który będzie wysłany jednorazowy adres url
      */
+    @PreAuthorize("permitAll()")
     public void initiatePasswordReset(String email) {
         Optional<Account> accountOpt = accountRepository.findByEmail(email);
         if (accountOpt.isEmpty()) {
@@ -63,7 +66,7 @@ public class PasswordResetService {
         }
 
         List<OneTimeTokenEnt> potentialClashedToken = tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET);
-        potentialClashedToken.forEach(item -> item.setUsed(true));
+        potentialClashedToken.forEach(item -> item.setIsUsed(true));
 
         if (!potentialClashedToken.isEmpty()) {
             tokenRepository.saveAllAndFlush(potentialClashedToken);
@@ -75,7 +78,7 @@ public class PasswordResetService {
         token.setUsername(email);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
         token.setTokenType(OneTimeTokenType.PASSWORD_RESET);
-        token.setUsed(false);
+        token.setIsUsed(false);
         tokenRepository.saveAndFlush(token);
 
         emailService.sendResetPasswordEmail(email, rawToken, accountOpt.get().getLanguageVersion().getLanguage());
@@ -85,6 +88,7 @@ public class PasswordResetService {
      * @param passwordHash: skrót nowego hasła użtkownika
      * @param token:        token który użytkownik otrzymał w powiadomieniu na mail
      */
+    @PreAuthorize("permitAll()")
     public void resolvePasswordReset(String token, String passwordHash) {
         String hashedTokenInput = hashToken(token);
         OneTimeTokenEnt tokenEntity = tokenRepository
@@ -92,7 +96,7 @@ public class PasswordResetService {
                 .orElseThrow(() -> new OneTimeTokenInvalidException("error.token.reset.expired"));
         //TODO: i18n
 
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         //Nie rozumiem dlaczego, ale jeżeli robię manualny save albo saveAndFlush
         //to występuje optimisticLockException którego nie mogę obejść.
         //Na razie zostawię je tutaj zakomentowane, ale muszę zapytać kogoś z doktorów co tu się

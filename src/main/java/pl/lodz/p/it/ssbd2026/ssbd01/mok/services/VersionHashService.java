@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.HashEncryptionException;
@@ -16,6 +17,7 @@ public class VersionHashService {
     @Value("${app.hash.secret}")
     private String secret;
 
+    @PreAuthorize("permitAll()")
     public String hashObjectVersion(UUID id, Integer version){
         try {
             MessageDigest digest = MessageDigest.getInstance(OneTimeTokenConsts.HASHING_ALGORITHM);

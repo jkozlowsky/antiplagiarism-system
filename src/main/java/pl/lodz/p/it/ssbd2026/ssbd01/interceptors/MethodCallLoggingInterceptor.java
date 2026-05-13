@@ -51,11 +51,11 @@ public class MethodCallLoggingInterceptor {
                         String paramName = (parameterNames != null && parameterNames.length > i) ? parameterNames[i].toLowerCase() : "";
                         Object arg = args[i];
 
-                        if (paramName.contains("password") || paramName.contains("haslo")) {
+                        if (paramName.contains("password") || paramName.contains("haslo") || paramName.contains("token")) {
                             message.append("*** UKRYTE *** ");
                         } else {
                             String argStr = (arg != null) ? arg.toString() : "null";
-                            argStr = argStr.replaceAll("(?i)(password\\s*=\\s*)[^,\\}\\]]+", "$1*** UKRYTE ***");
+                            argStr = argStr.replaceAll("(?i)((?:password|haslo|token|idToken)\\s*=\\s*)[^,\\}\\]]+", "$1*** UKRYTE ***");
                             message.append(argStr).append(" ");
                         }
                     }
@@ -72,7 +72,8 @@ public class MethodCallLoggingInterceptor {
             result = joinPoint.proceed();
 
         } catch (Throwable t) {
-            message.append(" | Thrown exception: ").append(t.toString()).append(" - ").append(t.getMessage());;
+            message.append(" | Thrown exception: ").append(t.toString()).append(" - ").append(t.getMessage());
+            ;
             log.warn(message.toString(), t);
             throw t;
         }

@@ -87,7 +87,7 @@ public class AuthWithEmailOnlyTest {
 
         assertEquals(testAccount.getLogin(), savedToken.getUsername());
         assertEquals(OneTimeTokenType.EMAIL_ONLY_AUTH, savedToken.getTokenType());
-        assertFalse(savedToken.isUsed());
+        assertFalse(savedToken.getIsUsed());
 
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
         verify(postCommitTransactionManager).register(runnableCaptor.capture());
@@ -132,7 +132,7 @@ public class AuthWithEmailOnlyTest {
         OneTimeTokenEnt activeToken = new OneTimeTokenEnt();
         activeToken.setUsername(testAccount.getLogin());
         activeToken.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
-        activeToken.setUsed(false);
+        activeToken.setIsUsed(false);
 
         when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
 
@@ -151,7 +151,7 @@ public class AuthWithEmailOnlyTest {
         assertEquals("short-jwt-token", response.token());
         assertEquals("refresh-jwt-token", response.refreshToken());
 
-        assertTrue(activeToken.isUsed());
+        assertTrue(activeToken.getIsUsed());
         verify(tokenRepository).saveAndFlush(activeToken);
 
         assertEquals(0, testAccount.getFailedAttempts());

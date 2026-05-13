@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -43,8 +44,6 @@ import java.util.Optional;
 @Slf4j
 public class AuthService {
 
-    @Value("${google.client.id}")
-    private String googleClientId;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthService jwtAuthService;
@@ -53,13 +52,27 @@ public class AuthService {
     private final AuthenticationTokenValueGenerator tokenValueGenerator;
     private final OneTimeTokenRepository tokenRepository;
     private final LanguageDictRepository languageDictRepository;
+    @Value("${google.client.id}")
+    private String googleClientId;
 
+    private static String getStringFromByteArray(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public AuthResponseDTO authenticateWithGoogle(String idTokenString, String ipAddress) {
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory()).setAudience(Collections.singletonList(googleClientId)).build();
 
             GoogleIdToken idToken = verifier.verify(idTokenString);
 
@@ -70,17 +83,13 @@ public class AuthService {
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
 
-            Account account = accountRepository.findByEmail(email)
-                    .orElseThrow(AccountNotFoundException::new);
+            Account account = accountRepository.findByEmail(email).orElseThrow(AccountNotFoundException::new);
 
             if (account.getIsBlocked()) {
                 throw new AccountIsBlockedException();
             }
 
-            List<String> roles = account.getAccessLevelList().stream()
-                    .filter(AccessLevel::getActive)
-                    .map(al -> al.getAccessLevelDict().getAccessLevelName())
-                    .toList();
+            List<String> roles = account.getAccessLevelList().stream().filter(AccessLevel::getActive).map(al -> al.getAccessLevelDict().getAccessLevelName()).toList();
 
             account.setFailedAttempts(0);
             account.setLastSuccessfulLoginIp(ipAddress);
@@ -98,12 +107,13 @@ public class AuthService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
+    @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
+    @PreAuthorize("permitAll()")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
     public void authenticate(String login, String password, String ipAddress) {
         Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
-//        System.out.println(account.getIsBlocked());
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
@@ -119,38 +129,35 @@ public class AuthService {
         generate2FactorCode(account);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW,
-            transactionManager = "mokTransactionManager",
-            noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
+    @MethodCallLogged
+    @PreAuthorize("permitAll()")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
     public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress, String langHeader) {
 
         String hashedToken = hashToken(token);
 
-        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository
-                .findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
-                        hashedToken, login, OneTimeTokenType.CODE_2FA, LocalDateTime.now());
+        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(hashedToken, login, OneTimeTokenType.CODE_2FA, LocalDateTime.now());
 
         if (tokenOpt.isEmpty()) {
-            Account account = accountRepository.findByLogin(login)
-                    .orElseThrow(OneTimeTokenInvalidException::new);
+            Account account = accountRepository.findByLogin(login).orElseThrow(OneTimeTokenInvalidException::new);
             handleFailedLogin(account, ipAddress);
             throw new OneTimeTokenInvalidException();
         }
 
         OneTimeTokenEnt tokenEntity = tokenOpt.get();
-        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
-                .orElseThrow(AccountNotFoundException::new);
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername()).orElseThrow(AccountNotFoundException::new);
 
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         tokenRepository.saveAndFlush(tokenEntity);
 
         return handleSuccessfulLogin(account, ipAddress, langHeader);
     }
 
+    @MethodCallLogged
+    @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void resend2FactorCode(String login) {
-        Account account = accountRepository.findByLogin(login)
-                .orElseThrow(InvalidCredentialsProvidedException::new);
+        Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
@@ -163,10 +170,11 @@ public class AuthService {
         generate2FactorCode(account);
     }
 
+    @MethodCallLogged
+    @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void generate2FactorCode(Account account) {
-        List<OneTimeTokenEnt> activeTokens = tokenRepository
-                .findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.CODE_2FA);
+        List<OneTimeTokenEnt> activeTokens = tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.CODE_2FA);
 
         if (!activeTokens.isEmpty()) {
             OneTimeTokenEnt oldToken = activeTokens.getFirst();
@@ -178,7 +186,7 @@ public class AuthService {
                     throw new Resend2FATokenException();
                 }
             }
-            oldToken.setUsed(true);
+            oldToken.setIsUsed(true);
             tokenRepository.save(oldToken);
         }
 
@@ -190,7 +198,7 @@ public class AuthService {
         tokenEnt.setUsername(account.getLogin());
         tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
         tokenEnt.setTokenType(OneTimeTokenType.CODE_2FA);
-        tokenEnt.setUsed(false);
+        tokenEnt.setIsUsed(false);
 
         tokenRepository.saveAndFlush(tokenEnt);
     }
@@ -204,18 +212,6 @@ public class AuthService {
         } catch (NoSuchAlgorithmException e) {
             throw new HashEncryptionException("Algorithm " + OneTimeTokenConsts.HASHING_ALGORITHM + " does not exist", e);
         }
-    }
-
-    private static String getStringFromByteArray(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder(2 * bytes.length);
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
     }
 
     private void handleFailedLogin(Account account, String ipAddress) {
@@ -237,8 +233,7 @@ public class AuthService {
         account.setLastSuccessfulLoginIp(ipAddress);
         account.setLastLoginSuccessDateTime(LocalDateTime.now());
         String langCode = (langHeader != null && langHeader.length() >= 2) ? langHeader.substring(0, 2).toLowerCase() : "en";
-        languageDictRepository.findByLanguage(langCode)
-                .ifPresent(account::setLanguageVersion);
+        languageDictRepository.findByLanguage(langCode).ifPresent(account::setLanguageVersion);
         accountRepository.saveAndFlush(account);
 
         List<String> roles = account.getAccessLevelList().stream().filter(AccessLevel::getActive).map(al -> al.getAccessLevelDict().getAccessLevelName()).toList();
@@ -252,8 +247,10 @@ public class AuthService {
         return new AuthResponseDTO(token, refreshToken);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
+    @PreAuthorize("permitAll()")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public AuthResponseDTO refreshToken(String refreshToken, String ipAddress) {
         if (!jwtAuthService.isTokenValid(refreshToken)) {
             throw new InvalidCredentialsProvidedException();
@@ -303,7 +300,7 @@ public class AuthService {
             throw new OneTimeTokenInvalidException();
         }
         OneTimeTokenEnt tokenEntity = tokenOpt.get();
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         tokenRepository.saveAndFlush(tokenEntity);
         return handleSuccessfulLoginWithEmail(account, ipAddress, langHeader);
     }
@@ -323,7 +320,7 @@ public class AuthService {
         tokenEnt.setUsername(account.getLogin());
         tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
         tokenEnt.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
-        tokenEnt.setUsed(false);
+        tokenEnt.setIsUsed(false);
         tokenRepository.saveAndFlush(tokenEnt);
     }
 
@@ -360,7 +357,7 @@ public class AuthService {
                     throw new Resend2FATokenException();
                 }
             }
-            oldToken.setUsed(true);
+            oldToken.setIsUsed(true);
             tokenRepository.save(oldToken);
         }
     }

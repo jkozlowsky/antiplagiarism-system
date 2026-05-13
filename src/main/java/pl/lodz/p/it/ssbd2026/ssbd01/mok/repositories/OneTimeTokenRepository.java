@@ -18,13 +18,16 @@ import java.util.Optional;
 @Component
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
 public interface OneTimeTokenRepository extends AbstractRepository<OneTimeTokenEnt> {
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<OneTimeTokenEnt> findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(String token, OneTimeTokenType tokenType, LocalDateTime now);
 
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<OneTimeTokenEnt> findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(String token, String username, OneTimeTokenType tokenType, LocalDateTime now);
 
     //Blokujemy wpisy które znajdziemy żeby wyeliminować wyścig związany z jednoczesnym wczytaniem i tworzeniem tokenu.
     //Nie do końca wiem czy jest to potrzebne ale chyba nic złego nie robi ¯\_(ツ)_/¯
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
     List<OneTimeTokenEnt> findByUsernameAndTokenTypeAndIsUsedIsFalse(String username, OneTimeTokenType tokenType);
 
     void deleteByExpiresAtBefore(LocalDateTime expiresAt);

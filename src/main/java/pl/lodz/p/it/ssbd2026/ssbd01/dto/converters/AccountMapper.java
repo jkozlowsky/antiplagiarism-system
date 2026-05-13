@@ -9,13 +9,16 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 @Mapper(componentModel = "spring", uses = {AccessLevelMapper.class})
 public interface AccountMapper {
 
-
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "versionHash", source = "versionHash")
+    @Mapping(source = "account.createdBy.login", target = "createdBy")
+    @Mapping(source = "account.modifiedBy.login", target = "modifiedBy")
     AccountDTO toAccountDTO(Account account, String versionHash);
 
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "versionHash", ignore = true)
+    @Mapping(source = "createdBy.login", target = "createdBy")
+    @Mapping(source = "modifiedBy.login", target = "modifiedBy")
     AccountDTO toAccountDTONoHash(Account account);
 
     @Mapping(target = "account", expression = "java(toAccountDTO(account, versionHash))")
@@ -31,7 +34,10 @@ public interface AccountMapper {
     @Mapping(target = "version", ignore = true)
     Account toEntity(RegisterAccountDTO dto);
 
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "modifiedBy", ignore = true)
     Account toUpdateAccount(AccountDTO accountDTO);
+
     @BeanMapping(ignoreByDefault = true, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mappings({
             @Mapping(target = "name"),

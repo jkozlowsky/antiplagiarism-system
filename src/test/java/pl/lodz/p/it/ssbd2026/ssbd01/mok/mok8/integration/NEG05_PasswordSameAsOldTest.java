@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok8.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,8 @@ public class NEG05_PasswordSameAsOldTest extends BaseTestSetup {
     @Autowired
     RequestFunctions requestFunctions;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
     @Test
     void NEG05_shouldFailWhenNewPasswordIsSameAsOld() throws JsonProcessingException {
         String value1 = requestFunctions.sendGetRequest(

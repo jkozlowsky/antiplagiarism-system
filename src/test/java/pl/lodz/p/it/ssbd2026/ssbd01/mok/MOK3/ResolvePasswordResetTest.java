@@ -96,7 +96,7 @@ class ResolvePasswordResetTest {
                 )
         );
 
-        assertTrue(tokenEntity.isUsed());
+        assertTrue(tokenEntity.getIsUsed());
     }
 
     @Test
@@ -107,7 +107,7 @@ class ResolvePasswordResetTest {
 
         OneTimeTokenEnt tokenEntity = new OneTimeTokenEnt();
         tokenEntity.setUsername(email);
-        tokenEntity.setUsed(false);
+        tokenEntity.setIsUsed(false);
 
         Account account = new Account();
 //        account.setTokenVersion(1);
@@ -126,7 +126,7 @@ class ResolvePasswordResetTest {
                 rawPassword
         );
 
-        assertTrue(tokenEntity.isUsed(), "Token should be marked as used");
+        assertTrue(tokenEntity.getIsUsed(), "Token should be marked as used");
 
         assertEquals(hashedPassword, account.getPasswordHash(), "Password should be updated");
 //        assertEquals(2, account.getTokenVersion(), "Token version should have been incremented");

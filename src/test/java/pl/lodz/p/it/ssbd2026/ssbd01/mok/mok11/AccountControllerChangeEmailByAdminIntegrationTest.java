@@ -55,7 +55,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         String response = requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.OK.value(),
-                "/api/account/" + account.getId() + "/email",
+                "/api/account/" + "anowak" + "/email",
                 new Headers(new Header("if-Match", hash))
         );
 
@@ -106,7 +106,7 @@ public class AccountControllerChangeEmailByAdminIntegrationTest extends BaseTest
         requestFunctions.sendPatchRequest(
                 reqBody,
                 HttpStatus.CONFLICT.value(),
-                "/api/account/" + account.getId() + "/email",
+                "/api/account/" + "jkowalski" + "/email",
                 new Headers(new Header("if-Match",badHash))
         );
     }
