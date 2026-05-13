@@ -1,0 +1,76 @@
+package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.MokRefreshRepository;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class NEG09_PasswordAlreadyUsedInPastServiceTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private MokRefreshRepository mokRefreshRepository;
+
+    @Mock
+    private VersionHashService versionHashService;
+
+    @InjectMocks
+    private AccountService accountService;
+
+    private Account account;
+    private final String LOGIN = "passTestUser";
+    private final String OLD_PASSWORD_PLAIN = "StareHaslo123!";
+    private final String NEW_PASSWORD_PLAIN = "ZupelnieNoweHaslo321!";
+    private final String OLD_PASSWORD_HASH = "old_hashed_password";
+    private final String HISTORICAL_HASH = "historical_hashed_password";
+
+    @BeforeEach
+    void setUp() {
+        account = new Account();
+        account.setLogin(LOGIN);
+        account.setPasswordHash(OLD_PASSWORD_HASH);
+        ReflectionTestUtils.setField(account, "version", 0);
+
+        PasswordHistory history = new PasswordHistory(account, HISTORICAL_HASH);
+        account.getPasswordHistoryList().add(history);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPasswordWasUsedInPast() {
+        when(accountRepository.findByLogin(LOGIN)).thenReturn(Optional.of(account));
+        when(versionHashService.hashObjectVersion(account.getId(), account.getVersion())).thenReturn("0");
+
+        when(passwordEncoder.matches(OLD_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(true);
+        when(passwordEncoder.matches(NEW_PASSWORD_PLAIN, OLD_PASSWORD_HASH)).thenReturn(false);
+        when(passwordEncoder.matches(NEW_PASSWORD_PLAIN, HISTORICAL_HASH)).thenReturn(true);
+
+        assertAll(
+                () -> assertThrows(PasswordAlreadyUsedInPastException.class, () ->
+                        accountService.changeOwnPassword(LOGIN, OLD_PASSWORD_PLAIN, NEW_PASSWORD_PLAIN, "0")
+                ),
+                () -> verify(accountRepository, never()).saveAndFlush(any(Account.class))
+        );
+    }
+}
