@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
-import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AuthResponseDTO;
@@ -43,7 +43,7 @@ class AuthService2FAPositiveTest {
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
     @Mock
-    private TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
+    private AuthenticationTokenValueGenerator tokenValueGenerator;
     @Mock
     private OneTimeTokenRepository tokenRepository;
     @Mock

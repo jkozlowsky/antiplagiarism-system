@@ -135,4 +135,11 @@ public class JwtAuthService implements LogoutHandler {
     public void logout(HttpServletRequest httpServletRequest, @NonNull HttpServletResponse response, Authentication authentication) {
         //Architektura bezstanowa więc metoda nic nie robi.
     }
+
+    public String generateShortLivedToken(String username, List<String> roles) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", roles);
+        return createToken(extraClaims, username, expirationTime / 2);
+    }
+
 }
