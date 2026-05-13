@@ -1,14 +1,102 @@
-
 ## 12 Interfejs użytkownika 3 pkt
 
-Należy omówić elementu szablonu widoku GUI, przedstawiając stosowny kod szablonu z podziałem na wydzielone w nim elementy (np. nagłówek, menu, główna część
-prezentująca treści, stopka).
+### Szablon GUI
 
-Dla każdego możliwego poziomu dostępu dla konta użytkownika (roli zgodnie z modelem RBAC) należy przedstawić główny widok GUI dostępny tuż po
-uwierzytelnieniu użytkownika wraz z kompletem akcji dostępnych w menu wyboru.
+Widok GUI jest utworzony w języku TypeScript za pomocą biblioteki React z dodatkowym wykorzystaniem bibliotek:
+- Tailwind: dla ostylowania elementów.
+- i18next: dla internacjonalizacji widoku.
+Szablon strony po pomyślnym uwierzytelnieniu użytkownika znajduje się w pliku `layout.tsx`, zaprezentowany poniżej w listingu 12.1.
 
-Należy też przedstawić mechanizm doboru widoku głównego i/lub konstruowania menu po poprawnym zakończeniu procesu uwierzytelniania w aplikacji, dla konta z
-kilkoma poziomami dostępu. Forma - zacytowane fragmenty kodu stanowiące rozwiązanie.
+```typeScript
+import { Outlet } from "react-router-dom";  
+import { useState } from "react";  
+import Header from "./shared/components/header/Header.tsx";  
+import { BreadcrumbContext } from "./contexts/BreadcrumbContext.tsx";  
+import Sidebar from "./shared/components/sidebar/Sidebar.tsx";  
+import {Footer} from "./shared/components/Footer.tsx";  
+  
+const Layout = () => {  
+    const [dynamicBreadcrumb, setDynamicBreadcrumb] = useState<string | null>(null);  
+  
+    return (  
+        <BreadcrumbContext.Provider value={{ dynamicBreadcrumb, setDynamicBreadcrumb }}>  
+            <main>                
+	            <Header />
+	            <div className="flex flex-1 overflow-hidden">  
+	                <Sidebar />
+	                <main className="flex-1 overflow-y-auto">  
+	                    <Outlet />
+                    </main>
+                </div>
+                <Footer/>            
+            </main>
+        </BreadcrumbContext.Provider>    
+        );  
+};  
+  
+export default Layout;
+```
+Listing 12.1. Kod głównego szablonu aplikacji web.
 
-_Przytaczane rozwiązania muszą być zrealizowane we wszystkich stronach należących do modułu MOK. Należy pamiętać o tym, że nazwy ról (poziomów dostępu) nie
-mogą być zakodowane na stałe w kodzie aplikacji - należy wykorzystać parametry deklarowane poza kodem źródłowym aplikacji (np. właściwości - properties)._
+Szablon widoku zawiera następujące elementy:
+- Nagłówek w postaci niestandardowego komponentu `<Header/>` zawierający nazwę aplikacji, która jednocześnie jest przyciskiem do przejścia na widok ekranu głównego danego poziomu dostępu użytkownika.
+- Menu boczne nawigacyjne w postaci niestandardowego komponentu `<Sidebar/>` który zawiera przyciski do przejścia na poszczególne widoki dla danego poziomu dostępu użytkownika.
+- Sekcja główna w postaci komponentu `<main/>` z zagnieżdżonym elementem z biblioteki React `<Outlet/>` do którego podstawiane są wybrane widoki użytkownika.
+- Stópka w postaci niestandardowego komponentu `<Footer/>` która zawiera informację o zespole który utworzył oprogramowanie.
+
+### Domyślne (główne) strony dla poszczególnych ról użytkowników.
+
+Po uwierzytelnieniu dla użytkownika będzie dostępny jeden z następujących widoków w zależności od jego aktywnego poziomu dostępu:
+- Administrator - lista użytkowników (rys. 12.1);
+- Prowadzący - lista przedmiotów (rys. 12.2);
+- Student - lista przedmiotów (rys. 12.3).
+
+Także w zależności od aktywnego poziomu dostępu poszczególne role widzą różne kolory linii oddzielającej nagłówek od głównej zawartości strony dla szybkiej identyfikacji wybranego poziomu dostępu:
+- Administrator - niebieski (rys. 12.1);
+- Prowadzący - czerwony (rys. 12.2);
+- Student - zielony (rys. 12.3).
+
+![admin](2szczegolowy/img/admin_strona.png)
+
+Rysunek 12.1. Strona główna użytkownika z poziomem dostępu administrator.
+
+![prowadzacy](2szczegolowy/img/prowadzacy_strona.png)
+
+Rysunek 12.2. Strona główna użytkownika z poziomem dostępu prowadzący.
+
+![student](2szczegolowy/img/student_strona.png)
+
+Rysunek 12.3. Strona główna użytkownika z poziomem dostępu student.
+
+### Mechanizm dobóru widoku głównego dla konta z kilkoma poziomami dostępu.
+
+Po uwierzytelnieniu (poprzez zwykłę dwufazowe jak i za pomocą usługi google) aplikacja dekoduje otrzymany token JWT w celu identyfikacji ról użytkownika. Następnie, wybiera odpowiedni poziom dostępu jako aktywny, priorytetyzując poziom dostępu "ADMIN" jeżeli jest dostępny (listing 12.4), po czym za pomocą funkcji pomocniczej `getDashboardPath`, zaprezentowaną na listingu 12.5 wyznacza odpowiednią ścieżkę przekierowania właściwą dla aktywnego poziomu dostępu.
+
+```TypeScript
+if (response?.token) {  
+    setTokens(response.token, response.refreshToken);  
+    const decoded = jwtDecode<JwtPayload>(response.token);  
+    const newRole = decoded.roles?.includes("ADMIN") ? "ADMIN" : decoded.roles?.[0];  
+    const targetPath = location.state?.from?.pathname || getDashboardPath(newRole);  
+    navigate(targetPath, {replace: true});  
+}
+```
+
+Listing 12.4. Fragment funkcji `handleGoogleLogin` odpowiadający za przekierowanie użytkownika do odpowiedniego widoku zgodnie z jego poziomem dostępu.
+
+```TypeScript
+export const getDashboardPath = (role: string | null): string => {  
+    switch (role?.toUpperCase()) {  
+        case 'ADMIN':  
+            return PATHS.USER_LIST;  
+        case 'TEACHER':  
+            return PATHS.TEACHER_SUBJECT_LIST;  
+        case 'STUDENT':  
+            return PATHS.STUDENT_SUBJECT_LIST;  
+        default:  
+            return PATHS.PROFILE;  
+    }  
+};
+```
+
+Listing 12.5 funkcja pomocnicza `getDashboardPath`.
