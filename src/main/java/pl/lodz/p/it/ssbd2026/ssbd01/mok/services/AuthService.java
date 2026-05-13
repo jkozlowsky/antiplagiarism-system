@@ -12,8 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
@@ -312,7 +312,7 @@ public class AuthService {
         invalidateActiveToken(activeTokens);
         OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
         String authCode = tokenValueGenerator.generateAuthWithEmailOnlyCode();
-        postCommitTransactionManager.register(()->
+        postCommitTransactionManager.register(() ->
                 emailService.sendEmailOnlyAuthCode(account.getEmail(), authCode, account.getLanguageVersion().getLanguage()));
 
         tokenEnt.setTokenValue(hashToken(authCode));
@@ -345,5 +345,19 @@ public class AuthService {
         return new AuthResponseDTO(token, refreshToken);
     }
 
+    private void invalidateActiveToken(List<OneTimeTokenEnt> activeTokens) {
+        if (!activeTokens.isEmpty()) {
+            OneTimeTokenEnt oldToken = activeTokens.getFirst();
+            if (oldToken.getExpiresAt() != null) {
+                LocalDateTime createdAt = oldToken.getExpiresAt().minusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES);
+                LocalDateTime canResend = createdAt.plusMinutes(OneTimeTokenConsts.RESEND_TIMEOUT_2FA_IN_MINUTES);
 
+                if (LocalDateTime.now().isBefore(canResend)) {
+                    throw new Resend2FATokenException();
+                }
+            }
+            oldToken.setUsed(true);
+            tokenRepository.save(oldToken);
+        }
+    }
 }

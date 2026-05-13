@@ -90,4 +90,66 @@ public class AuthWithEmailOnlyIntegrationTest extends BaseTestSetup {
             assertEquals(0, dbAccount.getFailedAttempts());
         });
     }
+
+    @Test
+    public void NEG01_LoginWithEmail_NonExistingEmail() throws Exception {
+        LoginWithEmailRequestDTO req = new LoginWithEmailRequestDTO("nieistniejacy@example.com");
+
+        requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(req),
+                HttpStatus.NOT_FOUND.value(),
+                "/api/auth/loginEmail",
+                jsonHeaders
+        );
+    }
+
+    @Test
+    public void NEG02_LoginWithEmail_InvalidCode() throws Exception {
+        Account testAccount = accountTestRepository.findByLogin("jkowalski").orElseThrow();
+
+        LoginWithEmailRequestDTO loginReq = new LoginWithEmailRequestDTO(testAccount.getEmail());
+        requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(loginReq),
+                HttpStatus.ACCEPTED.value(),
+                "/api/auth/loginEmail",
+                jsonHeaders
+        );
+
+        VerifyEmailSignInRequestDTO verifyReq = new VerifyEmailSignInRequestDTO("WRONGCODE1", testAccount.getEmail());
+
+        requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(verifyReq),
+                HttpStatus.CONFLICT.value(),
+                "/api/auth/checkEmail",
+                jsonHeaders
+        );
+
+        transactionTemplate.executeWithoutResult(status -> {
+            Account dbAccount = accountTestRepository.findByEmail(testAccount.getEmail()).orElseThrow();
+            assertEquals(1, dbAccount.getFailedAttempts());
+        });
+    }
+
+    @Test
+    public void NEG03_LoginWithEmail_AccountIsBlocked() throws Exception {
+        Account testAccount = transactionTemplate.execute(status -> {
+            Account account = accountTestRepository.findByLogin("admin").orElseThrow();
+            account.setIsBlocked(true);
+            return accountTestRepository.save(account);
+        });
+        LoginWithEmailRequestDTO loginReq = new LoginWithEmailRequestDTO(testAccount.getEmail());
+
+        requestFunctions.sendPostRequest(
+                objectMapper.writeValueAsString(loginReq),
+                HttpStatus.CONFLICT.value(),
+                "/api/auth/loginEmail",
+                jsonHeaders
+        );
+
+        transactionTemplate.executeWithoutResult(status -> {
+            Account account = accountTestRepository.findByLogin("admin").orElseThrow();
+            account.setIsBlocked(false);
+            accountTestRepository.save(account);
+        });
+    }
 }
