@@ -510,15 +510,136 @@ Listing 2.9.13. Weryfikacja hasła algorytmem `BCrypt` podczas procesu uwierzyte
 
 Na listingu 2.9.13 widać, że podczas uwierzytelniania system pobiera zaszyfrowane hasło z bazy danych i porównuje je z hasłem jawnym, wprowadzonym przez użytkownika w żądaniu logowania. Służy do tego metoda `matches()`, która automatycznie odczytuje sól (salt) z zapisanego skrótu i wylicza hash z podanego hasła, sprawdzając ich zgodność.
 
-```
-Należy też zaprezentować rozwiązanie zapewniające zgłaszanie do dziennika zdarzeń, w którym dla każdego wywołania metody biznesowej każdego z komponentów aplikacji sieciowej odnotowane będą co najmniej:
-* tożsamość użytkownika, na rzecz którego wykonywany jest przypadek użycia,
-* nazwa wykonywanej metody i klasy, której jest ona członkiem,
-* wartości (reprezentacja tekstowa) parametrów i wartości zwracanej, o ile takowe istnieją,
-* w przypadku zakończenia metody przez zgłoszenie wyjątku - nazwa i przyczyna (cause) wyjątku.
+### Zgłaszanie do dziennika zdarzeń
+
+W celu zapewnienia pełnego śledzenia przebiegu wykonania przypadków użycia, w aplikacji zaimplementowano mechanizm centralnego logowania wywołań metod biznesowych.
+
+```java
+package pl.lodz.p.it.ssbd2026.ssbd01.interceptors;
+
+import java.lang.annotation.*;
+
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface MethodCallLogged {
+
+}
 ```
 
+Listing 2.9.14. Własna adnotacja znacznika `@MethodCallLogged`.
 
+```java
+package pl.lodz.p.it.ssbd2026.ssbd01.interceptors;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.retry.support.RetrySynchronizationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Order(Ordered.LOWEST_PRECEDENCE)
+@Component
+public class MethodCallLoggingInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(MethodCallLoggingInterceptor.class);
+
+    @Around("Pointcuts.methodCallLoggedAnnotatedMethods() || Pointcuts.allRepositoryMethods()")
+    public Object getOperationInfo(ProceedingJoinPoint joinPoint) throws Throwable {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = (authentication != null) ? authentication.getName() : "--ANONYMOUS--";
+
+        StringBuilder message = new StringBuilder("Method call ");
+
+        if (null != RetrySynchronizationManager.getContext()) {
+            message.append("(retry # ").append(RetrySynchronizationManager.getContext().getRetryCount()).append(") ");
+        }
+
+        Object result;
+        try {
+            try {
+                message.append("| ").append(joinPoint.getSignature().toShortString())
+                        .append(":").append(Thread.currentThread().threadId());
+                message.append(" | User: ").append(username);
+                message.append(" | Args: ");
+                if (joinPoint.getSignature() instanceof MethodSignature methodSignature) {
+                    String[] parameterNames = methodSignature.getParameterNames();
+                    Object[] args = joinPoint.getArgs();
+
+                    for (int i = 0; i < args.length; i++) {
+                        String paramName = (parameterNames != null && parameterNames.length > i) ? parameterNames[i].toLowerCase() : "";
+                        Object arg = args[i];
+
+                        if (paramName.contains("password") || paramName.contains("haslo")) {
+                            message.append("*** UKRYTE *** ");
+                        } else {
+                            String argStr = (arg != null) ? arg.toString() : "null";
+                            argStr = argStr.replaceAll("(?i)(password\\s*=\\s*)[^,\\}\\]]+", "$1*** UKRYTE ***");
+                            message.append(argStr).append(" ");
+                        }
+                    }
+                } else {
+                    for (Object arg : joinPoint.getArgs()) {
+                        message.append(arg).append(" ");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("| Unexpected exception within interceptor: ", e);
+                throw e;
+            }
+
+            result = joinPoint.proceed();
+
+        } catch (Throwable t) {
+            message.append(" | Thrown exception: ").append(t.toString()).append(" - ").append(t.getMessage());;
+            log.warn(message.toString(), t);
+            throw t;
+        }
+
+        if (result != null) {
+            message.append(" | Returned type: ").append(result.getClass().getSimpleName());
+
+        } else {
+            message.append(" | Returned: null");
+        }
+        log.info(message.toString());
+
+        return result;
+    }
+}
+```
+
+Listing 2.9.15. Implementacja aspektu logującego wywołania metod.
+
+Głównym elementem mechanizmu jest aspekt `MethodCallLoggingInterceptor`, który można zobaczyć na listingu 2.9.15, działający w trybie `@Around`, co oznacza, że przechwytuje on sterowanie zarówno przed wejściem do metody, jak i po jej opuszczeniu.
+
+Mechanizm zapewnia odnotowanie w dzienniku zdarzeń (poprzez bibliotekę SLF4J zapisującą zdarzenia z poziomem INFO lub WARN w przypadku błędu) wszystkich niezbędnych informacji:
+* **Tożsamość użytkownika** – pobierana jest z kontekstu bezpieczeństwa Spring Security (`SecurityContextHolder.getContext().getAuthentication()`). W przypadku braku uwierzytelnienia (np. podczas logowania lub rejestracji), tożsamość oznaczana jest jako `--ANONYMOUS--`.
+* **Nazwa wykonywanej metody i klasy** – pozyskiwana z obiektu powiązania aspektu (`joinPoint.getSignature().toShortString()`), do której dodatkowo dodawany jest identyfikator wątku obsługującego bieżące żądanie.
+* **Wartości parametrów wejściowych** – ekstrahowane metodą `joinPoint.getArgs()`. Aspekt posiada dodatkowe zabezpieczenie parsujące nazwy argumentów — w sytuacji, w której parametr nosi nazwę zawierającą słowo "password" lub "haslo", na wyjście trafia ciąg `*** UKRYTE ***`. Zapobiega to wyciekowi danych poufnych do dziennika zdarzeń.
+* **Wartości zwracane z metody** – dla metod niezwracających wartości zapisywana jest sekcja `Returned: null`. Ze względów bezpieczeństwa i optymalizacji pamięciowej zapisywany jest typ zwracanego obiektu (`result.getClass().getSimpleName()`).
+* **Wyjątki** – blok przechwytujący catch (`Throwable t`) rejestruje typ wyłapanego wyjątku (`t.toString()`) oraz bezpośrednią przyczynę rzuconego błędu zapisaną w jego strukturze (`t.getMessage()`).
+
+Klasa posiada również mechanizm obsługujący ponowienia operacji. Jeżeli wywołanie jest powtarzane (np. z powodu `ConcurrentUpdateException` wywoływanego przez `@Retryable`), do logów dodawana jest adnotacja z numerem ponowienia: (`retry # X`, gdzie X to liczba określająca, który raz metoda jest wywoływana).
+
+```
+2026-05-13 19:12:52,003 INFO  [http-nio-8081-exec-2] p.l.p.i.s.s.i.MethodCallLoggingInterceptor [f139c087-5d60-4111-a874-c5473adaacbf]: Method call | AccountRepository.findByEmail(..):71 | User: anonymousUser | Args: remekowskixd@gmail.com  | Returned type: Optional
+2026-05-13 19:12:52,022 INFO  [http-nio-8081-exec-2] p.l.p.i.s.s.i.MethodCallLoggingInterceptor [f139c087-5d60-4111-a874-c5473adaacbf]: Method call | JpaRepository.saveAndFlush(..):71 | User: anonymousUser | Args: pl.lodz.p.it.ssbd2026.ssbd01.entities.Account@55f9cd39  | Returned type: Account
+2026-05-13 19:12:52,022 INFO  [http-nio-8081-exec-2] p.l.p.i.s.s.m.s.AuthService [f139c087-5d60-4111-a874-c5473adaacbf]: User session started | User: rbar | Logical address (IP): 172.19.0.1
+2026-05-13 19:12:52,096 INFO  [http-nio-8081-exec-2] p.l.p.i.s.s.i.MethodCallLoggingInterceptor [f139c087-5d60-4111-a874-c5473adaacbf]: Method call | AuthService.authenticateWithGoogle(..):71 | User: anonymousUser | Args: eyJhbGciOiJSUzI1NiIsImtpZCI6ImY4ZTY2MjBkMzk3MTFhYTIxY2U4YTJiZjJmM2VlMDFiOTI0Y2IyZDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMzM4ODAxODE5OTAtdDBsNWo5dHE4ZXQ4cGJwYjluODU0dnRzdGN1YXA1dDAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzM4ODAxODE5OTAtdDBsNWo5dHE4ZXQ4cGJwYjluODU0dnRzdGN1YXA1dDAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDk2MjI0MjA5MjIzNTQ3Mzk5OTMiLCJlbWFpbCI6InJlbWVrb3dza2l4ZEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmJmIjoxNzc4NjkyMDcyLCJuYW1lIjoiUmVtaWdpdXN6IEJhcnRjemFrIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0xEUDJ4amhvQkYzYTNPajFYeHpScmFlZzhraFA4M0ZXamh1Vm5LMlZaZjhwMTZyaHc9czk2LWMiLCJnaXZlbl9uYW1lIjoiUmVtaWdpdXN6IiwiZmFtaWx5X25hbWUiOiJCYXJ0Y3phayIsImlhdCI6MTc3ODY5MjM3MiwiZXhwIjoxNzc4Njk1OTcyLCJqdGkiOiJkM2M1ZGY4NmRhOGUxMmM2ZjY4MmViMzIzZDZmN2E5MWZlZjc0ZjVmIn0.AsPFIRgfPjI7v_wEwA_nj6OXVZHy3N8B8GaVVQtT4NE2IO_nG-CLpxTfkRMK-uyAYv9JAUGIRQgBNdPaxRl-O3TBBrTfosXeFYLzsxj7Uivfp52r1zljZL6U5GRU75Rgv5u2doEYEFeA3cU7PsbB6rZfh8Wd4dP0lcDWDi5LJ9ETVlVIVO7x1S_EbLZ6szDvTdqQDnyj5uVYJWcnL6yOOEe4RWuOHrXb-ZY8di070vklvsytwk3ULl8w_V40fgVhbq3df3ycgu5ij48nH8pFFNgmLl6A2PJGAcJZyqjLQG62r0JixHOGKsL0cJJy0tyfq08fbh_lXpvIDAe3FEapAA 172.19.0.1  | Returned type: AuthResponseDTO
+2026-05-13 19:12:52,100 INFO  [http-nio-8081-exec-2] p.l.p.i.s.s.i.MethodCallLoggingInterceptor [f139c087-5d60-4111-a874-c5473adaacbf]: Method call | AuthController.loginWithGoogle(..):71 | User: anonymousUser | Args: GoogleLoginRequestDTO[idToken=eyJhbGciOiJSUzI1NiIsImtpZCI6ImY4ZTY2MjBkMzk3MTFhYTIxY2U4YTJiZjJmM2VlMDFiOTI0Y2IyZDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMzM4ODAxODE5OTAtdDBsNWo5dHE4ZXQ4cGJwYjluODU0dnRzdGN1YXA1dDAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzM4ODAxODE5OTAtdDBsNWo5dHE4ZXQ4cGJwYjluODU0dnRzdGN1YXA1dDAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDk2MjI0MjA5MjIzNTQ3Mzk5OTMiLCJlbWFpbCI6InJlbWVrb3dza2l4ZEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmJmIjoxNzc4NjkyMDcyLCJuYW1lIjoiUmVtaWdpdXN6IEJhcnRjemFrIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0xEUDJ4amhvQkYzYTNPajFYeHpScmFlZzhraFA4M0ZXamh1Vm5LMlZaZjhwMTZyaHc9czk2LWMiLCJnaXZlbl9uYW1lIjoiUmVtaWdpdXN6IiwiZmFtaWx5X25hbWUiOiJCYXJ0Y3phayIsImlhdCI6MTc3ODY5MjM3MiwiZXhwIjoxNzc4Njk1OTcyLCJqdGkiOiJkM2M1ZGY4NmRhOGUxMmM2ZjY4MmViMzIzZDZmN2E5MWZlZjc0ZjVmIn0.AsPFIRgfPjI7v_wEwA_nj6OXVZHy3N8B8GaVVQtT4NE2IO_nG-CLpxTfkRMK-uyAYv9JAUGIRQgBNdPaxRl-O3TBBrTfosXeFYLzsxj7Uivfp52r1zljZL6U5GRU75Rgv5u2doEYEFeA3cU7PsbB6rZfh8Wd4dP0lcDWDi5LJ9ETVlVIVO7x1S_EbLZ6szDvTdqQDnyj5uVYJWcnL6yOOEe4RWuOHrXb-ZY8di070vklvsytwk3ULl8w_V40fgVhbq3df3ycgu5ij48nH8pFFNgmLl6A2PJGAcJZyqjLQG62r0JixHOGKsL0cJJy0tyfq08fbh_lXpvIDAe3FEapAA] SecurityContextHolderAwareRequestWrapper[ org.springframework.security.web.header.HeaderWriterFilter$HeaderWriterRequest@56f5bf95]  | Returned type: ResponseEntity
+```
+
+Listing 2.9.16. Przykład wygenerowanych wpisów w dzienniku zdarzeń.
 
 ```
 W ramach prezentacji rozwiązania należy zacytować kod klas i metod realizujących funkcjonalność dziennika zdarzeń oraz fragment kodu wybranego (przykładowego) komponentu obrazujący zastosowanie rozwiązania.
