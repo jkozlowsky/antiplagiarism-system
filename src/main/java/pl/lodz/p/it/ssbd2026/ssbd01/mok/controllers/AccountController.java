@@ -35,6 +35,7 @@ public class AccountController {
     private final VersionHashService versionHashService;
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO getAccount(@PathVariable UUID id) {
 
@@ -46,6 +47,7 @@ public class AccountController {
     }
 
     @GetMapping("/login/{login}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) or #login == authentication.name")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO getAccountByLogin(@PathVariable String login) {
         Account account = accountService.getAccountByLogin(login);
@@ -66,8 +68,8 @@ public class AccountController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @ResponseStatus(HttpStatus.OK)
     public Page<AccountWithAccessLevelsDTO> getAllAccounts(
             @RequestParam(required = false) String phrase,
             @RequestParam(defaultValue = "0") int page,
@@ -205,8 +207,8 @@ public class AccountController {
     }
 
     @PatchMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateOtherAccount(
             @PathVariable UUID id,
             @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO,
@@ -220,6 +222,7 @@ public class AccountController {
     }
 
     @PatchMapping("/update-myself")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO updateMyAccount(
             @Validated(OnUpdate.class) @RequestBody AccountDTO accountDTO,

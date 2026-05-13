@@ -100,7 +100,6 @@ public class AuthService {
     public void authenticate(String login, String password, String ipAddress) {
         Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
-//        System.out.println(account.getIsBlocked());
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
