@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 public class OneTimeTokenEnt extends AbstractEntity{
 
-    @Column(name = "token_value", nullable = false, unique = true, updatable = false, length = 255) //TODO: zmienić rozmiar na konstantę (wyznaczyć jaki)
+    @Column(name = "token_value", nullable = false, unique = true, updatable = false) //TODO: zmienić rozmiar na konstantę (wyznaczyć jaki)
     private String tokenValue;
 
     @Column(name = "username", nullable = false, updatable = false, length = AccountConsts.LOGIN_LENGTH)
@@ -23,7 +23,7 @@ public class OneTimeTokenEnt extends AbstractEntity{
     private LocalDateTime expiresAt;
 
     @Column(name="is_used", nullable = false)
-    private boolean isUsed;
+    private Boolean isUsed;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "token_type", nullable = false, updatable = false, length = 32)

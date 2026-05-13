@@ -76,7 +76,7 @@ public class Account extends AbstractEntity {
     private LocalDateTime creationDate = LocalDateTime.now();
 
     @Column(name = "second_email_sent", nullable = false)
-    private boolean secondEmailSent = false;
+    private Boolean secondEmailSent = false;
 
 //    @Column(name = "token_version", nullable = false)
 //    private Integer tokenVersion;
