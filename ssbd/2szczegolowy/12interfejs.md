@@ -56,15 +56,15 @@ Także w zależności od aktywnego poziomu dostępu poszczególne role widzą r�
 - Prowadzący - czerwony (rys. 12.2);
 - Student - zielony (rys. 12.3).
 
-![admin](2szczegolowy/img/12-1.png)
+![admin](2szczegolowy/img/admin_strona.png)
 
 Rysunek 12.1. Strona główna użytkownika z poziomem dostępu administrator.
 
-![prowadzący](2szczegolowy/img/12-2.png)
+![prowadzacy](2szczegolowy/img/prowadzacy_strona.png)
 
 Rysunek 12.2. Strona główna użytkownika z poziomem dostępu prowadzący.
 
-![student](2szczegolowy/img/12-3.png)
+![student](2szczegolowy/img/student_strona.png)
 
 Rysunek 12.3. Strona główna użytkownika z poziomem dostępu student.
 
