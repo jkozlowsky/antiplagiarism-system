@@ -2,7 +2,7 @@
 
 ### Szablon GUI
 
-Widok GUI jest utworzony w za pomocą TypeScript biblioteki React z dodatkowym wykorzystaniem bibliotek:
+Widok GUI jest utworzony za pomocą TypeScript biblioteki React z dodatkowym wykorzystaniem bibliotek:
 - Tailwind: dla ostylowania elementów.
 - i18next: dla internacjonalizacji widoku.
 Szablon strony po pomyślnym uwierzytelnieniu użytkownika znajduje się w pliku `layout.tsx`, zaprezentowany poniżej w listingu 12.1.
@@ -70,7 +70,7 @@ Rysunek 12.3. Strona główna użytkownika z poziomem dostępu student.
 
 ### Mechanizm dobóru widoku głównego dla konta z kilkoma poziomami dostępu.
 
-Po uwierzytelnieniu (poprzez zwykłę dwufazowe jak i za pomocą usługi google) aplikacja dekoduje otrzymany token JWT w celu identyfikacji ról użytkownika. Następnie, wybiera odpowiedni poziom dostępu jako aktywny, priorityzująć poziom dostępu "ADMIN" jeżeli jest dostępny (listing 12.4), po czym za pomocą funkcji pomocniczej `getDashboardPath`, zaprezentowaną na listingu 12.5 wyznacza odpowiednią ścieżkę przekierowania właściwą dla aktywnego poziomu dostępu.
+Po uwierzytelnieniu (poprzez zwykłę dwufazowe jak i za pomocą usługi google) aplikacja dekoduje otrzymany token JWT w celu identyfikacji ról użytkownika. Następnie, wybiera odpowiedni poziom dostępu jako aktywny, priorytetyzując poziom dostępu "ADMIN" jeżeli jest dostępny (listing 12.4), po czym za pomocą funkcji pomocniczej `getDashboardPath`, zaprezentowaną na listingu 12.5 wyznacza odpowiednią ścieżkę przekierowania właściwą dla aktywnego poziomu dostępu.
 
 ```TypeScript
 if (response?.token) {  
