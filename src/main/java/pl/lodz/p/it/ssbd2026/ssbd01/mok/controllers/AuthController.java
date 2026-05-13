@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -21,6 +22,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<MessageResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest,
                                                     HttpServletRequest request)
 
@@ -31,12 +33,14 @@ public class AuthController {
     }
 
     @PostMapping("/resend2FA")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<MessageResponseDTO> resend2FACode(@Valid @RequestBody Resend2FARequestDTO requestDTO) {
         authService.resend2FactorCode(requestDTO.login());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MessageResponseDTO("mfa.resend"));
     }
 
     @PostMapping("/check2FA")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<AuthResponseDTO> verify2FACode(@Valid @RequestBody Verify2FARequestDTO requestDTO,
                                                          HttpServletRequest request,
                                                          @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = "pl") String langHeader) {
@@ -46,6 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<AuthResponseDTO> refresh(@Valid @RequestBody RefreshTokenRequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
         AuthResponseDTO response = authService.refreshToken(requestDTO.refreshToken(), ipAddress);
@@ -53,6 +58,7 @@ public class AuthController {
     }
 
     @PostMapping("/google")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<AuthResponseDTO> loginWithGoogle(@Valid @RequestBody GoogleLoginRequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
         AuthResponseDTO response = authService.authenticateWithGoogle(requestDTO.idToken(), ipAddress);

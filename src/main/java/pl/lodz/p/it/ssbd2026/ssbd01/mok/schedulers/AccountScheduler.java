@@ -4,6 +4,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
@@ -25,6 +26,7 @@ public class AccountScheduler {
 
     @Scheduled(fixedDelayString = "${app.scheduler.check.interval.ms}")
     @Transactional(transactionManager = "mokTransactionManager")
+    @PreAuthorize("permitAll()")
     public void processInactiveAccounts() {
         LocalDateTime now = LocalDateTime.now();
         int reminderHours = expirationHours / 2;
@@ -46,6 +48,7 @@ public class AccountScheduler {
 
     @Scheduled(fixedDelayString = "${app.scheduler.check.interval.ms}")
     @Transactional(transactionManager = "mokTransactionManager")
+    @PreAuthorize("permitAll()")
     public void unblockAccountsAfter24Hours() {
         LocalDateTime threshold = LocalDateTime.now().minusHours(24);
         List<Account> accountsToUnblock = accountRepository

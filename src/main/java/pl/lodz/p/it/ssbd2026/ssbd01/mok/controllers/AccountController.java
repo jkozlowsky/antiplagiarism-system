@@ -58,6 +58,7 @@ public class AccountController {
     }
 
     @GetMapping("/login/no-access-level/{login}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO getAccountByLoginNoAccessLevel(@PathVariable String login) {
         Account account = accountService.getAccountByLogin(login);
@@ -90,6 +91,7 @@ public class AccountController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
         Account account = accountMapper.toEntity(dto);
         accountService.registerAccount(account);
@@ -97,6 +99,7 @@ public class AccountController {
     }
 
     @PostMapping("/activate")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> activate(@RequestParam String token) {
         accountService.confirmActivation(token);
         return ResponseEntity.ok().build();
@@ -181,6 +184,7 @@ public class AccountController {
     }
 
     @PostMapping("/email/change")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> requestEmailChange(
             Authentication authentication) {
         String login = authentication.getName();
@@ -189,12 +193,14 @@ public class AccountController {
     }
 
     @PostMapping("/email/confirm")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> confirmEmailChange(@Valid @RequestBody OwnEmailChangeDTO request) {
         accountService.confirmOwnEmailChange(request.token(), request.password(), request.newEmail());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/email/change/resend")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> resendEmailChangeRequest(Authentication authentication) {
         String login = authentication.getName();
         accountService.resendUrlOwnEmailChange(login);
@@ -202,6 +208,7 @@ public class AccountController {
     }
 
     @PostMapping("/email/revert")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> revertEmailChange(@RequestParam String token) {
         accountService.revertEmailChange(token);
         return ResponseEntity.ok().build();
@@ -256,6 +263,7 @@ public class AccountController {
     }
 
     @PostMapping("/role/change")
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeRoleLog(@RequestBody String role, Principal principal){
         log.info("{} changed his active role to: {}", principal.getName(), role);
