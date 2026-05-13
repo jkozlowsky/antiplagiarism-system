@@ -94,6 +94,31 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
+    @DisplayName("Pomyślne zapisanie preferencji sortowania i stronicowania i wczytanie ich dla zapytań bez parametrów")
+    public void shouldRememberPaginationAndSortingPreferences() {
+        requestFunctions.sendGetRequest(
+                200,
+                "/api/account?size=2&sortBy=email&sortDesc=true",
+                adminHeaders
+        );
+
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account",
+                adminHeaders
+        );
+
+        int size = JsonPath.from(responseBody).getInt("size");
+        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+
+        assertEquals(2, size);
+
+        if (emails.size() > 1) {
+            assertTrue(emails.get(0).compareTo(emails.get(1)) >= 0, "Obiekty nie są poprawnie posortowane malejąco względem adresu email");
+        }
+    }
+
+    @Test
     @DisplayName("Pomyślne wyszukiwanie po imieniu ignorując wielkość liter")
     public void shouldSearchByNameIgnoreCase() {
         String responseBody = requestFunctions.sendGetRequest(
