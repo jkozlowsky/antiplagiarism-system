@@ -125,4 +125,55 @@ public class AuthWithEmailOnlyTest {
                 authService.authenticateOnlyWithEmail(testAccount.getEmail(), "127.0.0.1")
         );
     }
+
+    @Test
+    void POS02_verifyEmailOnlyAuthCode_ShouldBeSuccessful() {
+        String rawToken = "ABCDEFGHIJ";
+
+        OneTimeTokenEnt activeToken = new OneTimeTokenEnt();
+        activeToken.setUsername(testAccount.getLogin());
+        activeToken.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
+        activeToken.setUsed(false);
+
+        when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
+
+        when(tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(), eq(testAccount.getLogin()), eq(OneTimeTokenType.EMAIL_ONLY_AUTH), any(LocalDateTime.class)
+        )).thenReturn(Optional.of(activeToken));
+
+        when(languageDictRepository.findByLanguage("pl")).thenReturn(Optional.of(plLang));
+        when(jwtAuthService.generateShortLivedToken(eq(testAccount.getLogin()), anyList())).thenReturn("short-jwt-token");
+        when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList())).thenReturn("refresh-jwt-token");
+
+        AuthResponseDTO response = authService.verifyEmailOnlyAuthCode(rawToken, testAccount.getEmail(), "127.0.0.1", "pl");
+
+        assertNotNull(response);
+        assertEquals("short-jwt-token", response.token());
+        assertEquals("refresh-jwt-token", response.refreshToken());
+
+        assertTrue(activeToken.isUsed());
+        verify(tokenRepository).saveAndFlush(activeToken);
+
+        assertEquals(0, testAccount.getFailedAttempts());
+        assertEquals("127.0.0.1", testAccount.getLastSuccessfulLoginIp());
+        assertNotNull(testAccount.getLastLoginSuccessDateTime());
+        verify(accountRepository).saveAndFlush(testAccount);
+    }
+
+    @Test
+    void NEG04_verifyEmailOnlyAuthCode_ShouldFailWithInvalidCode() {
+        when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
+
+        when(tokenRepository.findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                anyString(), eq(testAccount.getLogin()), eq(OneTimeTokenType.EMAIL_ONLY_AUTH), any(LocalDateTime.class)
+        )).thenReturn(Optional.empty());
+
+        assertThrows(OneTimeTokenInvalidException.class, () ->
+                authService.verifyEmailOnlyAuthCode("WRONGCODE!", testAccount.getEmail(), "127.0.0.1", "pl")
+        );
+        assertEquals(1, testAccount.getFailedAttempts());
+        assertEquals("127.0.0.1", testAccount.getLastFailedLoginIp());
+        assertNotNull(testAccount.getLastLoginFailureDateTime());
+        verify(accountRepository).saveAndFlush(testAccount);
+    }
 }
