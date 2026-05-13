@@ -27,11 +27,15 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
+import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
 
 @RequiredArgsConstructor
 @Service
@@ -66,10 +70,26 @@ public class AccountService {
 
     private final LanguageDictRepository languageDictRepository;
 
+    private void validateAndSetNewPassword(Account account, String newPassword) {
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        for (PasswordHistory history : account.getPasswordHistoryList()) {
+            if (passwordEncoder.matches(newPassword, history.getPasswordHash())) {
+                throw new PasswordAlreadyUsedInPastException();
+            }
+        }
+
+        String newHash = passwordEncoder.encode(newPassword);
+        account.setPasswordHash(newHash);
+        account.getPasswordHistoryList().add(new PasswordHistory(account, newHash));
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void registerAccount(Account account) {
         account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
+        account.getPasswordHistoryList().add(new PasswordHistory(account, account.getPasswordHash()));
 
         account.setIsVerified(false);
         account.setIsBlocked(false);
@@ -132,15 +152,20 @@ public class AccountService {
         return account;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Page<Account> getAllAccounts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<Account> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
         return accountRepository.findAll(pageable);
     }
 
@@ -164,17 +189,22 @@ public class AccountService {
         return account;
     }
 
-    /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
             retryFor = {JpaSystemException.class, ConcurrentUpdateException.class},
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Page<Account> searchAccounts(String phrase, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
+    public Page<Account> searchAccounts(String phrase, Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
+        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(
+                phrase, phrase, phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
@@ -327,13 +357,10 @@ public class AccountService {
             throw new InvalidOldPasswordException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
-        }
-
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        validateAndSetNewPassword(account, newPassword);
         accountRepository.saveAndFlush(account);
     }
+
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -520,13 +547,44 @@ public class AccountService {
             throw new ConcurrentUpdateException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
+        validateAndSetNewPassword(account, newPassword);
+        accountRepository.saveAndFlush(account);
+    }
+
+    private void updatePreferencesIfProvided(Account admin, Integer size, String sortBy, Boolean sortDesc) {
+        boolean updated = false;
+
+        if (size != null && !size.equals(admin.getListPageSize())) {
+            admin.setListPageSize(size);
+            updated = true;
+        }
+        if (sortBy != null && !sortBy.equals(admin.getListSortBy())) {
+            admin.setListSortBy(sortBy);
+            updated = true;
+        }
+        if (sortDesc != null && !sortDesc.equals(admin.getListSortDesc())) {
+            admin.setListSortDesc(sortDesc);
+            updated = true;
         }
 
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
-        accountRepository.saveAndFlush(account);
+        if (updated) {
+            accountRepository.saveAndFlush(admin);
+        }
+    }
 
+    private Pageable createPageable(Integer page, Account admin) {
+        int finalPage = (page != null) ? page : DEFAULT_PAGE;
+        int finalSize = (admin.getListPageSize() != null) ? admin.getListPageSize() : DEFAULT_PAGE_SIZE;
+
+        String sortByField = (admin.getListSortBy() != null) ? admin.getListSortBy() : DEFAULT_SORT_BY;
+        if (SORT_ACCESS_LEVEL_ALIAS.equals(sortByField)) {
+            sortByField = SORT_ACCESS_LEVEL_PATH;
+        }
+
+        boolean isDescending = Boolean.TRUE.equals(admin.getListSortDesc());
+        Sort.Direction direction = isDescending ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        return PageRequest.of(finalPage, finalSize, Sort.by(direction, sortByField));
     }
 
     @MethodCallLogged

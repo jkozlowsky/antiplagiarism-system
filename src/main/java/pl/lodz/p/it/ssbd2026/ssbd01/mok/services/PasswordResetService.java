@@ -20,6 +20,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordSameAsOldException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -98,8 +101,21 @@ public class PasswordResetService {
 
         Account account = accountRepository.findByEmail(tokenEntity.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Account associated with that email is not found"));
-//        entityManager.refresh(account);
-        account.setPasswordHash(passwordEncoder.encode(passwordHash));
+
+        if (passwordEncoder.matches(passwordHash, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        for (PasswordHistory history : account.getPasswordHistoryList()) {
+            if (passwordEncoder.matches(passwordHash, history.getPasswordHash())) {
+                throw new PasswordAlreadyUsedInPastException();
+            }
+        }
+
+        String newHash = passwordEncoder.encode(passwordHash);
+        account.setPasswordHash(newHash);
+        account.getPasswordHistoryList().add(new PasswordHistory(account, newHash));
+
 //        account.setTokenVersion(account.getTokenVersion() + 1);
 //        accountRepository.save(account);
     }

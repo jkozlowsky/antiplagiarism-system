@@ -7,15 +7,9 @@ import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
@@ -52,6 +46,9 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 null,
                 changedName,
                 changedSurname,
+                null,
+                null,
+                null,
                 null,
                 null
         );

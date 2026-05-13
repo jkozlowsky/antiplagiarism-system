@@ -48,7 +48,16 @@ public record AccountDTO(
         String email,
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        LocalDateTime lastLoginSuccessDateTime
+        LocalDateTime lastLoginSuccessDateTime,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Integer listPageSize,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        String listSortBy,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean listSortDesc
 //
 //        @Null(groups = {OnCreate.class, OnUpdate.class})
 //        LocalDateTime lastLoginFailureDateTime,
