@@ -1,11 +1,6 @@
 
 ## 15 Zabezpieczenie transmisji HTTP 1 pkt
 
-Przedstawić konfigurację aplikacji (fragmenty deskryptora) lub serwera pośredniczącego (proxy) wymuszającą korzystanie z szyfrowanego protokołu HTTPS w
-komunikacji między przeglądarką WWW a serwerem. 
-
-_Prezentowana konfiguracja musi być w całości zrealizowana w aplikacji._
-
 Weryfikacja i zabezpieczenie transmisji w aplikacji zostały zrealizowane z wykorzystaniem wzorca architektonicznego **SSL Termination Proxy**. Za szyfrowanie ruchu pomiędzy przeglądarką klienta a systemem odpowiada serwer pośredniczący Nginx jako Reverse Proxy. Natomiast komunikacja w sieci wewnętrznej (od Nginx do kontenerów aplikacji) odbywa się po HTTP, co odciąża aplikację z narzutu kryptograficznego.
 
 Wymuszenie korzystania z protokołu HTTPS, przy komunikacji między przeglądarką WWW a serwerem, zrealizowano poprzez konfigurację bloku serwera na porcie 80, który odpowiada statusem `301 Moved Permanently`, przekierowując cały ruch na port 443:
