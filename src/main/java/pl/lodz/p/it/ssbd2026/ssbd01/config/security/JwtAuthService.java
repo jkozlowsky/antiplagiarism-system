@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
@@ -50,14 +51,20 @@ public class JwtAuthService implements LogoutHandler {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, List<String> roles) {
+    public String generateToken(String username, List<String> roles, Boolean forcePasswordChange) {
+        if (Boolean.TRUE.equals(forcePasswordChange)) {
+            roles = List.of(AccountConsts.ROLE_FORCE_PASSWORD_CHANGE);
+        }
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", roles);
 //        extraClaims.put("token_version", tokenVersion);
         return createToken(extraClaims, username, expirationTime);
     }
 
-    public String generateRefreshToken(String username, List<String> roles) {
+    public String generateRefreshToken(String username, List<String> roles, Boolean forcePasswordChange) {
+        if (Boolean.TRUE.equals(forcePasswordChange)) {
+            roles = List.of(AccountConsts.ROLE_FORCE_PASSWORD_CHANGE);
+        }
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", roles);
         return createToken(extraClaims, username, refreshExpirationTime);

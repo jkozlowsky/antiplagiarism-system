@@ -88,8 +88,8 @@ public class AuthService {
             accountRepository.saveAndFlush(account);
             log.info("User session started | User: {} | Logical address (IP): {}", account.getLogin(), ipAddress);
 
-            String token = jwtAuthService.generateToken(account.getLogin(), roles);
-            String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+            String token = jwtAuthService.generateToken(account.getLogin(), roles, account.getForcePasswordChange());
+            String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles, account.getForcePasswordChange());
 
             return new AuthResponseDTO(token, refreshToken);
 
@@ -103,6 +103,7 @@ public class AuthService {
     public void authenticate(String login, String password, String ipAddress) {
         Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
+//        System.out.println(account.getIsBlocked());
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
@@ -245,8 +246,8 @@ public class AuthService {
         if (roles.contains(AccountConsts.ROLE_ADMIN)) {
             postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress, account.getLanguageVersion().getLanguage()));
         }
-        String token = jwtAuthService.generateToken(account.getLogin(), roles);
-        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        String token = jwtAuthService.generateToken(account.getLogin(), roles, account.getForcePasswordChange());
+        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles, account.getForcePasswordChange());
         log.info("User session started | User: {} | Logical address (IP): {}", account.getLogin(), ipAddress);
         return new AuthResponseDTO(token, refreshToken);
     }
@@ -271,8 +272,8 @@ public class AuthService {
         account.setLastSuccessfulLoginIp(ipAddress);
         accountRepository.saveAndFlush(account);
 
-        String newToken = jwtAuthService.generateToken(account.getLogin(), roles);
-        String newRefreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        String newToken = jwtAuthService.generateToken(account.getLogin(), roles, account.getForcePasswordChange());
+        String newRefreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles, account.getForcePasswordChange());
 
         return new AuthResponseDTO(newToken, newRefreshToken);
     }
