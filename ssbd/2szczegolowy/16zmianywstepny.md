@@ -19,5 +19,9 @@ Względem etapu wstępnego, w rozdziale 3 wprowadzono następujące modyfikacje:
 
 ### Zmiany: Rozdział 5 Objekty encji
 
-1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account. 
+1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account na liście encji oraz w macierzy związków. 
 2. Poprawiono związek Account -> LanguageDict na Mutable.
+
+
+### Zmiany: Rozdział 6 Diagram encji
+1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account na diagramie encji. 
