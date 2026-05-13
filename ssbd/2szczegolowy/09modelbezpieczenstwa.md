@@ -436,10 +436,79 @@ Listing 2.9.10. Ciało żetonu odświeżania.
 
 Ponieważ aplikacja implementuje autentykację bezstanową opartą o standard HTTP i mechanizm JWT (ustawiono `SessionCreationPolicy.STATELESS`), klasyczne sesje serwerowe (`HttpSession`) w ogóle nie są tworzone. Czas trwania sesji uwierzytelnionego użytkownika uwarunkowany jest czasem życia tokena dostępu (`accessToken`), który jest konfigurowalny we właściwościach konfiguracyjnych i domyślnie wynosi 30 minut (od momentu zalogowania). Po upływie tego czasu klient automatycznie utraci dostęp, chyba że wcześniej posłuży się tokenem odświeżającym (`refreshToken`) do pozyskania nowego tokena dostępu (`accessToken`), co przedłuża jego stan uwierzytelnienia. Utrata żetonu (jego wygaśnięcie lub skasowanie z pamięci lokalnej przeglądarki poprzez wylogowanie) jest równoznaczna z automatycznym przerwaniem dostępu i zakończeniem sesji użytkownika.
 
-```
-Należy też przedstawić rozwiązanie zapewniające wyliczanie i składowanie haseł przypisanych do kont użytkowników w bazie danych w postaci niejawnej (skrótu) wraz z przykładem jego wykorzystania.
+### Mechanizm składowania haseł w postaci skrótu
+
+W systemie zaimplementowano mechanizm bezpiecznego składowania haseł z wykorzystaniem funkcji skrótu `BCrypt`. Rozwiązanie to zapewnia, że hasła użytkowników nigdy nie są przechowywane w bazie danych w postaci jawnej.
+
+#### Konfiguracja mechanizmu
+
+```java
+@Bean
+public PasswordEncoder encoder(){
+    return new BCryptPasswordEncoder();
+}
 ```
 
+Listing 2.9.11. Definicja komponentu szyfrującego hasła.
+
+Na listingu 2.9.11 widać komponent `PasswordEncoder`, zdefiniowany w klasie konfiguracji bezpieczeństwa `SecurityConfig` (listing 2.9.3). Wykorzystuje on implementację `BCryptPasswordEncoder` dostarczaną przez Spring Security.
+
+#### Wykorzystanie podczas rejestracji/zmiany hasła (Składowanie)
+
+```java
+@MethodCallLogged
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+@Retryable(retryFor = ConcurrentUpdateException.class)
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+public void changeOtherPassword(String login, String newPassword, String ifMatch) {
+    Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
+
+    mokRefreshRepository.refresh(account);
+    if (!ifMatch.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
+        throw new ConcurrentUpdateException();
+    }
+
+    if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+        throw new PasswordSameAsOldException();
+    }
+
+    account.setPasswordHash(passwordEncoder.encode(newPassword));
+    accountRepository.saveAndFlush(account);
+
+}
+```
+
+Listing 2.9.12. Proces weryfikacji skrótu oraz hashowania hasła przed zapisem do bazy danych przy zmianie hasła innego użytkownika jako administrator (metoda `changeOtherPassword` z klasy `AccountService`).
+
+Powyższy listing 2.9.12 przedstawia metodę `changeOtherPassword` z klasy `AccountService`, w której jest weryfikowane najpierw, czy nowe hasło nie jest takie samo jak poprzednie (za pomocą metody `matches()`), a następnie nowe hasło jest zapisywane w postaci niejawnej (za pomocą `encode()`).
+
+#### Wykorzystanie podczas logowania (Weryfikacja)
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = InvalidCredentialsProvidedException.class)
+@Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
+public void authenticate(String login, String password, String ipAddress) {
+    Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
+
+    if (account.getIsBlocked()) {
+        throw new AccountIsBlockedException();
+    }
+
+    if (!account.getIsVerified()) {
+        throw new AccountIsNotVerifiedException();
+    }
+
+    if (!passwordEncoder.matches(password, account.getPasswordHash())) {
+        handleFailedLogin(account, ipAddress);
+        throw new InvalidCredentialsProvidedException();
+    }
+    generate2FactorCode(account);
+}
+```
+
+Listing 2.9.13. Weryfikacja hasła algorytmem `BCrypt` podczas procesu uwierzytelniania w klasie `AuthService` (metoda `authenticate`).
+
+Na listingu 2.9.13 widać, że podczas uwierzytelniania system pobiera zaszyfrowane hasło z bazy danych i porównuje je z hasłem jawnym, wprowadzonym przez użytkownika w żądaniu logowania. Służy do tego metoda `matches()`, która automatycznie odczytuje sól (salt) z zapisanego skrótu i wylicza hash z podanego hasła, sprawdzając ich zgodność.
 
 ```
 Należy też zaprezentować rozwiązanie zapewniające zgłaszanie do dziennika zdarzeń, w którym dla każdego wywołania metody biznesowej każdego z komponentów aplikacji sieciowej odnotowane będą co najmniej:
