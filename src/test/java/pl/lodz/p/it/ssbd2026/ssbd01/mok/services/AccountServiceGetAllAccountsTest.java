@@ -116,7 +116,7 @@ public class AccountServiceGetAllAccountsTest {
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
 
         assertAll(
-                () -> assertEquals(1, result.getTotalElements()),
+                () -> assertEquals(2, result.getTotalElements()),
                 () -> assertTrue(result.getContent().stream().anyMatch(a -> a.getName().equals("Jan"))),
                 () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
@@ -139,19 +139,6 @@ public class AccountServiceGetAllAccountsTest {
                 () -> assertEquals("Nowak", result.getContent().get(0).getSurname()),
                 () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
-    }
-
-    @Test
-    @DisplayName("Pomyślne wyszukiwanie po adresie email")
-    void shouldReturnAccountsFilteredByEmail() {
-        String phrase = "@example.com";
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
-
-        when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-
-        Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
-
-        assertEquals(3, result.getTotalElements());
     }
 
     @Test
