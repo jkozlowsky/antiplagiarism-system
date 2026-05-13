@@ -28,24 +28,417 @@ Tabela 2.9.1: Deklaratywna kontrola dostępu w aspekcie metod przypadków użyci
 | **MOK.14 (Wyloguj)**                              | `jwtAuthService.logout(HttpServletRequest httpServletRequest, HttpServletResponse response, Authentication authentication)`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | default                                                                                                                                                                                                                                                                                                                                             |
 | **MOK.15 (Wyświetl listę użytkowników)**          | `accountController.getAllAccounts(@RequestParam(required = false) String phrase, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size)`<br>`accountService.getAllAccounts(int page, int size)`<br>`accountService.searchAccounts(String phrase, int page, int size)`<br>`accountRepository.findAll(Pageable pageable)`<br>`accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String login, String email, String name, String surname, Pageable pageable)`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")`<br>`@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")`<br>`@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")`<br>default<br>default |
 
+### Mapowanie grup i tożsamości użytkowników na role aplikacji
 
+Tabela 2.9.2: Mapowanie tożsamości użytkowników i grup na role aplikacji w Spring Security.
+
+| Grupa             | Rola w aplikacji |
+|:------------------|:-----------------|
+| **Administrator** | `ADMIN`          |
+| **Prowadzący**    | `TEACHER`        |
+| **Student**       | `STUDENT`        |
+
+Sprawdzanie ról na warstwie obsługi żądań odbywa się deklaratywnie przy użyciu adnotacji bezpieczeństwa bazujących na uprawnieniach, np.: `@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")`. Zmienne przechowujące stałe nazwy ról zdefiniowane są w klasie `AccountConsts`.
+
+### Mechanizm uwierzytelniania użytkowników — konfiguracja
+
+```java
+package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthService jwtAuthService;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(httpSecuritySessionManagementConfigurer ->
+                        httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Brak lub niepoprawny token autoryzacyjny.\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Brak uprawnień do tego zasobu.\"}");
+                        })
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/account/register", "/account/activate").permitAll()
+                        .requestMatchers("/auth/login", "/auth/refresh", "/auth/check2FA", "/auth/resend2FA", "/auth/google").permitAll()
+                        .requestMatchers("/auth/reset/request", "/auth/reset/confirm").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/loggers", "/actuator/loggers/**").permitAll()
+                        .requestMatchers("/account/email/confirm").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new JwtAuthFilter(jwtAuthService), UsernamePasswordAuthenticationFilter.class)
+
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .addLogoutHandler(jwtAuthService)
+                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)));
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder encoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    @Value("${app.frontend.url:https://localhost}")
+    private String frontendUrl;
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(frontendUrl));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Correlation-Id", "If-Match", "Accept-Language"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+}
 ```
-Ponadto należy zaprezentować mapowanie grup oraz tożsamości użytkowników na role aplikacji. Informacje te należy zaprezentować w formie tabeli lub wycinka z odpowiedniego deskryptora aplikacji.
+
+Listing 2.9.3. Konfiguracja łańcucha filtrów bezpieczeństwa (`SecurityFilterChain`).
+
+Na podstawie listingu 2.9.3 możemy zobaczyć, że w projekcie punkty wejścia dla błędów uwierzytelniania (`AuthenticationEntryPoint`) i braku dostępu (`AccessDeniedHandler`) zostały zdefiniowane bezpośrednio w konfiguracji łańcucha filtrów bezpieczeństwa (`SecurityFilterChain`) przy użyciu wyrażeń lambda, zwracając komunikaty w formacie JSON oraz odpowiednie kody HTTP (401 Unauthorized i 403 Forbidden).
+
+### Mechanizm uwierzytelniania użytkowników — implementacja
+
+```java
+package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+@RequiredArgsConstructor
+@Slf4j
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private final JwtAuthService jwtAuthService;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String token = authHeader.substring(7);
+        try {
+            String username = jwtAuthService.extractUsername(token);
+
+            if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            if (!jwtAuthService.isTokenValid(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            List<String> roles = jwtAuthService.extractRoles(token);
+
+            var authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException e) {
+            log.warn("JWT token has expired: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Token expired\"}");
+            return;
+        } catch (JwtException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Invalid token format\"}");
+            return;
+        }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/auth/refresh");
+    }
+}
 ```
 
+Listing 2.9.4. Implementacja głównego filtra uwierzytelniającego do aplikacji. 
 
+Na podstawie listingu 2.9.4 możemy zobaczyć główny filtr uwierzytelniający do aplikacji, parsujący nagłówek `Authorization`, weryfikujący token i odtwarzający kontekst użytkownika w `SecurityContextHolder`.
 
+### Mechanizm żetonów JWT
+
+```java
+package pl.lodz.p.it.ssbd2026.ssbd01.config.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.stereotype.Service;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+
+import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+@Service
+@RequiredArgsConstructor
+public class JwtAuthService implements LogoutHandler {
+
+    @Value("${security.jwt.secret}")
+    private String secret;
+
+    @Value("${security.jwt.expTime}")
+    private long expirationTime;
+
+    @Value("${security.jwt.refreshExpTime}")
+    private long refreshExpirationTime;
+
+    private SecretKey secretKey;
+
+    private final AccountRepository accountRepository;
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateToken(String username, List<String> roles) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", roles);
+        return createToken(extraClaims, username, expirationTime);
+    }
+
+    public String generateRefreshToken(String username, List<String> roles) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", roles);
+        return createToken(extraClaims, username, refreshExpirationTime);
+    }
+
+    private String createToken(Map<String, Object> extraClaims, String subject, long ttlInSeconds) {
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(subject)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + (ttlInSeconds * 1000)))
+                .signWith(this.secretKey)
+                .compact();
+    }
+
+    public boolean isTokenValid(@NotNull @NotBlank @NotEmpty String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        return extractClaim(token, claims -> claims.get("roles", List.class));
+    }
+
+    public Integer extractTokenVersion(String token) {
+        return extractClaim(token, claims -> claims.get("token_version", Integer.class));
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(this.secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    @Override
+    public void logout(HttpServletRequest httpServletRequest, @NonNull HttpServletResponse response, Authentication authentication) {
+
+    }
+}
 ```
-Należy zaprezentować wszystkie elementy niezbędne dla funkcjonowania mechanizmu uwierzytelniania użytkowników (implementacja i konfiguracja). Należy podać czas trwania sesji bezczynnego uwierzytelnionego użytkownika, po upływie którego nastąpi automatyczne zakończenie sesji użytkownika (wylogowanie). W przypadku
-zastosowania JWT należy przedstawić kiedy tworzony jest żeton, co zawiera i jaki ma okres ważności. 
+
+Listing 2.9.5. Komponent `JwtAuthService` odpowiedzialny za generowanie, odczytywanie i sprawdzanie poprawności żetonów JWT.
+
+#### Tworzenie i podpisywanie żetonu JWT
+
+Żetony typu `accessToken` oraz `refreshToken` są tworzone przez wspólną metodę (`createToken(Map<String, Object> extraClaims, String subject, long ttlInSeconds)`), a ich budowa przedstawia się w sposób następujący:
+
+```java
+Jwts.builder()
+    .claims(extraClaims)
+    .subject(subject)
+    .issuedAt(new Date(System.currentTimeMillis()))
+    .expiration(new Date(System.currentTimeMillis() + (ttlInSeconds * 1000)))
+    .signWith(this.secretKey)
+    .compact();
 ```
 
+Listing 2.9.6. Konstruowanie i podpis żetonu — dotyczy tokena dostępu (`accessToken`) i odświeżania (`refreshToken`).
 
+Listing 2.9.6 przedstawia konstruowanie i podpis żetonów, gdzie:
+* `claims` – dodatkowe informacje zaszyte w tokenie, w tym lista ról autoryzacyjnych (roles), przypisana do konta w momencie uwierzytelniania.
+* `subject` – login konta użytkownika.
+* `issuedAt` – moment wytworzenia żetonu.
+* `expiration` – moment wygaśnięcia żetonu, wczytywany dynamicznie z pliku konfiguracyjnego application.properties (domyślnie jest to 30 minut dla tokena dostępu i 24 godziny dla tokena odświeżania).
+* `signWith` – podpis żetonu przy użyciu klucza symetrycznego (wygenerowanego na podstawie współdzielonego sekretu zapisanego w konfiguracji aplikacji)..
+
+Typ `accessToken` jest przekazywany w nagłówku typu `Bearer` i służy do przyznawania dostępu do zasobów użytkownikowi, który jest do nich autoryzowany. Z kolei typ `refreshToken` służy do odświeżania i uzyskania nowego żetonu dostępu, bez potrzeby podawania hasła przez użytkownika po stronie logowania. Żetony przekazywane są klientowi w formie struktury JSON (z wykorzystaniem `AuthResponseDTO`).
+
+#### Odkodowanie żetonów JWT i weryfikacja podpisu
+
+Za pomocą narzędzi ze strony https://www.jwt.io/ po rozkodowaniu token dostępu (`accessToken`) wygląda w następujący sposób:
+
+```json
+{
+  "alg": "HS512"
+}
+```
+
+Listing 2.9.7. Nagłówek żetonu dostępu.
+
+```json
+{
+  "roles": [
+    "STUDENT"
+  ],
+  "sub": "rbar",
+  "iat": 1778688748,
+  "exp": 1778690548
+}
+```
+
+Listing 2.9.8. Ciało żetonu dostępu.
+
+```json
+{
+  "alg": "HS512"
+}
+```
+
+Listing 2.9.9. Nagłówek żetonu odświeżania.
+
+```json
+{
+  "roles": [
+    "STUDENT"
+  ],
+  "sub": "rbar",
+  "iat": 1778688748,
+  "exp": 1778775148
+}
+```
+
+Listing 2.9.10. Ciało żetonu odświeżania.
+
+#### Czas trwania sesji uwierzytelnionego użytkownika
+
+Ponieważ aplikacja implementuje autentykację bezstanową opartą o standard HTTP i mechanizm JWT (ustawiono `SessionCreationPolicy.STATELESS`), klasyczne sesje serwerowe (`HttpSession`) w ogóle nie są tworzone. Czas trwania sesji uwierzytelnionego użytkownika uwarunkowany jest czasem życia tokena dostępu (`accessToken`), który jest konfigurowalny we właściwościach konfiguracyjnych i domyślnie wynosi 30 minut (od momentu zalogowania). Po upływie tego czasu klient automatycznie utraci dostęp, chyba że wcześniej posłuży się tokenem odświeżającym (`refreshToken`) do pozyskania nowego tokena dostępu (`accessToken`), co przedłuża jego stan uwierzytelnienia. Utrata żetonu (jego wygaśnięcie lub skasowanie z pamięci lokalnej przeglądarki poprzez wylogowanie) jest równoznaczna z automatycznym przerwaniem dostępu i zakończeniem sesji użytkownika.
 
 ```
 Należy też przedstawić rozwiązanie zapewniające wyliczanie i składowanie haseł przypisanych do kont użytkowników w bazie danych w postaci niejawnej (skrótu) wraz z przykładem jego wykorzystania.
 ```
-
 
 
 ```
