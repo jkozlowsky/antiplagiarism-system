@@ -257,4 +257,11 @@ public class AccountController {
         String ipAddress = request.getRemoteAddr();
         log.info("User access level changed | User: {} | Logical address (IP): {} | New Role: {}", principal.getName(), ipAddress, role);
     }
+
+    @PostMapping("/unblock-inactive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> unblockAccountViaToken(@RequestParam String token) {
+        accountService.unblockAccountViaEmailToken(token);
+        return ResponseEntity.noContent().build();
+    }
 }
