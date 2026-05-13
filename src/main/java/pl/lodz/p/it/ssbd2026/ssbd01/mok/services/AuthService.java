@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
-import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
@@ -48,7 +48,7 @@ public class AuthService {
     private final JwtAuthService jwtAuthService;
     private final EmailService emailService;
     private final PostCommitTransactionManager postCommitTransactionManager;
-    private final TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
+    private final AuthenticationTokenValueGenerator tokenValueGenerator;
     private final OneTimeTokenRepository tokenRepository;
     private final LanguageDictRepository languageDictRepository;
 
