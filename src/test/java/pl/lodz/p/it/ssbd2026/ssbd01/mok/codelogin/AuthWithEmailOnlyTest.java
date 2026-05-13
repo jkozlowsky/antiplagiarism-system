@@ -105,3 +105,24 @@ public class AuthWithEmailOnlyTest {
                 authService.authenticateOnlyWithEmail("wrong@example.com", "127.0.0.1")
         );
     }
+
+    @Test
+    void NEG02_authenticateOnlyWithEmail_ShouldThrowAccountIsBlockedException() {
+        testAccount.setIsBlocked(true);
+        when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
+
+        assertThrows(AccountIsBlockedException.class, () ->
+                authService.authenticateOnlyWithEmail(testAccount.getEmail(), "127.0.0.1")
+        );
+    }
+
+    @Test
+    void NEG03_authenticateOnlyWithEmail_ShouldThrowAccountIsNotVerifiedException() {
+        testAccount.setIsVerified(false);
+        when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
+
+        assertThrows(AccountIsNotVerifiedException.class, () ->
+                authService.authenticateOnlyWithEmail(testAccount.getEmail(), "127.0.0.1")
+        );
+    }
+}

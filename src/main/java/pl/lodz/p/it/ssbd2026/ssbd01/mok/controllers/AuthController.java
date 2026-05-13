@@ -7,8 +7,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AuthService;
 
@@ -56,6 +58,25 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> loginWithGoogle(@Valid @RequestBody GoogleLoginRequestDTO requestDTO, HttpServletRequest request) {
         String ipAddress = request.getRemoteAddr();
         AuthResponseDTO response = authService.authenticateWithGoogle(requestDTO.idToken(), ipAddress);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/loginEmail")
+    public ResponseEntity<MessageResponseDTO> loginWithEmailOnly(@Validated(OnCreate.class) @RequestBody LoginWithEmailRequestDTO dto,
+                                                                 HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        authService.authenticateOnlyWithEmail(dto.email(), ipAddress);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MessageResponseDTO("email.only.auth.required"));
+    }
+
+    @PostMapping("/checkEmail")
+    public ResponseEntity<AuthResponseDTO>  verifySignInWithEmailOnlyCode(
+            @Validated(OnCreate.class) @RequestBody VerifyEmailSignInRequestDTO dto,
+            HttpServletRequest request,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = "pl") String langHeader) {
+        String ipAddress = request.getRemoteAddr();
+        AuthResponseDTO response = authService.verifyEmailOnlyAuthCode(dto.token(), dto.email(), ipAddress, langHeader);
         return ResponseEntity.ok(response);
     }
 }
