@@ -5,6 +5,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -39,6 +40,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @MethodCallLogged
+@Slf4j
 public class AuthService {
 
     @Value("${google.client.id}")
@@ -84,6 +86,7 @@ public class AuthService {
             account.setLastSuccessfulLoginIp(ipAddress);
             account.setLastLoginSuccessDateTime(LocalDateTime.now());
             accountRepository.saveAndFlush(account);
+            log.info("User session started | User: {} | Logical address (IP): {}", account.getLogin(), ipAddress);
 
             String token = jwtAuthService.generateToken(account.getLogin(), roles);
             String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
@@ -100,7 +103,6 @@ public class AuthService {
     public void authenticate(String login, String password, String ipAddress) {
         Account account = accountRepository.findByLogin(login).orElseThrow(InvalidCredentialsProvidedException::new);
 
-//        System.out.println(account.getIsBlocked());
         if (account.getIsBlocked()) {
             throw new AccountIsBlockedException();
         }
@@ -245,6 +247,7 @@ public class AuthService {
         }
         String token = jwtAuthService.generateToken(account.getLogin(), roles);
         String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        log.info("User session started | User: {} | Logical address (IP): {}", account.getLogin(), ipAddress);
         return new AuthResponseDTO(token, refreshToken);
     }
 

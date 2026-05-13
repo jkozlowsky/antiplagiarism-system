@@ -249,8 +249,9 @@ public class AccountController {
 
     @PostMapping("/role/change")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeRoleLog(@RequestBody String role, Principal principal){
-        log.info("{} changed his active role to: {}", principal.getName(), role);
+    public void changeRoleLog(@RequestBody String role, Principal principal, jakarta.servlet.http.HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        log.info("User access level changed | User: {} | Logical address (IP): {} | New Role: {}", principal.getName(), ipAddress, role);
     }
 
 }
