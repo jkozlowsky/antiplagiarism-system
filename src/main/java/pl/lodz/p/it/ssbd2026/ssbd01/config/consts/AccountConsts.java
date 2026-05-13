@@ -4,6 +4,7 @@ public class AccountConsts {
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_STUDENT = "STUDENT";
     public static final String ROLE_TEACHER = "TEACHER";
+    public static final String ROLE_FORCE_PASSWORD_CHANGE = "ROLE_FORCE_PASSWORD_CHANGE";
 
     public final static int NAME_LENGTH = 50;
     public final static int SURNAME_LENGTH = 50;

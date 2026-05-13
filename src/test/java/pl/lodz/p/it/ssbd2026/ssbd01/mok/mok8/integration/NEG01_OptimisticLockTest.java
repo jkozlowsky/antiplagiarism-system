@@ -15,7 +15,7 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
     @Autowired
     RequestFunctions requestFunctions;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void NEG01_shouldFailDueToOptimisticLock() throws JsonProcessingException {

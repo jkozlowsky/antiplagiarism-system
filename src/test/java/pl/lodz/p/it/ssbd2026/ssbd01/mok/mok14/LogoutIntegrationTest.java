@@ -52,7 +52,8 @@ public class LogoutIntegrationTest extends BaseTestSetup {
                     account.getLogin(),
                     account.getAccessLevelList().stream()
                             .map(AccessLevel::getAccessLevelName)
-                            .collect(Collectors.toList())
+                            .collect(Collectors.toList()),
+                    false
             );
         });
 

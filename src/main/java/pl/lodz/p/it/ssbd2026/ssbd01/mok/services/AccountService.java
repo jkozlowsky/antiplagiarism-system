@@ -30,6 +30,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
 import org.springframework.data.domain.Sort;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -93,6 +95,7 @@ public class AccountService {
 
         account.setIsVerified(false);
         account.setIsBlocked(false);
+        account.setForcePasswordChange(true);
         account.setActivationToken(UUID.randomUUID().toString());
         account.setCreationDate(LocalDateTime.now());
         account.setSecondEmailSent(false);
@@ -357,6 +360,7 @@ public class AccountService {
         }
 
         validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(false);
         accountRepository.saveAndFlush(account);
     }
 
@@ -547,7 +551,9 @@ public class AccountService {
         }
 
         validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(true);
         accountRepository.saveAndFlush(account);
+
     }
 
     private void updatePreferencesIfProvided(Account admin, Integer size, String sortBy, Boolean sortDesc) {

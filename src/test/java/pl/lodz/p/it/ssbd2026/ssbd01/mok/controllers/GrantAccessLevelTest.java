@@ -54,8 +54,8 @@ public class GrantAccessLevelTest extends BaseTestSetup {
 
     @BeforeEach
     public void setUpRestAssuredAndAuth() {
-        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
-        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN), false);
+        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"), false);
 //        adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
 //        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
         unauthenticatedHeaders = new Headers();
@@ -195,7 +195,7 @@ public class GrantAccessLevelTest extends BaseTestSetup {
     public void shouldFailWithStudentToken() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         Account testAccount = createTestAccount("priv");
-        String studentToken = jwtAuthService.generateToken(testAccount.getLogin(), List.of(AccountConsts.ROLE_STUDENT));
+        String studentToken = jwtAuthService.generateToken(testAccount.getLogin(), List.of(AccountConsts.ROLE_STUDENT), false);
         UUID accountId = testAccount.getId();
         String validHash = versionHashService.hashObjectVersion(accountId, testAccount.getVersion());
         String requestBody = "{\"versionHash\": \"" + validHash + "\"}";

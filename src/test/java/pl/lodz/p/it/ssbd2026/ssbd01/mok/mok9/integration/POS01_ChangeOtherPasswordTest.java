@@ -22,7 +22,7 @@ public class POS01_ChangeOtherPasswordTest extends BaseTestSetup {
     @Autowired
     private AccountTestRepository accountTestRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void POS01_shouldChangeOtherPassword() throws Exception {
