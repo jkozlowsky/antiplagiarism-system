@@ -4,5 +4,6 @@ public enum OneTimeTokenType {
     PASSWORD_RESET,
     OWN_EMAIL_CHANGE,
     CODE_2FA,
-    ACCOUNT_UNBLOCK
+    ACCOUNT_UNBLOCK,
+    EMAIL_ONLY_AUTH
 }

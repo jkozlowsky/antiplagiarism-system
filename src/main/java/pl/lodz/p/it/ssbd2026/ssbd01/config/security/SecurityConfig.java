@@ -53,8 +53,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/account/register", "/account/activate").permitAll()
-                        .requestMatchers("/auth/login", "/auth/refresh", "/auth/check2FA", "/auth/resend2FA", "/auth/google").permitAll()
-                        .requestMatchers("/auth/reset/request", "/auth/reset/confirm").permitAll()
+                        .requestMatchers("/auth/login", "/auth/refresh", "/auth/check2FA", "/auth/resend2FA", "/auth/google", "/auth/loginEmail", "/auth/checkEmail").permitAll()                        .requestMatchers("/auth/reset/request", "/auth/reset/confirm").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/loggers", "/actuator/loggers/**").permitAll()
                         .requestMatchers("/account/email/confirm").permitAll()
                         .requestMatchers("/account/unblock-inactive").permitAll()

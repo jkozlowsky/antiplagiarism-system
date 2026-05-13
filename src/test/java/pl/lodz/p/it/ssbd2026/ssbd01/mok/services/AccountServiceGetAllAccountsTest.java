@@ -111,14 +111,14 @@ public class AccountServiceGetAllAccountsTest {
         Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(0), mockAccounts.get(2)), pageRequest, 2);
 
         when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
 
         assertAll(
                 () -> assertEquals(2, result.getTotalElements()),
                 () -> assertTrue(result.getContent().stream().anyMatch(a -> a.getName().equals("Jan"))),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+                () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
     }
 
@@ -130,29 +130,15 @@ public class AccountServiceGetAllAccountsTest {
         Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(1)), pageRequest, 1);
 
         when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
 
         assertAll(
                 () -> assertEquals(1, result.getTotalElements()),
                 () -> assertEquals("Nowak", result.getContent().get(0).getSurname()),
-                () -> verify(accountRepository, times(1)).findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)
+                () -> verify(accountRepository, times(1)).findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)
         );
-    }
-
-    @Test
-    @DisplayName("Pomyślne wyszukiwanie po adresie email")
-    void shouldReturnAccountsFilteredByEmail() {
-        String phrase = "@example.com";
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
-
-        when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(mockAccountsPage);
-
-        Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
-
-        assertEquals(3, result.getTotalElements());
     }
 
     @Test
@@ -163,7 +149,7 @@ public class AccountServiceGetAllAccountsTest {
         Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(2)), pageRequest, 1);
 
         when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(filteredPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
 
@@ -178,7 +164,7 @@ public class AccountServiceGetAllAccountsTest {
         PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("login").ascending());
 
         when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(admin));
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
+        when(accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageRequest)).thenReturn(emptyAccountsPage);
 
         Page<Account> result = accountService.searchAccounts(phrase, 0, 10, "login", false, "admin");
 

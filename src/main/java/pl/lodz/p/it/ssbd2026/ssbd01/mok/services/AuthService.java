@@ -13,8 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
-import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
@@ -50,7 +50,7 @@ public class AuthService {
     private final JwtAuthService jwtAuthService;
     private final EmailService emailService;
     private final PostCommitTransactionManager postCommitTransactionManager;
-    private final TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
+    private final AuthenticationTokenValueGenerator tokenValueGenerator;
     private final OneTimeTokenRepository tokenRepository;
     private final LanguageDictRepository languageDictRepository;
 
@@ -275,5 +275,92 @@ public class AuthService {
         String newRefreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
 
         return new AuthResponseDTO(newToken, newRefreshToken);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
+    public void authenticateOnlyWithEmail(String email, String ipAddress) {
+        Account account = accountRepository.findByEmail(email).orElseThrow(AccountNotFoundException::new);
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        } else if (!account.getIsVerified()) {
+            throw new AccountIsNotVerifiedException();
+        }
+        generateEmailOnlyAuthCode(account);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager",
+            noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
+    public AuthResponseDTO verifyEmailOnlyAuthCode(String token, String email, String ipAddress, String langHeader) {
+        Account account = accountRepository.findByEmail(email).orElseThrow(AccountNotFoundException::new);
+        String hashedToken = hashToken(token);
+        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository
+                .findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        hashedToken, account.getLogin(), OneTimeTokenType.EMAIL_ONLY_AUTH, LocalDateTime.now());
+        if (tokenOpt.isEmpty()) {
+            handleFailedLogin(account, ipAddress);
+            throw new OneTimeTokenInvalidException();
+        }
+        OneTimeTokenEnt tokenEntity = tokenOpt.get();
+        tokenEntity.setUsed(true);
+        tokenRepository.saveAndFlush(tokenEntity);
+        return handleSuccessfulLoginWithEmail(account, ipAddress, langHeader);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    public void generateEmailOnlyAuthCode(Account account) {
+        List<OneTimeTokenEnt> activeTokens = tokenRepository
+                .findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.EMAIL_ONLY_AUTH);
+
+        invalidateActiveToken(activeTokens);
+        OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
+        String authCode = tokenValueGenerator.generateAuthWithEmailOnlyCode();
+        postCommitTransactionManager.register(() ->
+                emailService.sendEmailOnlyAuthCode(account.getEmail(), authCode, account.getLanguageVersion().getLanguage()));
+
+        tokenEnt.setTokenValue(hashToken(authCode));
+        tokenEnt.setUsername(account.getLogin());
+        tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
+        tokenEnt.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
+        tokenEnt.setUsed(false);
+        tokenRepository.saveAndFlush(tokenEnt);
+    }
+
+    private AuthResponseDTO handleSuccessfulLoginWithEmail(Account account, String ipAddress, String langHeader) {
+        account.setFailedAttempts(0);
+        account.setLastSuccessfulLoginIp(ipAddress);
+        account.setLastLoginSuccessDateTime(LocalDateTime.now());
+        String langCode = (langHeader != null && langHeader.length() >= 2) ? langHeader.substring(0, 2).toLowerCase() : "en";
+        languageDictRepository.findByLanguage(langCode).ifPresent(account::setLanguageVersion);
+        accountRepository.saveAndFlush(account);
+
+        List<String> roles = account.getAccessLevelList().stream()
+                .filter(AccessLevel::getActive)
+                .map(al -> al.getAccessLevelDict().getAccessLevelName())
+                .toList();
+
+        if (roles.contains(AccountConsts.ROLE_ADMIN)) {
+            postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress, account.getLanguageVersion().getLanguage()));
+        }
+
+        String token = jwtAuthService.generateShortLivedToken(account.getLogin(), roles);
+        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        return new AuthResponseDTO(token, refreshToken);
+    }
+
+    private void invalidateActiveToken(List<OneTimeTokenEnt> activeTokens) {
+        if (!activeTokens.isEmpty()) {
+            OneTimeTokenEnt oldToken = activeTokens.getFirst();
+            if (oldToken.getExpiresAt() != null) {
+                LocalDateTime createdAt = oldToken.getExpiresAt().minusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES);
+                LocalDateTime canResend = createdAt.plusMinutes(OneTimeTokenConsts.RESEND_TIMEOUT_2FA_IN_MINUTES);
+
+                if (LocalDateTime.now().isBefore(canResend)) {
+                    throw new Resend2FATokenException();
+                }
+            }
+            oldToken.setUsed(true);
+            tokenRepository.save(oldToken);
+        }
     }
 }

@@ -203,8 +203,7 @@ public class AccountService {
         updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
 
         Pageable pageable = createPageable(page, admin);
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(
-                phrase, phrase, phrase, phrase, pageable);
+        return accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
