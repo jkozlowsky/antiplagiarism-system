@@ -54,4 +54,4 @@ server {
 ```
 _Listing 2.15.2 Fragment pliku nginx.conf z widocznymi certyfikatami oraz kierowaniem ruchem_
 
-Aby aplikacja backendowa była świadoma, że pierwotny ruch odbywa się po HTTPS (co jest niezbędne m.in. do prawidłowego generowania linków w Spring Security oraz poprawnego działania polityki CORS), w Nginx zastosowano nagłówki przekazujące `X-Forwarded-Proto $scheme;`. Po stronie backendu, w pliku application.properties, włączono obsługę tych nagłówków wpisem `server.forward-headers-strategy=framework`.
+Aby aplikacja serwerowa była świadoma, że pierwotny ruch odbywa się po HTTPS (co jest niezbędne m.in. do poprawnego działania polityki CORS), w Nginx zastosowano nagłówki przekazujące `X-Forwarded-Proto $scheme;`. Po stronie aplikacji serwerowej, w pliku application.properties, włączono obsługę tych nagłówków wpisem `server.forward-headers-strategy=framework`.
