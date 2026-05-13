@@ -122,7 +122,7 @@ public class MOK01_RegistrationAndActivation extends BaseTestSetup {
 
         txTemplate.executeWithoutResult(status -> {
             Account updatedAccount = accountTestRepository.findByLogin("reminder123").get();
-            assertTrue(updatedAccount.isSecondEmailSent(), "Flaga secondEmailSent powinna zmienić się na true");
+            assertTrue(updatedAccount.getSecondEmailSent(), "Flaga secondEmailSent powinna zmienić się na true");
             assertFalse(updatedAccount.getIsVerified());
         });
     }

@@ -90,7 +90,7 @@ public class AccountScheduler {
             token.setUsername(acc.getLogin());
             token.setExpiresAt(LocalDateTime.now().plusDays(expiresAtDays));
             token.setTokenType(ACCOUNT_UNBLOCK);
-            token.setUsed(false);
+            token.setIsUsed(false);
 
             tokenRepository.save(token);
 

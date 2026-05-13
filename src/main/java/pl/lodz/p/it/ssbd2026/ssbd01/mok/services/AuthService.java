@@ -147,7 +147,7 @@ public class AuthService {
         OneTimeTokenEnt tokenEntity = tokenOpt.get();
         Account account = accountRepository.findByLogin(tokenEntity.getUsername()).orElseThrow(AccountNotFoundException::new);
 
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         tokenRepository.saveAndFlush(tokenEntity);
 
         return handleSuccessfulLogin(account, ipAddress, langHeader);
@@ -186,7 +186,7 @@ public class AuthService {
                     throw new Resend2FATokenException();
                 }
             }
-            oldToken.setUsed(true);
+            oldToken.setIsUsed(true);
             tokenRepository.save(oldToken);
         }
 
@@ -198,7 +198,7 @@ public class AuthService {
         tokenEnt.setUsername(account.getLogin());
         tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
         tokenEnt.setTokenType(OneTimeTokenType.CODE_2FA);
-        tokenEnt.setUsed(false);
+        tokenEnt.setIsUsed(false);
 
         tokenRepository.saveAndFlush(tokenEnt);
     }
@@ -300,7 +300,7 @@ public class AuthService {
             throw new OneTimeTokenInvalidException();
         }
         OneTimeTokenEnt tokenEntity = tokenOpt.get();
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         tokenRepository.saveAndFlush(tokenEntity);
         return handleSuccessfulLoginWithEmail(account, ipAddress, langHeader);
     }
@@ -320,7 +320,7 @@ public class AuthService {
         tokenEnt.setUsername(account.getLogin());
         tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
         tokenEnt.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
-        tokenEnt.setUsed(false);
+        tokenEnt.setIsUsed(false);
         tokenRepository.saveAndFlush(tokenEnt);
     }
 
@@ -357,7 +357,7 @@ public class AuthService {
                     throw new Resend2FATokenException();
                 }
             }
-            oldToken.setUsed(true);
+            oldToken.setIsUsed(true);
             tokenRepository.save(oldToken);
         }
     }

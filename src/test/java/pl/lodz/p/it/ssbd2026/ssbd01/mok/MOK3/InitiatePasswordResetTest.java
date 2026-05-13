@@ -68,20 +68,20 @@ public class InitiatePasswordResetTest {
         Account account = new Account();
         account.setLanguageVersion(langDict);
         OneTimeTokenEnt oldToken = new OneTimeTokenEnt();
-        oldToken.setUsed(false);
+        oldToken.setIsUsed(false);
 
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
         when(tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET)).thenReturn(List.of(oldToken));
 
         passwordResetService.initiatePasswordReset(email);
 
-        assertTrue(oldToken.isUsed());
+        assertTrue(oldToken.getIsUsed());
         verify(tokenRepository).saveAllAndFlush(anyList());
 
         verify(tokenRepository).saveAndFlush(tokenCaptor.capture());
         OneTimeTokenEnt savedToken = tokenCaptor.getValue();
         assertEquals(email, savedToken.getUsername());
-        assertFalse(savedToken.isUsed());
+        assertFalse(savedToken.getIsUsed());
         assertNotNull(savedToken.getTokenValue());
 
         verify(emailService).sendResetPasswordEmail(eq(email), any(String.class), any());
@@ -104,7 +104,7 @@ public class InitiatePasswordResetTest {
 
         verify(tokenRepository).saveAndFlush(tokenCaptor.capture());
         assertEquals(email, tokenCaptor.getValue().getUsername());
-        assertFalse(tokenCaptor.getValue().isUsed());
+        assertFalse(tokenCaptor.getValue().getIsUsed());
     }
 
     @Test

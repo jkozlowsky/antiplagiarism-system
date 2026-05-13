@@ -152,7 +152,7 @@ public class AccountService {
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public Page<Account> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
         Account admin = accountRepository.findByLogin(username)
                 .orElseThrow(AccountNotFoundException::new);
@@ -385,7 +385,7 @@ public class AccountService {
         token.setUsername(login);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
         token.setTokenType(OneTimeTokenType.OWN_EMAIL_CHANGE);
-        token.setUsed(false);
+        token.setIsUsed(false);
 
         tokenRepository.saveAndFlush(token);
 
@@ -413,7 +413,7 @@ public class AccountService {
 
         String oldEmail = account.getEmail();
         account.setEmail(newEmail);
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
 
         String revertUrlToken = UUID.randomUUID().toString();
         EmailRevertTokenEnt revertToken = new EmailRevertTokenEnt();
@@ -460,7 +460,7 @@ public class AccountService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void resendUrlOwnEmailChange(String login) {
         tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(login, OneTimeTokenType.OWN_EMAIL_CHANGE).forEach(token -> {
-            token.setUsed(true);
+            token.setIsUsed(true);
             tokenRepository.save(token);
         });
 
@@ -571,7 +571,7 @@ public class AccountService {
 
         account.setIsBlocked(false);
         account.setLastLoginSuccessDateTime(LocalDateTime.now());
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
 
         accountRepository.saveAndFlush(account);
         tokenRepository.saveAndFlush(tokenEntity);

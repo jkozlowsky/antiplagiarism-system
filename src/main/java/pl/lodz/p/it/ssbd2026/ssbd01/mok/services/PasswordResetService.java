@@ -66,7 +66,7 @@ public class PasswordResetService {
         }
 
         List<OneTimeTokenEnt> potentialClashedToken = tokenRepository.findByUsernameAndTokenTypeAndIsUsedIsFalse(email, OneTimeTokenType.PASSWORD_RESET);
-        potentialClashedToken.forEach(item -> item.setUsed(true));
+        potentialClashedToken.forEach(item -> item.setIsUsed(true));
 
         if (!potentialClashedToken.isEmpty()) {
             tokenRepository.saveAllAndFlush(potentialClashedToken);
@@ -78,7 +78,7 @@ public class PasswordResetService {
         token.setUsername(email);
         token.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
         token.setTokenType(OneTimeTokenType.PASSWORD_RESET);
-        token.setUsed(false);
+        token.setIsUsed(false);
         tokenRepository.saveAndFlush(token);
 
         emailService.sendResetPasswordEmail(email, rawToken, accountOpt.get().getLanguageVersion().getLanguage());
@@ -96,7 +96,7 @@ public class PasswordResetService {
                 .orElseThrow(() -> new OneTimeTokenInvalidException("error.token.reset.expired"));
         //TODO: i18n
 
-        tokenEntity.setUsed(true);
+        tokenEntity.setIsUsed(true);
         //Nie rozumiem dlaczego, ale jeżeli robię manualny save albo saveAndFlush
         //to występuje optimisticLockException którego nie mogę obejść.
         //Na razie zostawię je tutaj zakomentowane, ale muszę zapytać kogoś z doktorów co tu się

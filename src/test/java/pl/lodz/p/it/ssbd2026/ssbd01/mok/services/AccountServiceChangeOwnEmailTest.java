@@ -98,7 +98,7 @@ public class AccountServiceChangeOwnEmailTest {
 
         assertAll(
                 () -> assertEquals("ownemail_tester", savedToken.getUsername()),
-                () -> assertFalse(savedToken.isUsed()),
+                () -> assertFalse(savedToken.getIsUsed()),
                 () -> assertNotNull(savedToken.getTokenValue()),
                 () -> verify(postCommitTransactionManager, times(1)).register(any())
         );
@@ -114,7 +114,7 @@ public class AccountServiceChangeOwnEmailTest {
         OneTimeTokenEnt tokenEntity = new OneTimeTokenEnt();
         tokenEntity.setTokenValue(generatedUrl);
         tokenEntity.setUsername("ownemail_tester");
-        tokenEntity.setUsed(false);
+        tokenEntity.setIsUsed(false);
         tokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_TIME_MINUTES));
 
         when(tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
@@ -131,7 +131,7 @@ public class AccountServiceChangeOwnEmailTest {
 
         assertAll(
                 () -> assertEquals(newEmail, testAccount.getEmail()),
-                () -> assertTrue(tokenEntity.isUsed()),
+                () -> assertTrue(tokenEntity.getIsUsed()),
                 () -> verify(accountRepository, times(1)).saveAndFlush(testAccount),
                 () -> verify(tokenRepository, times(1)).saveAndFlush(tokenEntity)
         );
