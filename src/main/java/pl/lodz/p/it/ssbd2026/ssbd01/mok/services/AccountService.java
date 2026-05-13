@@ -36,6 +36,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastExceptio
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
 import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
 
 @RequiredArgsConstructor
@@ -591,4 +592,30 @@ public class AccountService {
         return PageRequest.of(finalPage, finalSize, Sort.by(direction, sortByField));
     }
 
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockAccountViaEmailToken(String token) {
+        OneTimeTokenEnt tokenEntity = tokenRepository
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        token, ACCOUNT_UNBLOCK, LocalDateTime.now())
+                .orElseThrow(OneTimeTokenInvalidException::new);
+
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        account.setLastLoginSuccessDateTime(LocalDateTime.now());
+        tokenEntity.setUsed(true);
+
+        accountRepository.saveAndFlush(account);
+        tokenRepository.saveAndFlush(tokenEntity);
+
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
+    }
 }
