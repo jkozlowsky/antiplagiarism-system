@@ -273,4 +273,77 @@ public class AuthService {
 
         return new AuthResponseDTO(newToken, newRefreshToken);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    @Retryable(retryFor = ConcurrentUpdateException.class, backoff = @Backoff(delayExpression = "${app.retry.backoff}"))
+    public void authenticateOnlyWithEmail(String email, String ipAddress) {
+        Account account = accountRepository.findByEmail(email).orElseThrow(AccountNotFoundException::new);
+        if (account.getIsBlocked()) {
+            throw new AccountIsBlockedException();
+        } else if (!account.getIsVerified()) {
+            throw new AccountIsNotVerifiedException();
+        }
+        generateEmailOnlyAuthCode(account);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager",
+            noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
+    public AuthResponseDTO verifyEmailOnlyAuthCode(String token, String email, String ipAddress, String langHeader) {
+        Account account = accountRepository.findByEmail(email).orElseThrow(AccountNotFoundException::new);
+        String hashedToken = hashToken(token);
+        Optional<OneTimeTokenEnt> tokenOpt = tokenRepository
+                .findByTokenValueAndUsernameAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        hashedToken, account.getLogin(), OneTimeTokenType.EMAIL_ONLY_AUTH, LocalDateTime.now());
+        if (tokenOpt.isEmpty()) {
+            handleFailedLogin(account, ipAddress);
+            throw new OneTimeTokenInvalidException();
+        }
+        OneTimeTokenEnt tokenEntity = tokenOpt.get();
+        tokenEntity.setUsed(true);
+        tokenRepository.saveAndFlush(tokenEntity);
+        return handleSuccessfulLoginWithEmail(account, ipAddress, langHeader);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
+    public void generateEmailOnlyAuthCode(Account account) {
+        List<OneTimeTokenEnt> activeTokens = tokenRepository
+                .findByUsernameAndTokenTypeAndIsUsedIsFalse(account.getLogin(), OneTimeTokenType.EMAIL_ONLY_AUTH);
+
+        invalidateActiveToken(activeTokens);
+        OneTimeTokenEnt tokenEnt = new OneTimeTokenEnt();
+        String authCode = tokenValueGenerator.generateAuthWithEmailOnlyCode();
+        postCommitTransactionManager.register(()->
+                emailService.sendEmailOnlyAuthCode(account.getEmail(), authCode, account.getLanguageVersion().getLanguage()));
+
+        tokenEnt.setTokenValue(hashToken(authCode));
+        tokenEnt.setUsername(account.getLogin());
+        tokenEnt.setExpiresAt(LocalDateTime.now().plusMinutes(OneTimeTokenConsts.EXPIRATION_ONE_TIME_TOKEN_MINUTES));
+        tokenEnt.setTokenType(OneTimeTokenType.EMAIL_ONLY_AUTH);
+        tokenEnt.setUsed(false);
+        tokenRepository.saveAndFlush(tokenEnt);
+    }
+
+    private AuthResponseDTO handleSuccessfulLoginWithEmail(Account account, String ipAddress, String langHeader) {
+        account.setFailedAttempts(0);
+        account.setLastSuccessfulLoginIp(ipAddress);
+        account.setLastLoginSuccessDateTime(LocalDateTime.now());
+        String langCode = (langHeader != null && langHeader.length() >= 2) ? langHeader.substring(0, 2).toLowerCase() : "en";
+        languageDictRepository.findByLanguage(langCode).ifPresent(account::setLanguageVersion);
+        accountRepository.saveAndFlush(account);
+
+        List<String> roles = account.getAccessLevelList().stream()
+                .filter(AccessLevel::getActive)
+                .map(al -> al.getAccessLevelDict().getAccessLevelName())
+                .toList();
+
+        if (roles.contains(AccountConsts.ROLE_ADMIN)) {
+            postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress, account.getLanguageVersion().getLanguage()));
+        }
+
+        String token = jwtAuthService.generateShortLivedToken(account.getLogin(), roles);
+        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        return new AuthResponseDTO(token, refreshToken);
+    }
+
+
 }

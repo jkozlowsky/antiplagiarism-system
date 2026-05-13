@@ -1,4 +1,107 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.codelogin;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AuthService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AuthResponseDTO;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Optional;
+
+import org.mockito.ArgumentCaptor;
+import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
 public class AuthWithEmailOnlyTest {
-}
+    @Mock
+    private AccountRepository accountRepository;
+    @Mock
+    private OneTimeTokenRepository tokenRepository;
+    @Mock
+    private AuthenticationTokenValueGenerator tokenValueGenerator;
+    @Mock
+    private EmailService emailService;
+    @Mock
+    private PostCommitTransactionManager postCommitTransactionManager;
+    @Mock
+    private JwtAuthService jwtAuthService;
+    @Mock
+    private LanguageDictRepository languageDictRepository;
+
+    @InjectMocks
+    private AuthService authService;
+
+    private Account testAccount;
+    private LanguageDict plLang;
+    private final CommonFunctions commonFunctions = new CommonFunctions();
+
+    @BeforeEach
+    void setUp() {
+        plLang = new LanguageDict();
+        plLang.setLanguage("pl");
+
+        testAccount = new Account();
+        testAccount.setLogin("testuser");
+        testAccount.setEmail("test@example.com");
+        testAccount.setIsBlocked(false);
+        testAccount.setIsVerified(true);
+        testAccount.setFailedAttempts(0);
+        testAccount.setLanguageVersion(plLang);
+        testAccount.setAccessLevelList(new ArrayList<>());
+    }
+
+    @Test
+    void POS01_authenticateOnlyWithEmail_ShouldBeSuccessful() {
+        String rawToken = commonFunctions.generateRandomStringOfLength(OneTimeTokenConsts.CODE_LOGIN_TOKEN_LENGTH);
+        when(accountRepository.findByEmail(testAccount.getEmail())).thenReturn(Optional.of(testAccount));
+        when(tokenValueGenerator.generateAuthWithEmailOnlyCode()).thenReturn(rawToken);
+
+        authService.authenticateOnlyWithEmail(testAccount.getEmail(), "127.0.0.1");
+
+        verify(tokenRepository).findByUsernameAndTokenTypeAndIsUsedIsFalse(testAccount.getLogin(), OneTimeTokenType.EMAIL_ONLY_AUTH);
+
+        ArgumentCaptor<OneTimeTokenEnt> tokenCaptor = ArgumentCaptor.forClass(OneTimeTokenEnt.class);
+        verify(tokenRepository).saveAndFlush(tokenCaptor.capture());
+        OneTimeTokenEnt savedToken = tokenCaptor.getValue();
+
+        assertEquals(testAccount.getLogin(), savedToken.getUsername());
+        assertEquals(OneTimeTokenType.EMAIL_ONLY_AUTH, savedToken.getTokenType());
+        assertFalse(savedToken.isUsed());
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(postCommitTransactionManager).register(runnableCaptor.capture());
+
+        runnableCaptor.getValue().run();
+        verify(emailService).sendEmailOnlyAuthCode(eq(testAccount.getEmail()), eq(rawToken), eq("pl"));
+    }
+
+    @Test
+    void NEG01_authenticateOnlyWithEmail_ShouldThrowAccountNotFoundException() {
+        when(accountRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+        assertThrows(AccountNotFoundException.class, () ->
+                authService.authenticateOnlyWithEmail("wrong@example.com", "127.0.0.1")
+        );
+    }
