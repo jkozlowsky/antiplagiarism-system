@@ -16,3 +16,8 @@ Względem etapu wstępnego, w rozdziale 3 wprowadzono następujące modyfikacje:
 4. Uporządkowano sposób prezentacji tabel, wydzielając klucze obce oraz indeksy do dedykowanych sekcji pod każdą z tabel, co znacząco poprawiło czytelność dokumentacji.
 
 5. Zaprezentowane skrypty DDL i DML zostały zaktualizowane tak, aby odzwierciedlały ostateczny, skonsolidowany stan bazy po przejściu wszystkich migracji narzędzia Flyway. Dodano również uzasadnienie dla użycia bloku programistycznego podczas startowego zasilania bazy (Seed).
+
+### Zmiany: Rozdział 5 Objekty encji
+
+1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account. 
+2. Poprawiono związek Account -> LanguageDict na Mutable.
