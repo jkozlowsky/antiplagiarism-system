@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok12.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +29,9 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
     @Autowired
     RequestFunctions requestFunctions;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
     CommonFunctions commonFunctions;
     @BeforeEach
     void testSetup() {
@@ -55,6 +57,13 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 null,
                 changedName,
                 changedSurname,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null
                 );

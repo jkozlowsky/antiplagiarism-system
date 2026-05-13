@@ -1,8 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 
 import java.time.LocalDateTime;
@@ -56,6 +58,8 @@ public class Account extends AbstractEntity {
     @Column(name = "is_verified", nullable = false)
     private Boolean isVerified = false;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 

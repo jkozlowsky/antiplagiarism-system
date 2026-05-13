@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -120,7 +121,12 @@ public class AccountService {
     public Account getAccountWithAccessLevels(UUID id) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(AccountNotFoundException::new);
-
+        if (account.getCreatedBy() != null) {
+            Hibernate.initialize(account.getCreatedBy());
+        }
+        if (account.getModifiedBy() != null) {
+            Hibernate.initialize(account.getModifiedBy());
+        }
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -153,6 +159,12 @@ public class AccountService {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(AccountNotFoundException::new);
 
+        if (account.getCreatedBy() != null) {
+            Hibernate.initialize(account.getCreatedBy());
+        }
+        if (account.getModifiedBy() != null) {
+            Hibernate.initialize(account.getModifiedBy());
+        }
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -287,10 +299,16 @@ public class AccountService {
             backoff = @Backoff(delayExpression = "${app.retry.backoff}"),
             maxAttemptsExpression = "${app.retry.maxattempts}"
     )
-    public Account changeEmailByAdmin(UUID targetAccountId, String newEmail, String frontendVersionHash) {
-        Account account = accountRepository.findById(targetAccountId).orElseThrow(AccountNotFoundException::new);
+    public Account changeEmailByAdmin(String login, String newEmail, String frontendVersionHash) {
+        Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(account);
-        String expectedVersionHash = hashService.hashObjectVersion(targetAccountId, account.getVersion());
+        String expectedVersionHash = hashService.hashObjectVersion(account.getId(), account.getVersion());
+        if (account.getCreatedBy() != null) {
+            Hibernate.initialize(account.getCreatedBy());
+        }
+        if (account.getModifiedBy() != null) {
+            Hibernate.initialize(account.getModifiedBy());
+        }
         if (!expectedVersionHash.equals(frontendVersionHash)) {
             throw new ConcurrentUpdateException();
         }
@@ -510,8 +528,8 @@ public class AccountService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = ConcurrentUpdateException.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public void changeOtherPassword(UUID id, String newPassword, String ifMatch) {
-        Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
+    public void changeOtherPassword(String login, String newPassword, String ifMatch) {
+        Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
 
         mokRefreshRepository.refresh(account);
         if (!ifMatch.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {

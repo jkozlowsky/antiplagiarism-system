@@ -67,6 +67,7 @@ public class AccountController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public Page<AccountWithAccessLevelsDTO> getAllAccounts(
             @RequestParam(required = false) String phrase,
             @RequestParam(defaultValue = "0") int page,
@@ -100,6 +101,7 @@ public class AccountController {
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO grantAccessLevel(
             @PathVariable UUID id,
@@ -109,6 +111,7 @@ public class AccountController {
     }
 
     @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
     public AccountWithAccessLevelsDTO revokeAccessLevel(
             @PathVariable UUID id,
@@ -124,15 +127,15 @@ public class AccountController {
                 versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
     }
 
-    @PatchMapping("/{id}/email")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PatchMapping("/{login}/email")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) and #login != authentication.name")
     @ResponseStatus(HttpStatus.OK)
     public AccountDTO adminChangeAccountEmail(
-            @PathVariable UUID id,
+            @PathVariable String login,
             @Validated(OnCreate.class) @RequestBody ChangeEmailDTO changeEmailDTO,
             @RequestHeader("If-Match") String ifMatch) {
 
-        Account account = accountService.changeEmailByAdmin(id, changeEmailDTO.email(), ifMatch);
+        Account account = accountService.changeEmailByAdmin(login, changeEmailDTO.email(), ifMatch);
         return accountMapper.toAccountDTONoHash(account);
     }
 
@@ -203,6 +206,7 @@ public class AccountController {
 
     @PatchMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public AccountWithAccessLevelsDTO updateOtherAccount(
             @PathVariable UUID id,
             @RequestBody @Validated(OnUpdate.class) AccountDTO accountDTO,
@@ -232,16 +236,16 @@ public class AccountController {
     }
 
 
-    @PostMapping("/{id}/password")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PostMapping("/{login}/password")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) and #login != authentication.name")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeOtherPassword(
-            @PathVariable UUID id,
+            @PathVariable String login,
             @Valid @RequestBody ChangeOtherPasswordDto dto,
             @RequestHeader("If-Match") String ifMatch) {
 
         accountService.changeOtherPassword(
-                id,
+                login,
                 dto.getNewPassword(),
                 ifMatch
         );

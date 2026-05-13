@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok12.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +25,11 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
     @Autowired
     RequestFunctions requestFunctions;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
     CommonFunctions commonFunctions;
+
     @BeforeEach
     void testSetup() {
         commonFunctions = new CommonFunctions();
@@ -53,20 +56,27 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 changedName,
                 changedSurname,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null
         );
         String response = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 200,
                 "/api/account/update-myself",
-                new Headers(new Header("if-Match",getAccount.versionHash()))
+                new Headers(new Header("if-Match", getAccount.versionHash()))
         );
 
         String response2 = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 409,
                 "/api/account/update-myself",
-                new Headers(new Header("if-Match",getAccount.versionHash()))
+                new Headers(new Header("if-Match", getAccount.versionHash()))
         );
     }
 }

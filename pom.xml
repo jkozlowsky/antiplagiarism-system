@@ -205,6 +205,10 @@
             <version>7.6.0.202603022253-r</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
 
         <!--JWT-->
         <dependency>

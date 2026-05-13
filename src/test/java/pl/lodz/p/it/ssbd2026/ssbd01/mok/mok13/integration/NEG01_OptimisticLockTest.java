@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok13.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,8 +37,8 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
 
     Account testAccount;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
     private String accountEmail;
     private String accountLogin;
 
@@ -85,6 +86,13 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 null,
                 changedName,
                 changedSurname,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null
         );

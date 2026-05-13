@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok9.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,8 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
     @Autowired
     private RequestFunctions requestFunctions;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
     @Test
     void NEG01_shouldFailDueToOptimisticLock() throws Exception {
         String value1 = requestFunctions.sendGetRequest(
@@ -27,7 +28,7 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
                 new Headers()
         );
         AccountDTO getAccount = objectMapper.readValue(value1, AccountDTO.class);
-        UUID targetId = getAccount.id();
+        String targetLoginn = getAccount.login();
 
         ChangeOtherPasswordDto dto = new ChangeOtherPasswordDto();
         dto.setNewPassword("NoweWymuszoneHaslo123!");
@@ -35,7 +36,7 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(dto),
                 409,
-                "/api/account/" + targetId + "/password",
+                "/api/account/" + targetLoginn + "/password",
                 new Headers(new Header("If-Match", "niepoprawny-stary-hash-wersji-12345"))
         );
     }
