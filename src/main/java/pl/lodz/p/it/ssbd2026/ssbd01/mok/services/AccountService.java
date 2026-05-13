@@ -162,7 +162,6 @@ public class AccountService {
         return account;
     }
 
-    /// Feature do przeszukiwania listy po loginie/email-u już w backendzie
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(
@@ -172,7 +171,7 @@ public class AccountService {
     )
     public Page<Account> searchAccounts(String phrase, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
+        return accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
