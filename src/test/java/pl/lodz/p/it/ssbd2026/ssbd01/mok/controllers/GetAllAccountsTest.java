@@ -20,10 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GetAllAccountsTest extends BaseTestSetup {
 
@@ -90,6 +87,31 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 () -> assertNotNull(accounts),
                 () -> assertFalse(accounts.isEmpty())
         );
+    }
+
+    @Test
+    @DisplayName("Pomyślne zapisanie preferencji sortowania i stronicowania i wczytanie ich dla zapytań bez parametrów")
+    public void shouldRememberPaginationAndSortingPreferences() {
+        requestFunctions.sendGetRequest(
+                200,
+                "/api/account?size=2&sortBy=email&sortDesc=true",
+                adminHeaders
+        );
+
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account",
+                adminHeaders
+        );
+
+        int size = JsonPath.from(responseBody).getInt("size");
+        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+
+        assertEquals(2, size);
+
+        if (emails.size() > 1) {
+            assertTrue(emails.get(0).compareTo(emails.get(1)) >= 0, "Obiekty nie są poprawnie posortowane malejąco względem adresu email");
+        }
     }
 
     @Test

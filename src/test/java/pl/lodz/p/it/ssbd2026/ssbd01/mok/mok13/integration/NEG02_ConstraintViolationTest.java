@@ -83,6 +83,9 @@ public class NEG02_ConstraintViolationTest extends BaseTestSetup {
                 changedName,
                 changedSurname,
                 null,
+                null,
+                null,
+                null,
                 null
         );
         String response = requestFunctions.sendPatchRequest(
