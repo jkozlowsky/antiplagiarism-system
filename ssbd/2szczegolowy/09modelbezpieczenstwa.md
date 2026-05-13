@@ -640,11 +640,3 @@ Klasa posiada również mechanizm obsługujący ponowienia operacji. Jeżeli wyw
 ```
 
 Listing 2.9.16. Przykład wygenerowanych wpisów w dzienniku zdarzeń.
-
-```
-W ramach prezentacji rozwiązania należy zacytować kod klas i metod realizujących funkcjonalność dziennika zdarzeń oraz fragment kodu wybranego (przykładowego) komponentu obrazujący zastosowanie rozwiązania.
-
-_Realizacja: Wszystkie metody biznesowe wszystkich komponentów (we wszystkich modułach funkcjonalnych aplikacji) muszą być opatrzone stosownymi adnotacjami konfigurującymi deklaratywny model bezpieczeństwa._
-
-_Przedstawione rozwiązanie tworzenia dziennika zdarzeń musi być zaimplementowane i zastosowane do wszystkich klas / metod komponentów_
-```
