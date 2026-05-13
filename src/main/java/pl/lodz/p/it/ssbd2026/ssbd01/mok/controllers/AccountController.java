@@ -143,6 +143,7 @@ public class AccountController {
 
 
     @PostMapping("/security/password")
+    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeOwnPassword(
             @Valid @RequestBody ChangeOwnPasswordDto dto,
