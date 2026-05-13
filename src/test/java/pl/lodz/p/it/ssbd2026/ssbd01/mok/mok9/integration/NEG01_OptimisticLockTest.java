@@ -20,6 +20,8 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+//    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     @Test
     void NEG01_shouldFailDueToOptimisticLock() throws Exception {
         String value1 = requestFunctions.sendGetRequest(

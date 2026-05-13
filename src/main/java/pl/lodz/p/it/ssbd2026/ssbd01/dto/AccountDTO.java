@@ -1,22 +1,12 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.dto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.springframework.data.jpa.domain.AbstractAuditable_.createdBy;
 
 public record AccountDTO(
         @Null(groups = {OnCreate.class, OnUpdate.class})

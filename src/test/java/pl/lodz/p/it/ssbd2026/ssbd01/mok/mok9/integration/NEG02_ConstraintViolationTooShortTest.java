@@ -20,6 +20,8 @@ public class NEG02_ConstraintViolationTooShortTest extends BaseTestSetup {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+//    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     @Test
     void NEG02_shouldFailDueToTooShortPassword() throws Exception {
         String value1 = requestFunctions.sendGetRequest(

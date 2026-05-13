@@ -1,0 +1,1 @@
+ALTER TABLE account ADD COLUMN force_password_change BOOLEAN NOT NULL DEFAULT FALSE;

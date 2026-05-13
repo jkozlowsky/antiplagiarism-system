@@ -28,9 +28,17 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
+import org.springframework.data.domain.Sort;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
+import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
 
 @RequiredArgsConstructor
 @Service
@@ -57,12 +65,32 @@ public class AccountService {
 
     @MethodCallLogged
     @PreAuthorize("permitAll()")
+    private void validateAndSetNewPassword(Account account, String newPassword) {
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new PasswordSameAsOldException();
+        }
+
+        for (PasswordHistory history : account.getPasswordHistoryList()) {
+            if (passwordEncoder.matches(newPassword, history.getPasswordHash())) {
+                throw new PasswordAlreadyUsedInPastException();
+            }
+        }
+
+        String newHash = passwordEncoder.encode(newPassword);
+        account.setPasswordHash(newHash);
+        account.getPasswordHistoryList().add(new PasswordHistory(account, newHash));
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    @MethodCallLogged
+    @PreAuthorize("permitAll()")
     public void registerAccount(Account account) {
         account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
+        account.getPasswordHistoryList().add(new PasswordHistory(account, account.getPasswordHash()));
 
         account.setIsVerified(false);
         account.setIsBlocked(false);
+        account.setForcePasswordChange(true);
         account.setActivationToken(UUID.randomUUID().toString());
         account.setCreationDate(LocalDateTime.now());
         account.setSecondEmailSent(false);
@@ -125,8 +153,13 @@ public class AccountService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
-    public Page<Account> getAllAccounts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<Account> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
         return accountRepository.findAll(pageable);
     }
 
@@ -156,9 +189,14 @@ public class AccountService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    public Page<Account> searchAccounts(String phrase, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageable);
+    public Page<Account> searchAccounts(String phrase, Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+        Account admin = accountRepository.findByLogin(username)
+                .orElseThrow(AccountNotFoundException::new);
+
+        updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
+
+        Pageable pageable = createPageable(page, admin);
+        return accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageable);
     }
 
     @MethodCallLogged
@@ -267,7 +305,8 @@ public class AccountService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mokTransactionManager")
     public void changeOwnPassword(String login, String oldPassword, String newPassword, String ifMatch) {
 
-        Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(account);
         if (!ifMatch.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -277,13 +316,11 @@ public class AccountService {
             throw new InvalidOldPasswordException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
-        }
-
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(false);
         accountRepository.saveAndFlush(account);
     }
+
 
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
@@ -303,7 +340,8 @@ public class AccountService {
 
         account.setIsBlocked(true);
         accountRepository.saveAndFlush(account);
-        postCommitTransactionManager.register(() -> emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsBlockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
@@ -324,7 +362,8 @@ public class AccountService {
 
         account.setIsBlocked(false);
         accountRepository.saveAndFlush(account);
-        postCommitTransactionManager.register(() -> emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
@@ -332,7 +371,8 @@ public class AccountService {
     @PreAuthorize("isAuthenticated()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void createUrlOwnEmailChange(String login) {
-        Account account = accountRepository.findByLogin(login).orElseThrow(() -> new AccountNotFoundException());
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(() -> new AccountNotFoundException());
 
 //        mokRefreshRepository.refresh(account);
 //        if (!versionHash.equals(versionHashService.hashObjectVersion(account.getId(), account.getVersion()))) {
@@ -350,18 +390,22 @@ public class AccountService {
         tokenRepository.saveAndFlush(token);
 
         String changeUrl = frontendUrl + "/change-email?token=" + generateUrl;
-        postCommitTransactionManager.register(() -> emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl, account.getLanguageVersion().getLanguage()));
+        postCommitTransactionManager.register(() ->
+                emailService.sendUrlToChangeOwnEmail(account.getEmail(), account.getLogin(), changeUrl, account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void confirmOwnEmailChange(String token, String password, String newEmail) {
 
-        OneTimeTokenEnt tokenEntity = tokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.OWN_EMAIL_CHANGE, LocalDateTime.now()).orElseThrow(OneTimeTokenInvalidException::new);
+        OneTimeTokenEnt tokenEntity = tokenRepository
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(token, OneTimeTokenType.OWN_EMAIL_CHANGE, LocalDateTime.now())
+                .orElseThrow(OneTimeTokenInvalidException::new);
 
-        Account account = accountRepository.findByLogin(tokenEntity.getUsername()).orElseThrow(AccountNotFoundException::new);
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
 
         if (!passwordEncoder.matches(password, account.getPasswordHash())) {
             throw new InvalidCredentialsProvidedException();
@@ -384,21 +428,24 @@ public class AccountService {
         revertTokenRepository.saveAndFlush(revertToken);
 
         String revertUrl = frontendUrl + "/revert-email?token=" + revertUrlToken;
-        postCommitTransactionManager.register(() -> emailService.sendComebackEmailAddressLink(oldEmail, account.getLogin(), newEmail, revertUrl, account.getLanguageVersion().getLanguage()));
+        postCommitTransactionManager.register(() ->
+                emailService.sendComebackEmailAddressLink(oldEmail, account.getLogin(), newEmail, revertUrl, account.getLanguageVersion().getLanguage()));
     }
 
     @MethodCallLogged
     @Retryable(retryFor = ConcurrentUpdateException.class)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     public void revertEmailChange(String token) {
-        EmailRevertTokenEnt revertToken = revertTokenRepository.findByTokenValue(token).orElseThrow(OneTimeTokenInvalidException::new);
+        EmailRevertTokenEnt revertToken = revertTokenRepository.findByTokenValue(token)
+                .orElseThrow(OneTimeTokenInvalidException::new);
 
         if (revertToken.isUsed() || revertToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new OneTimeTokenInvalidException();
         }
 
-        Account account = accountRepository.findByLogin(revertToken.getUsername()).orElseThrow(AccountNotFoundException::new);
+        Account account = accountRepository.findByLogin(revertToken.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
 
         account.setEmail(revertToken.getOldEmail());
         revertToken.setUsed(true);
@@ -464,13 +511,72 @@ public class AccountService {
             throw new ConcurrentUpdateException();
         }
 
-        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
-            throw new PasswordSameAsOldException();
-        }
-
-        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(true);
         accountRepository.saveAndFlush(account);
 
     }
 
+    private void updatePreferencesIfProvided(Account admin, Integer size, String sortBy, Boolean sortDesc) {
+        boolean updated = false;
+
+        if (size != null && !size.equals(admin.getListPageSize())) {
+            admin.setListPageSize(size);
+            updated = true;
+        }
+        if (sortBy != null && !sortBy.equals(admin.getListSortBy())) {
+            admin.setListSortBy(sortBy);
+            updated = true;
+        }
+        if (sortDesc != null && !sortDesc.equals(admin.getListSortDesc())) {
+            admin.setListSortDesc(sortDesc);
+            updated = true;
+        }
+
+        if (updated) {
+            accountRepository.saveAndFlush(admin);
+        }
+    }
+
+    private Pageable createPageable(Integer page, Account admin) {
+        int finalPage = (page != null) ? page : DEFAULT_PAGE;
+        int finalSize = (admin.getListPageSize() != null) ? admin.getListPageSize() : DEFAULT_PAGE_SIZE;
+
+        String sortByField = (admin.getListSortBy() != null) ? admin.getListSortBy() : DEFAULT_SORT_BY;
+        if (SORT_ACCESS_LEVEL_ALIAS.equals(sortByField)) {
+            sortByField = SORT_ACCESS_LEVEL_PATH;
+        }
+
+        boolean isDescending = Boolean.TRUE.equals(admin.getListSortDesc());
+        Sort.Direction direction = isDescending ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        return PageRequest.of(finalPage, finalSize, Sort.by(direction, sortByField));
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void unblockAccountViaEmailToken(String token) {
+        OneTimeTokenEnt tokenEntity = tokenRepository
+                .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(
+                        token, ACCOUNT_UNBLOCK, LocalDateTime.now())
+                .orElseThrow(OneTimeTokenInvalidException::new);
+
+        Account account = accountRepository.findByLogin(tokenEntity.getUsername())
+                .orElseThrow(AccountNotFoundException::new);
+
+        if (!account.getIsBlocked()) {
+            throw new AccountIsNotBlockedException();
+        }
+
+        account.setIsBlocked(false);
+        account.setLastLoginSuccessDateTime(LocalDateTime.now());
+        tokenEntity.setUsed(true);
+
+        accountRepository.saveAndFlush(account);
+        tokenRepository.saveAndFlush(tokenEntity);
+
+        postCommitTransactionManager.register(() ->
+                emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
+    }
 }

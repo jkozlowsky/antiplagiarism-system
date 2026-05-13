@@ -33,7 +33,8 @@ public class NEG02_ConstraintViolationTest extends BaseTestSetup {
     Account testAccount;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());    CommonFunctions commonFunctions;
+            .registerModule(new JavaTimeModule());
+    CommonFunctions commonFunctions;
     @BeforeEach
     void testSetup() {
         commonFunctions = new CommonFunctions();

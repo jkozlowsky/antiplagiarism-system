@@ -136,5 +136,19 @@ public class EmailService {
         String content = translator.translateForUser("email.email.revert.content", langCode, login, newEmail, url);
         sendEmail(toAddress, subject, content);
     }
+
+    @Async
+    public void sendUnblockEmailLinkAfterInactivity(String toAddress, String login, String token, String langCode) {
+        String url = frontendUrl + "/unblock-account?token=" + token;
+        String subject = translator.translateForUser("email.account.inactive.unblock.subject", langCode);
+        String content = translator.translateForUser("email.account.inactive.unblock.content", langCode, login, url);
+        sendEmail(toAddress, subject, content);
+    }
+
+    public void sendEmailOnlyAuthCode(String toAddress, String authCode, String langCode) {
+        String subject = translator.translateForUser("email.only.auth.subject", langCode);
+        String content = translator.translateForUser("email.only.auth.content", langCode, authCode);
+        sendEmail(toAddress, subject, content);
+    }
 }
 

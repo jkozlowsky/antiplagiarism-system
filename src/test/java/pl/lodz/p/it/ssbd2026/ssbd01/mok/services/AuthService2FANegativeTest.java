@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
-import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.TwoFactorAuthenticationTokenGenerator;
+import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.AuthenticationTokenValueGenerator;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
@@ -39,7 +39,7 @@ class AuthService2FANegativeTest {
     @Mock
     private OneTimeTokenRepository tokenRepository;
     @Mock
-    private TwoFactorAuthenticationTokenGenerator tokenValueGenerator;
+    private AuthenticationTokenValueGenerator tokenValueGenerator;
     @Mock
     private LanguageDictRepository languageDictRepository;
     @InjectMocks

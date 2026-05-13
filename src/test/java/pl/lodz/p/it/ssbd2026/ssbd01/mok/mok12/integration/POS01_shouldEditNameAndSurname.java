@@ -1,6 +1,5 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.mok12.integration;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -66,7 +65,7 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 null,
                 null,
                 null
-                );
+        );
         String response = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 200,

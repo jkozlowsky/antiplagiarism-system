@@ -20,11 +20,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.AccountTestRepository;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GetAllAccountsTest extends BaseTestSetup {
 
@@ -43,8 +39,8 @@ public class GetAllAccountsTest extends BaseTestSetup {
     public void setUpAuth() {
         requestFunctions = new RequestFunctions();
 
-        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN));
-        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"));
+        String adminToken = jwtAuthService.generateToken("admin", List.of(AccountConsts.ROLE_ADMIN), false);
+        String studentToken = jwtAuthService.generateToken("student", List.of("STUDENT"), false);
 
         adminHeaders = new Headers(new Header("Authorization", "Bearer " + adminToken));
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
@@ -94,6 +90,31 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
+    @DisplayName("Pomyślne zapisanie preferencji sortowania i stronicowania i wczytanie ich dla zapytań bez parametrów")
+    public void shouldRememberPaginationAndSortingPreferences() {
+        requestFunctions.sendGetRequest(
+                200,
+                "/api/account?size=2&sortBy=email&sortDesc=true",
+                adminHeaders
+        );
+
+        String responseBody = requestFunctions.sendGetRequest(
+                200,
+                "/api/account",
+                adminHeaders
+        );
+
+        int size = JsonPath.from(responseBody).getInt("size");
+        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+
+        assertEquals(2, size);
+
+        if (emails.size() > 1) {
+            assertTrue(emails.get(0).compareTo(emails.get(1)) >= 0, "Obiekty nie są poprawnie posortowane malejąco względem adresu email");
+        }
+    }
+
+    @Test
     @DisplayName("Pomyślne wyszukiwanie po imieniu ignorując wielkość liter")
     public void shouldSearchByNameIgnoreCase() {
         String responseBody = requestFunctions.sendGetRequest(
@@ -103,11 +124,10 @@ public class GetAllAccountsTest extends BaseTestSetup {
         );
 
         List<String> names = JsonPath.from(responseBody).getList("content.account.name", String.class);
-        List<String> logins = JsonPath.from(responseBody).getList("content.account.login", String.class);
 
         assertAll(
                 () -> assertFalse(names.isEmpty()),
-                () -> assertTrue(names.stream().anyMatch(n -> n.equals("Anna")) || logins.stream().anyMatch(l -> l.contains("anna")))
+                () -> assertTrue(names.stream().anyMatch(n -> n.equalsIgnoreCase("Anna")))
         );
     }
 
@@ -129,21 +149,17 @@ public class GetAllAccountsTest extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("Pomyślne wyszukiwanie po adresie e-mail (częściowe)")
-    public void shouldSearchByEmailPartial() {
+    @DisplayName("Zwrócenie pustej listy podczas próby wyszukiwania po adresie e-mail")
+    public void shouldReturnEmptyListWhenSearchingByEmail() {
         String responseBody = requestFunctions.sendGetRequest(
                 200,
                 "/api/account?phrase=@p.lodz.pl&page=0&size=10",
                 adminHeaders
         );
 
-        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+        List<Object> accounts = JsonPath.from(responseBody).getList("content");
 
-        assertAll(
-                () -> assertFalse(emails.isEmpty()),
-                () -> assertTrue(emails.size() >= 4),
-                () -> assertTrue(emails.stream().allMatch(e -> e.endsWith("@p.lodz.pl")))
-        );
+        assertTrue(accounts.isEmpty());
     }
 
     @Test

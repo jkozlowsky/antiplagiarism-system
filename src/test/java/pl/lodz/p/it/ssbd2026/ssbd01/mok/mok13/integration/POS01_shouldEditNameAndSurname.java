@@ -91,7 +91,7 @@ public class POS01_shouldEditNameAndSurname extends BaseTestSetup {
                 null,
                 null,
                 null
-                );
+        );
         String response = requestFunctions.sendPatchRequest(
                 objectMapper.writeValueAsString(accountDTO),
                 200,

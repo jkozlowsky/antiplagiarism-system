@@ -55,7 +55,9 @@ public interface AccountRepository extends AbstractRepository<Account> {
     Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String login, String email, String name, String surname, Pageable pageable);
 
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
-    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
+    @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict"})
+    Page<Account> findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String name, String surname, Pageable pageable);
+//    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
 
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     List<Account> findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(Integer failedAttempts, LocalDateTime date);
@@ -64,5 +66,11 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @Query("SELECT a FROM Account a WHERE a.login = :login")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<Account> findAuditorByLogin(@Param("login") String login);
+
+    @Query("SELECT a FROM Account a WHERE a.isBlocked = false AND " +
+            "((a.lastLoginSuccessDateTime IS NOT NULL AND a.lastLoginSuccessDateTime < :lastTimeLogged) OR " +
+            "(a.lastLoginSuccessDateTime IS NULL AND a.creationDate < :lastTimeLogged))")
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
+    List<Account> findInactiveAccountsToBlock(@Param("lastTimeLogged") LocalDateTime lastTimeLogged);
 }
 

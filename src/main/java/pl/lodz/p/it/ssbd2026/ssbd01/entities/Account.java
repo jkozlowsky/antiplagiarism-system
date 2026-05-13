@@ -63,6 +63,9 @@ public class Account extends AbstractEntity {
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    private List<PasswordHistory> passwordHistoryList = new ArrayList<>();
+
     @Column(name = "name", nullable = false, length = AccountConsts.NAME_LENGTH)
     private String name;
 
@@ -77,6 +80,19 @@ public class Account extends AbstractEntity {
 
     @Column(name = "second_email_sent", nullable = false)
     private Boolean secondEmailSent = false;
+
+    @Column(name = "list_page_size")
+    private Integer listPageSize;
+
+    @Column(name = "list_sort_by", length = 50)
+    private String listSortBy;
+
+    @Column(name = "list_sort_desc")
+    private Boolean listSortDesc;
+
+    @Column(name = "force_password_change", nullable = false)
+    private Boolean forcePasswordChange = false;
+
 
 //    @Column(name = "token_version", nullable = false)
 //    private Integer tokenVersion;

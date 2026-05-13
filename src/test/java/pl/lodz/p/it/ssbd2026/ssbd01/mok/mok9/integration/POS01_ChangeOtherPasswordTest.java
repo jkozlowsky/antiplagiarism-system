@@ -25,6 +25,8 @@ public class POS01_ChangeOtherPasswordTest extends BaseTestSetup {
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
+//    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     @Test
     void POS01_shouldChangeOtherPassword() throws Exception {
         Account targetDbAccount = accountTestRepository.findByLogin("anowak").orElseThrow();

@@ -31,7 +31,7 @@ public class JwtAuthServiceTest {
         String username = "user";
         List<String> roles = List.of("ADMIN");
 
-        String token = jwtAuthService.generateToken(username, roles);
+        String token = jwtAuthService.generateToken(username, roles, false);
 
         assertNotNull(token);
         assertTrue(jwtAuthService.isTokenValid(token));
@@ -48,7 +48,7 @@ public class JwtAuthServiceTest {
         String username = "user";
         List<String> roles = List.of("ADMIN");
 
-        String token = jwtAuthService.generateToken(username, roles);
+        String token = jwtAuthService.generateToken(username, roles, false);
         assertNotNull(token);
 
         token = token + "tamper";
@@ -61,7 +61,7 @@ public class JwtAuthServiceTest {
 
         String username = "user";
         List<String> roles = List.of("ADMIN");
-        String expiredToken = jwtAuthService.generateToken(username, roles);
+        String expiredToken = jwtAuthService.generateToken(username, roles, false);
 
         assertFalse(jwtAuthService.isTokenValid(expiredToken));
     }
