@@ -1,6 +1,3 @@
-
-
-
 ## 2 Moduły funkcjonalne, aktorzy, przypadki użycia 3 pkt
 
 **Lista modułów funkcjonalnych**
@@ -301,7 +298,43 @@ Tabela 1.2.15 Scenariusz dla przypadku użycia MOK.14
 | Specjalne wymagania            | System musi zapobiec użyciu starego tokena po wylogowaniu.                                                                                                                                                                                                                                                   |
 | Notatki i kwestie              | Brak.                                                                                                                                                                                                                                                                                                        |
 
-Tabela 1.2.16 Scenariusz dla przypadku użycia MPP.1
+Tabela 1.2.16 Scenariusz dla przypadku użycia MOK.15
+
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.15|
+|Przypadek użycia|Pobierz konta użytkowników w systemie|
+|Twórca|Remigiusz Bartczak|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|Administrator|
+|Krótki opis|Przypadek użycia umożliwia wyświetlenie dostępnych kont w systemie z ograniczeniem wyświetlania wyników do określonej liczby.|
+|Warunki wstępne|Istnienie minimum jednego konta użytkownika w systemie.|
+|Warunki końcowe|Dostępne konta użytkowników w systemie zostaną wyświetlone na ekranie.|
+|Główny przepływ zdarzeń|1. Administrator po zalogowaniu się do systemu pojawi się już docelowo na stronie widoku użytkowników systemu.<br>2. Konta użytkowników zostają załadowane i wyświetlone na ekranie, są one limitowane do wybranej liczby zdefiniowanej w systemie, jednak istnieje możliwość przełączania pomiędzy stronami. 
+|Alternatywne przepływy zdarzeń|2a. Brak kont użytkowników w systemie.|
+|Specjalne wymagania|Brak|
+|Notatki i kwestie|Wyświetlane konta użytkowników są stronnicowane|
+
+Tabela 1.2.17 Scenariusz dla przypadku użycia MOK.16
+
+|Pole|Treść|
+|--|--|
+|Oznaczenie|MOK.16|
+|Przypadek użycia|Wyświetl szczegóły swojego konta|
+|Twórca|Danylo Dobrianskyi|
+|Poziom ważności|Wysoki|
+|Typ przypadku użycia|Istotny|
+|Aktorzy|Administrator, Student, Prowadzący, Prowadzący dodatkowy|
+|Krótki opis|Przypadek użycia umożliwia wyświetlenie szczegółów konta w systemie.|
+|Warunki wstępne|Dane konto użytkownika istnieje w systemie.|
+|Warunki końcowe|Dostępne szczegóły konta zostaną wyświetlone na ekranie.|
+|Główny przepływ zdarzeń|1. Użytkownik po zalogowaniu się do systemu wybiera opcję przeglądania swojego konta.<br>2. Szczegóły konta zostają załadowane i wyświetlone na ekranie. 
+|Alternatywne przepływy zdarzeń|Brak|
+|Specjalne wymagania|Brak|
+|Notatki i kwestie|Brak|
+
+Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.1
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ------------------------------ |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -319,7 +352,7 @@ Tabela 1.2.16 Scenariusz dla przypadku użycia MPP.1
 | Specjalne wymagania            | Pzebieg operacji oraz jej wynik jest zapisywany w dzienniku zdarzeń.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Notatki i kwestie              | Jeśli po stronie platformy Gitea nie ma żadnych nowych repozytoriów, system po prostu wyświetla komunikat, że wszystko jest aktualne nie modyfikując rekordów.                                                                                                                                                                                                                                                                                                                                                                     |
 
-Tabela 1.2.17 Scenariusz dla przypadku użycia MPP.2
+Tabela 1.2.19 Scenariusz dla przypadku użycia MPP.2
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -337,7 +370,7 @@ Tabela 1.2.17 Scenariusz dla przypadku użycia MPP.2
 | Specjalne wymagania            | brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Notatki i kwestie              | Każda generacja raportu powinna być zapisana do dziennika zdarzeń.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
-Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.3
+Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.3
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -356,7 +389,7 @@ Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.3
 | Notatki i kwestie              | Wyświetlać się powinni również raporty w trakcie generowania ze statusem "w trakcie". Powinna występować możliwość odświeżenia listy.                                                                                                                                                                                                                                                |
 
 
-Tabela 1.2.19 Scenariusz dla przypadku użycia MPP.4
+Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.4
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -374,7 +407,7 @@ Tabela 1.2.19 Scenariusz dla przypadku użycia MPP.4
 | Specjalne wymagania            | Raport musi czytelnie prezentować stopień podobieństwa w procentach oraz pozwalać na identyfikację konkretnych repozytoriów (Studentów) biorących udział w porównaniu.                                                                                                                                                                                                                                                                                                                                                                                      |
 | Notatki i kwestie              | Prowadzący dodatkowy ma do tego widoku wyłącznie prawa do odczytu (nie może edytować ani usuwać wyników).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
-Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.5
+Tabela 1.2.22 Scenariusz dla przypadku użycia MPP.5
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -392,7 +425,7 @@ Tabela 1.2.20 Scenariusz dla przypadku użycia MPP.5
 | Specjalne wymagania            | brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Notatki i kwestie              | brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
-Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.6
+Tabela 1.2.23 Scenariusz dla przypadku użycia MPP.6
 
 |Pole| Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 |--|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -410,7 +443,7 @@ Tabela 1.2.21 Scenariusz dla przypadku użycia MPP.6
 |Specjalne wymagania| Użytkownik widzi tylko te przedmioty, do których został przypisany                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |Notatki i kwestie| brak                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                      
 
-Tabela 1.2.22 Scenariusz dla przypadku użycia MPP.7
+Tabela 1.2.24 Scenariusz dla przypadku użycia MPP.7
 
 |Pole| Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |--|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -428,7 +461,7 @@ Tabela 1.2.22 Scenariusz dla przypadku użycia MPP.7
 |Specjalne wymagania| Walidacja zabezpieczająca przed tworzeniem duplikatów (przedmioty o tej samej nazwie itp.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 |Notatki i kwestie| brak                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
-Tabela 1.2.23 Scenariusz dla przypadku użycia MPP.8
+Tabela 1.2.25 Scenariusz dla przypadku użycia MPP.8
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -446,7 +479,7 @@ Tabela 1.2.23 Scenariusz dla przypadku użycia MPP.8
 | Specjalne wymagania            | Operajcja aktualizacji danych przedmiotu musi być zabezpieczona mechanizmem blokady optymistycznej ze względu na ryzyko współbieżnej edycji.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Notatki i kwestie              | brak                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |  
 
-Tabela 1.2.24 Scenariusz dla przypadku użycia MPP.9
+Tabela 1.2.26 Scenariusz dla przypadku użycia MPP.9
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 |--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -464,7 +497,7 @@ Tabela 1.2.24 Scenariusz dla przypadku użycia MPP.9
 | Specjalne wymagania            | System musi zagwarantować spójność: pliki powinny zostać usunięte tylko wtedy, gdy operacja na bazie danych zakończy się sukcesem (transakcja).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Notatki i kwestie              | Fizyczne usuwanie plików jest krytyczne dla zachowania wolnego miejsca na serwerze.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
-Tabela 1.2.25 Scenariusz dla przypadku użycia MPP.10
+Tabela 1.2.27 Scenariusz dla przypadku użycia MPP.10
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                |
 | :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -482,7 +515,7 @@ Tabela 1.2.25 Scenariusz dla przypadku użycia MPP.10
 | Specjalne wymagania            | Prowadzący dodatkowy widzi ten sam ekran, ale bez przycisków umożliwiających edycję, dodawanie lub usuwanie reguł (prawa wyłącznie do odczytu).                                                                                                                                                                                                                      |
 | Notatki i kwestie              | Zestawy reguł są później wykorzystywane przy tworzeniu harmonogramów sprawdzeń.                                                                                                                                                                                                                                                                                      |
 
-Tabela 1.2.26 Scenariusz dla przypadku użycia MPP.11
+Tabela 1.2.28 Scenariusz dla przypadku użycia MPP.11
 
 | Pole | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | :--- |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -500,7 +533,7 @@ Tabela 1.2.26 Scenariusz dla przypadku użycia MPP.11
 | Specjalne wymagania | Walidacja po stronie backendu i frontendu. Preset z konketną nazwą po utworzeniu od razu staje się dostępny do wyboru w module harmonogramów.                                                                                                                                                                                                                                                                                                                       |
 | Notatki i kwestie | Możliwość tworzenia wielu zestawów reguł pozwala na dostosowywanie ich parametrów do konketnych przedmiotów według prowadzącego.                                                                                                                                                                                                                                                                                                                                    |
 
-Tabela 1.2.27 Scenariusz dla przypadku użycia MPP.12
+Tabela 1.2.29 Scenariusz dla przypadku użycia MPP.12
 
 | Pole | Treść |
 | :--- | :--- |
@@ -518,7 +551,7 @@ Tabela 1.2.27 Scenariusz dla przypadku użycia MPP.12
 | Specjalne wymagania | Edycja reguł nie powinna wpływać na historyczne (już wygenerowane) raporty, a jedynie na przyszłe skanowania (wywoływane według harmonogramu lub na żądanie). |
 | Notatki i kwestie | Jeśli istnieją powiązane aktywne harmonogramy opierające się na edytowanej regule, zmiana konfiguracji reguły automatycznie zostanie zaaplikowana podczas ich najbliższego uruchomienia. |
 
-Tabela 1.2.28 Scenariusz dla przypadku użycia MPP.13
+Tabela 1.2.30 Scenariusz dla przypadku użycia MPP.13
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -536,7 +569,7 @@ Tabela 1.2.28 Scenariusz dla przypadku użycia MPP.13
 | Specjalne wymagania            | Baza danych musi zapewniać, że usunięcie obiektu nadrzędnego jakim jest zestaw reguł wymusza kaskadowe usunięcie powiązanych z nim obiektów podrzędnych (Schedule).                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Notatki i kwestie              | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
-Tabela 1.2.29 Scenariusz dla przypadku użycia MPP.14
+Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.14
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 |--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -554,7 +587,7 @@ Tabela 1.2.29 Scenariusz dla przypadku użycia MPP.14
 | Specjalne wymagania            | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Notatki i kwestie              | Widok powinien umożliwiać sortowanie i filtrowanie np. po dacie oraz statusie.                                                                                                                                                                                                                                                                                                                                                                |
 
-Tabela 1.2.30 Scenariusz dla przypadku użycia MPP.15
+Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.15
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 |--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -572,7 +605,7 @@ Tabela 1.2.30 Scenariusz dla przypadku użycia MPP.15
 | Specjalne wymagania            | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Notatki i kwestie              | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
-Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.16
+Tabela 1.2.33 Scenariusz dla przypadku użycia MPP.16
 
 |Pole|Treść|
 |--|--|
@@ -590,7 +623,7 @@ Tabela 1.2.31 Scenariusz dla przypadku użycia MPP.16
 |Specjalne wymagania|Brak|
 |Notatki i kwestie|Prowadzący edytuje harmonogram najczęściej przed zbliżającym się kolejnym zadaniem z uwagi na konieczność zmiany tagu zadania.|
 
-Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.17
+Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.17
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |:-------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -608,7 +641,7 @@ Tabela 1.2.32 Scenariusz dla przypadku użycia MPP.17
 | Specjalne wymagania            | Mechanizm usuwania musi być ściśle zintegrowany systemem kolejek, aby usunięcie z bazy pociągało za sobą rzeczywiste odwołanie pracy w tle.                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Notatki i kwestie              | Usunięcie historycznego, zakończonego harmonogramu pełni funkcję porządkową (nie ma wpływu na istniejące, wygenerowane przez niego raporty).                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
-Tabela 1.2.33 Scenariusz dla przypadku użycia MPP.18
+Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.18
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -626,7 +659,7 @@ Tabela 1.2.33 Scenariusz dla przypadku użycia MPP.18
 | Specjalne wymagania            | Powinna występować możliwość filtrowania i/lub sortowania raportów na według daty lub tagu. Powinna występować możliwość odświeżenia listy.                                                                                                                                                                                                                                                                                                                                                         |
 | Notatki i kwestie              | Wyświetlać się powinni również raporty w trakcie generowania ze statusem "w trakcie".                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.19
+Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.19
 
 |Pole|Treść|
 |--|--|
@@ -644,7 +677,7 @@ Tabela 1.2.34 Scenariusz dla przypadku użycia MPP.19
 |Specjalne wymagania|Brak|
 |Notatki i kwestie|W przypadku istnienia konta Studenta, jednocześnie z brakiem istnienia jakichkolwiek statystyk, przegląd dalej jest dostępny.|
 
-Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.20
+Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.20
 
 |Pole|Treść|
 |--|--|
@@ -662,7 +695,7 @@ Tabela 1.2.35 Scenariusz dla przypadku użycia MPP.20
 |Specjalne wymagania|Istnieje kod utworzony przez innych Studentów i udostępniony na repozytoriach, do którego Student może porównać swoją pracę. Kod musi zostać oznaczony odpowiednim tagiem testowym.|
 |Notatki i kwestie|Student ma możliwość sprawdzenia swojego kodu bez konsekwencji określoną przez Prowadzącego poprzez zestaw reguł ilość.|
 
-Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
+Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.21
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -680,7 +713,7 @@ Tabela 1.2.36 Scenariusz dla przypadku użycia MPP.21
 | Specjalne wymagania            | System musi bezwzględnie filtrować dane i chronić prywatność innych studentów (Student może widzieć tylko ewentualne podobieństwa swojego kodu, ale nie może widzieć pełnych danych innych studentów w raporcie oraz ich kodu)                                                                                                                                                                                                                                                                                                                                                                 |
 | Notatki i kwestie              | Poziom szczegółowości widoku powiązany jest z polem studentRaportLevel z klasy Rule i to ten parametr dyktuje, ile informacji udostępnić.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
-Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
+Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.22
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -698,7 +731,7 @@ Tabela 1.2.37 Scenariusz dla przypadku użycia MPP.22
 | Specjalne wymagania            | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Notatki i kwestie              | Brak.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.23
+Tabela 1.2.40 Scenariusz dla przypadku użycia MPP.23
 
 |Pole|Treść|
 |--|--|
@@ -716,7 +749,7 @@ Tabela 1.2.38 Scenariusz dla przypadku użycia MPP.23
 |Specjalne wymagania|Brak|
 |Notatki i kwestie|W przypadku braku danych, pojawi się informacja o braku agregacji danych zamiast odpowiednich statystyk.|
 
-Tabela 1.2.39 Scenariusz dla przypadku użycia MPP.24
+Tabela 1.2.41 Scenariusz dla przypadku użycia MPP.24
 
 | Pole                           | Treść                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 |--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

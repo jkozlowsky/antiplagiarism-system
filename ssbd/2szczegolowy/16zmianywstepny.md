@@ -3,6 +3,17 @@
 
 W rozdziale tym należy wymienić zmiany wprowadzone do sprawozdania wstępnego, zwięźle je charakteryzując.
 
+### Zmiany: Rozdział 2 Moduły funkcjonalne, aktorzy, przypadki użycia
+
+1. Dodano przypadek użycia MOK.15 - Pobierz konta użytkowników w systemie.
+
+2. Dodano przypadek użycia MOK.16 - Wyświetl szczegóły swojego konta.
+
+3. Poprawiono diagramy przypadków użycia dla aktorów:
+- Administrator, 
+- Prowadzący, 
+- Prowadzący dodatkowy.
+
 ### Zmiany: Rozdział 3 Struktury relacyjnej bazy danych
 
 Względem etapu wstępnego, w rozdziale 3 wprowadzono następujące modyfikacje:
