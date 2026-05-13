@@ -86,6 +86,9 @@ public class Account extends AbstractEntity {
     @Column(name = "list_sort_desc")
     private Boolean listSortDesc;
 
+    @Column(name = "force_password_change", nullable = false)
+    private Boolean forcePasswordChange = false;
+
 //    @Column(name = "token_version", nullable = false)
 //    private Integer tokenVersion;
 

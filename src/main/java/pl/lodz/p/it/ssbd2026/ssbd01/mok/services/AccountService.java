@@ -92,6 +92,7 @@ public class AccountService {
 
         account.setIsVerified(false);
         account.setIsBlocked(false);
+        account.setForcePasswordChange(true);
         account.setActivationToken(UUID.randomUUID().toString());
         account.setCreationDate(LocalDateTime.now());
         account.setSecondEmailSent(false);
