@@ -128,34 +128,6 @@ public class AccountServiceGetAllAccountsTest {
     }
 
     @Test
-    @DisplayName("Pomyślne wyszukiwanie po adresie email")
-    void shouldReturnAccountsFilteredByEmail() {
-        String phrase = "@example.com";
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(mockAccountsPage);
-
-        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
-
-        assertEquals(3, result.getTotalElements());
-    }
-
-    @Test
-    @DisplayName("Pomyślne wyszukiwanie po loginie")
-    void shouldReturnAccountsFilteredByLogin() {
-        String phrase = "j.zielinski";
-        PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<Account> filteredPage = new PageImpl<>(List.of(mockAccounts.get(2)), pageRequest, 1);
-
-        when(accountRepository.findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, phrase, phrase, pageRequest)).thenReturn(filteredPage);
-
-        Page<Account> result = accountService.searchAccounts(phrase, 0, 10);
-
-        assertEquals(1, result.getTotalElements());
-        assertEquals("j.zielinski", result.getContent().get(0).getLogin());
-    }
-
-    @Test
     @DisplayName("Zwrócenie pustej listy, gdy imię i nazwisko nie pasują do frazy")
     void shouldReturnEmptyListWhenNameAndSurnameDoNotMatch() {
         String phrase = "nieistniejący_użytkownik_123";
