@@ -74,6 +74,15 @@ public class Account extends AbstractEntity {
     @Column(name = "second_email_sent", nullable = false)
     private boolean secondEmailSent = false;
 
+    @Column(name = "list_page_size")
+    private Integer listPageSize;
+
+    @Column(name = "list_sort_by", length = 50)
+    private String listSortBy;
+
+    @Column(name = "list_sort_desc")
+    private Boolean listSortDesc;
+
 //    @Column(name = "token_version", nullable = false)
 //    private Integer tokenVersion;
 
