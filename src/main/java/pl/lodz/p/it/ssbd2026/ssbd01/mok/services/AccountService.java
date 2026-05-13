@@ -357,6 +357,7 @@ public class AccountService {
         }
 
         validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(false);
         accountRepository.saveAndFlush(account);
     }
 
@@ -547,6 +548,7 @@ public class AccountService {
         }
 
         validateAndSetNewPassword(account, newPassword);
+        account.setForcePasswordChange(true);
         accountRepository.saveAndFlush(account);
     }
 
