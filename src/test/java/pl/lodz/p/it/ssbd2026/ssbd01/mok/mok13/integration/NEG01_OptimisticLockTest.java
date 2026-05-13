@@ -36,7 +36,7 @@ public class NEG01_OptimisticLockTest extends BaseTestSetup {
 
     Account testAccount;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     private String accountEmail;
     private String accountLogin;

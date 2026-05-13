@@ -49,7 +49,6 @@ public class AuthWithEmailOnlyTest {
     private JwtAuthService jwtAuthService;
     @Mock
     private LanguageDictRepository languageDictRepository;
-
     @InjectMocks
     private AuthService authService;
 
@@ -142,8 +141,9 @@ public class AuthWithEmailOnlyTest {
         )).thenReturn(Optional.of(activeToken));
 
         when(languageDictRepository.findByLanguage("pl")).thenReturn(Optional.of(plLang));
-        when(jwtAuthService.generateShortLivedToken(eq(testAccount.getLogin()), anyList())).thenReturn("short-jwt-token");
-        when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList())).thenReturn("refresh-jwt-token");
+
+        when(jwtAuthService.generateToken(eq(testAccount.getLogin()), anyList(), any())).thenReturn("short-jwt-token");
+        when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList(), any())).thenReturn("refresh-jwt-token");
 
         AuthResponseDTO response = authService.verifyEmailOnlyAuthCode(rawToken, testAccount.getEmail(), "127.0.0.1", "pl");
 

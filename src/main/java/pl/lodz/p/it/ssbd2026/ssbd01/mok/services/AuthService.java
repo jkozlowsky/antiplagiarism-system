@@ -344,8 +344,8 @@ public class AuthService {
             postCommitTransactionManager.register(() -> emailService.sendAdminLoginNotification(account.getEmail(), account.getLogin(), ipAddress, account.getLanguageVersion().getLanguage()));
         }
 
-        String token = jwtAuthService.generateShortLivedToken(account.getLogin(), roles);
-        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles);
+        String token = jwtAuthService.generateToken(account.getLogin(), roles, account.getForcePasswordChange());
+        String refreshToken = jwtAuthService.generateRefreshToken(account.getLogin(), roles, account.getForcePasswordChange());
         return new AuthResponseDTO(token, refreshToken);
     }
 

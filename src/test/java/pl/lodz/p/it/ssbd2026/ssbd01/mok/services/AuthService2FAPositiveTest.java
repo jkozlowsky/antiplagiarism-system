@@ -119,8 +119,8 @@ class AuthService2FAPositiveTest {
 
         when(accountRepository.findByLogin(testAccount.getLogin())).thenReturn(Optional.of(testAccount));
 
-        when(jwtAuthService.generateToken(eq(testAccount.getLogin()), anyList())).thenReturn("accessToken123");
-        when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList())).thenReturn("refreshToken123");
+        when(jwtAuthService.generateToken(eq(testAccount.getLogin()), anyList(),any())).thenReturn("accessToken123");
+        when(jwtAuthService.generateRefreshToken(eq(testAccount.getLogin()), anyList(), any())).thenReturn("refreshToken123");
 
         AuthResponseDTO response = authService.verify2FactorCode(OTP_CODE, testAccount.getLogin(), IP_ADDRESS, "en");
 
