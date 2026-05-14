@@ -51,9 +51,11 @@ Tabela 2.16.2 Zmiany w uprawieniach do istniejących tabel
 
 ### Zmiany: Rozdział 5 Objekty encji
 
-1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account na liście encji oraz w macierzy związków. 
+1. Dodano encje OneTimeToken, EmailRevertTokenEnt, PasswordHistory oraz zaktualizowano encję Account na liście encji oraz w macierzy związków. 
+
 2. Poprawiono związek Account -> LanguageDict na Mutable.
 
 
 ### Zmiany: Rozdział 6 Diagram encji
-1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account na diagramie encji. 
+
+1. Dodano encje OneTimeToken, EmailRevertTokenEnt, PasswordHistory oraz zaktualizowano encję Account na diagramie encji. 

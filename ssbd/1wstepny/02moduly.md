@@ -300,39 +300,39 @@ Tabela 1.2.15 Scenariusz dla przypadku użycia MOK.14
 
 Tabela 1.2.16 Scenariusz dla przypadku użycia MOK.15
 
-|Pole|Treść|
-|--|--|
-|Oznaczenie|MOK.15|
-|Przypadek użycia|Pobierz konta użytkowników w systemie|
-|Twórca|Remigiusz Bartczak|
-|Poziom ważności|Wysoki|
-|Typ przypadku użycia|Istotny|
-|Aktorzy|Administrator|
-|Krótki opis|Przypadek użycia umożliwia wyświetlenie dostępnych kont w systemie z ograniczeniem wyświetlania wyników do określonej liczby.|
-|Warunki wstępne|Istnienie minimum jednego konta użytkownika w systemie.|
-|Warunki końcowe|Dostępne konta użytkowników w systemie zostaną wyświetlone na ekranie.|
-|Główny przepływ zdarzeń|1. Administrator po zalogowaniu się do systemu pojawi się już docelowo na stronie widoku użytkowników systemu.<br>2. Konta użytkowników zostają załadowane i wyświetlone na ekranie, są one limitowane do wybranej liczby zdefiniowanej w systemie, jednak istnieje możliwość przełączania pomiędzy stronami. 
-|Alternatywne przepływy zdarzeń|2a. Brak kont użytkowników w systemie.|
-|Specjalne wymagania|Brak|
-|Notatki i kwestie|Wyświetlane konta użytkowników są stronnicowane|
+| Pole                           | Treść                                                                                                                                                                                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Oznaczenie                     | MOK.15                                                                                                                                                                                                                                                                                                        |
+| Przypadek użycia               | Pobierz konta użytkowników w systemie                                                                                                                                                                                                                                                                         |
+| Twórca                         | Remigiusz Bartczak                                                                                                                                                                                                                                                                                            |
+| Poziom ważności                | Wysoki                                                                                                                                                                                                                                                                                                        |
+| Typ przypadku użycia           | Istotny                                                                                                                                                                                                                                                                                                       |
+| Aktorzy                        | Administrator                                                                                                                                                                                                                                                                                                 |
+| Krótki opis                    | Przypadek użycia umożliwia wyświetlenie dostępnych kont w systemie z ograniczeniem wyświetlania wyników do określonej liczby.                                                                                                                                                                                 |
+| Warunki wstępne                | Istnienie minimum jednego konta użytkownika w systemie.                                                                                                                                                                                                                                                       |
+| Warunki końcowe                | Dostępne konta użytkowników w systemie zostaną wyświetlone na ekranie.                                                                                                                                                                                                                                        |
+| Główny przepływ zdarzeń        | 1. Administrator po zalogowaniu się do systemu pojawi się już docelowo na stronie widoku użytkowników systemu.<br>2. Konta użytkowników zostają załadowane i wyświetlone na ekranie, są one limitowane do wybranej liczby zdefiniowanej w systemie, jednak istnieje możliwość przełączania pomiędzy stronami. |
+| Alternatywne przepływy zdarzeń | 2a. Brak kont użytkowników w systemie.                                                                                                                                                                                                                                                                        |
+| Specjalne wymagania            | Brak                                                                                                                                                                                                                                                                                                          |
+| Notatki i kwestie              | Wyświetlane konta użytkowników są stronnicowane                                                                                                                                                                                                                                                               |
 
 Tabela 1.2.17 Scenariusz dla przypadku użycia MOK.16
 
-|Pole|Treść|
-|--|--|
-|Oznaczenie|MOK.16|
-|Przypadek użycia|Wyświetl szczegóły swojego konta|
-|Twórca|Danylo Dobrianskyi|
-|Poziom ważności|Wysoki|
-|Typ przypadku użycia|Istotny|
-|Aktorzy|Administrator, Student, Prowadzący, Prowadzący dodatkowy|
-|Krótki opis|Przypadek użycia umożliwia wyświetlenie szczegółów konta w systemie.|
-|Warunki wstępne|Dane konto użytkownika istnieje w systemie.|
-|Warunki końcowe|Dostępne szczegóły konta zostaną wyświetlone na ekranie.|
-|Główny przepływ zdarzeń|1. Użytkownik po zalogowaniu się do systemu wybiera opcję przeglądania swojego konta.<br>2. Szczegóły konta zostają załadowane i wyświetlone na ekranie. 
-|Alternatywne przepływy zdarzeń|Brak|
-|Specjalne wymagania|Brak|
-|Notatki i kwestie|Brak|
+| Pole                           | Treść                                                                                                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Oznaczenie                     | MOK.16                                                                                                                                                   |
+| Przypadek użycia               | Wyświetl szczegóły konta                                                                                                                                 |
+| Twórca                         | Danylo Dobrianskyi                                                                                                                                       |
+| Poziom ważności                | Wysoki                                                                                                                                                   |
+| Typ przypadku użycia           | Istotny                                                                                                                                                  |
+| Aktorzy                        | Administrator, Student, Prowadzący, Prowadzący dodatkowy                                                                                                 |
+| Krótki opis                    | Przypadek użycia umożliwia wyświetlenie szczegółów konta w systemie.                                                                                     |
+| Warunki wstępne                | Dane konto użytkownika istnieje w systemie.                                                                                                              |
+| Warunki końcowe                | Dostępne szczegóły konta zostaną wyświetlone na ekranie.                                                                                                 |
+| Główny przepływ zdarzeń        | 1. Użytkownik po zalogowaniu się do systemu wybiera opcję przeglądania swojego konta.<br>2. Szczegóły konta zostają załadowane i wyświetlone na ekranie. |
+| Alternatywne przepływy zdarzeń | Brak                                                                                                                                                     |
+| Specjalne wymagania            | Brak                                                                                                                                                     |
+| Notatki i kwestie              | Brak                                                                                                                                                     |
 
 Tabela 1.2.18 Scenariusz dla przypadku użycia MPP.1
 
@@ -783,6 +783,8 @@ Tabela 1.2.41 Scenariusz dla przypadku użycia MPP.24
 - MOK.12 - Edytuj dane własnego konta
 - MOK.13 - Edytuj dane konta innego użytkownika
 - MOK.14 - Wyloguj
+- MOK.15 - Pobierz konta użytkowników w systemie
+- MOK.16 - Wyświetl szczegóły konta
 - MPP.1 - Synchronizacja przedmiotów z Gitea
 - MPP.2 - Generowanie raportu na żądanie
 - MPP.3 - Przeglądanie wszystkich raportów

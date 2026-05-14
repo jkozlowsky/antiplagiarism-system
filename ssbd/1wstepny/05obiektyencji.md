@@ -162,6 +162,20 @@
 		    - `@Column(name="is_used", nullable = false)`
 	    - `oldEmail`: String
 		    - `@Column(name = "old_email", nullable = false)`
+- **Encja: PasswordHistory**
+	- **Tabela**: password_history
+    - **Klucz główny:** 
+	    - `id`: UUID
+		    - `@Id`
+		    - `@GeneratedValue(strategy = GenerationType.UUID)`
+		    - `@Column(name = "id", updatable = false, nullable = false)`
+    - **Pola i ograniczenia:**
+	    - `passwordHash`: String
+		    - `@Column(name = "password_hash", nullable = false, updatable = false, length = AccountConsts.PASSWORD_HASH_LENGTH)`
+	- **Zależności:** 
+		- `account`: Account
+			- `@ManyToOne(fetch = FetchType.LAZY, optional = false)`
+			- `@JoinColumn(name = "account_id", nullable = false, updatable = false)`
 ### 3. Moduł MPP (Moduł Poszukiwania Plagiatu)
 
 - **Encja: Subject**
@@ -303,27 +317,29 @@ Tabela 1.5.1. Macierz krzyżowa związków między obiektami klas encyjnych.
 | AccessLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 | LanguageDict                             | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 | ReportLevelDict                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
+| PasswordHistory                          | -                    | -                       | -                    | -                          | -                          | -                          | -                          | -                    | -                    | -                     | -               | -               | -               |
 
 
 Tabela 1.5.2. Kontynuacja macierzy krzyżowej związków między obiektami klas encyjnych.
 
-| **Encja A (Wiersz) \ Encja B (Kolumna)** | **Student**          | **SubjectAssignment** | AccessLevelDict | LanguageDict    | RaportLevelDict | EmailRevertToken | OneTimeToken |
-| ---------------------------------------- | -------------------- | --------------------- | --------------- | --------------- | --------------- | ---------------- | ------------ |
-| **Account**                              | -                    | -                     | -               | U,OW,N:1,Brak,M | -               | -                | -            |
-| **AccessLevel**                          | -                    | -                     | U,OW,N:1,Brak,I | -               | -               | -                | -            |
-| **Subject**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               | -                | -            |
-| **Repository**                           | BI, OW, N:M, Brak, M | -                     | -               | -               | -               | -                | -            |
-| **Report**                               | -                    | -                     | -               | -               | -               | -                | -            |
-| **RulePreset**                           | -                    | -                     | -               | -               | U,OW,N:1,Brak,I | -                | -            |
-| **Schedule**                             | -                    | -                     | -               | -               | -               | -                | -            |
-| **Teacher**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               | -                | -            |
-| **Student**                              | -                    | -                     | -               | -               | -               | -                | -            |
-| **SubjectAssignment**                    | -                    | -                     | -               | -               | -               | -                | -            |
-| AccessLevelDict                          | -                    | -                     | -               | -               | -               | -                | -            |
-| LanguageDict                             | -                    | -                     | -               | -               | -               | -                | -            |
-| ReportLevelDict                          | -                    | -                     | -               | -               | -               | -                | -            |
-| EmailRevertToken                         | -                    | -                     | -               | -               | -               | -                | -            |
-| OneTimeToken                             | -                    | -                     | -               | -               | -               | -                | -            |
+| **Encja A (Wiersz) \ Encja B (Kolumna)** | **Student**          | **SubjectAssignment** | AccessLevelDict | LanguageDict    | RaportLevelDict | EmailRevertToken | OneTimeToken | PasswordHistory |
+| ---------------------------------------- | -------------------- | --------------------- | --------------- | --------------- | --------------- | ---------------- | ------------ | --------------- |
+| **Account**                              | -                    | -                     | -               | U,OW,N:1,Brak,M | -               | -                | -            | U,OW,N:1,Brak,I |
+| **AccessLevel**                          | -                    | -                     | U,OW,N:1,Brak,I | -               | -               | -                | -            | -               |
+| **Subject**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               | -                | -            | -               |
+| **Repository**                           | BI, OW, N:M, Brak, M | -                     | -               | -               | -               | -                | -            | -               |
+| **Report**                               | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| **RulePreset**                           | -                    | -                     | -               | -               | U,OW,N:1,Brak,I | -                | -            | -               |
+| **Schedule**                             | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| **Teacher**                              | -                    | BI, MA, 1:N, Brak, I  | -               | -               | -               | -                | -            | -               |
+| **Student**                              | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| **SubjectAssignment**                    | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| AccessLevelDict                          | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| LanguageDict                             | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| ReportLevelDict                          | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| EmailRevertToken                         | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| OneTimeToken                             | -                    | -                     | -               | -               | -               | -                | -            | -               |
+| PasswordHistory                          | -                    | -                     | -               | -               | -               | -                | -            | -               |
 
 
 ### Legenda oznaczeń w tabeli:
