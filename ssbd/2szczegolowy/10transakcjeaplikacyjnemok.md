@@ -919,10 +919,10 @@ Dotyczy to przypadków: MOK.4, MOK.5, MOK.6, MOK.7, MOK.8, MOK.9, MOK.11, MOK.12
 Dla wszystkich wymienionych scenariuszy schemat jest jednolity:
 * Metoda odczytu danych np. metoda `getAccountByLogin(String)` lub `getAccountWithAccessLevels(UUID)` wczytuje encję 
 **Account** w ramach pierwszej transakcji i zwraca ją wraz ze skrótem wersji, wyliczonym przez `VersionHashService.hashObjectVersion(UUID id, Long version)`. 
-Skrót ten jest przekazywany do warstwy prezentacji jako nagłówek HTTP **ETag**.
+Skrót ten jest przekazywany do warstwy prezentacji w ciele żądania wewnątrz obiektu AccountDTO.
 * Metoda modyfikacji danych np. `blockUserAccount(UUID, String)`, `changeOwnPassword(...)` itp. przed dokonaniem zmian 
 wywołuje `MokRefreshRepository.refresh(account)` w celu odświeżenia stanu encji bezpośrednio z bazy danych, 
-a następnie porównuje przekazany przez warstwę prezentacji skrót wersji ze świeżo wyliczonym skrótem. 
+a następnie porównuje przekazany przez warstwę prezentacji w nagłówku "If-Match" skrót wersji ze świeżo wyliczonym skrótem. 
 Niezgodność skutkuje rzuceniem `ConcurrentUpdateException`, co powoduje wycofanie transakcji.
 * Mechanizm zapewniający wiarygodność wersji, to skrót wersji, który jest generowany na podstawie identyfikatora encji 
 i jej pola `@Version`. Uniemożliwia to sfałszowanie wartości wersji po stronie klienta. Przy zapisie JPA automatycznie 
