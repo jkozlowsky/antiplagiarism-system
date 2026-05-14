@@ -7,5 +7,5 @@ import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
-public interface GiteaRepositoryRepository extends AbstractRepository<Repository> {
+public interface GiteaRepositoryRepository extends AbstractRepository<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> {
 }
