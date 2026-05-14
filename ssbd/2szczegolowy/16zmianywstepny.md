@@ -28,6 +28,27 @@ Względem etapu wstępnego, w rozdziale 3 wprowadzono następujące modyfikacje:
 
 5. Zaprezentowane skrypty DDL i DML zostały zaktualizowane tak, aby odzwierciedlały ostateczny, skonsolidowany stan bazy po przejściu wszystkich migracji narzędzia Flyway. Dodano również uzasadnienie dla użycia bloku programistycznego podczas startowego zasilania bazy (Seed).
 
+### Zmiany: Rozdział 4 Użytkownicy bazodanowi
+
+W stosunku do projektu wstępnego zaktualizowano listę uprawnień dla użytkowników bazodanowych, uwzględniając nowe obiekty w schemacie oraz rozszerzając zakres odpowiedzialności Modułu Obsługi Kont (MOK).
+
+Tabela 2.16.1 Nowe tabele bazodanowe w zestawieniu z nadanymi im uprawnieniami
+
+| Tabela\Użytkownik  | ssbd01admin | ssbd01mok | ssbd01mpp | 
+|--------------------|-------------|-----------|-----------|
+| one_time_token     | S,I,U,D     | S,I,U,D   | -         |
+| email_revert_token | S,I,U,D     | S,I,U     | -         |
+| password_history   | S,I,U,D     | S,I,U,D   | -         |
+
+Tabela 2.16.2 Zmiany w uprawieniach do istniejących tabel
+
+| Tabela\Użytkownik | ssbd01admin | ssbd01mok                 | ssbd01mpp    | 
+|-------------------|-------------|---------------------------|--------------|
+| admin             | brak zmiany | Dodano uprawnienie DELETE | brak zmiany  |
+| teacher           | brak zmiany | Dodano uprawnienie DELETE | brak zmiany  |
+
+
+
 ### Zmiany: Rozdział 5 Objekty encji
 
 1. Dodano encje OneTimeToken, EmailRevertTokenEnt oraz zaktualizowano encję Account na liście encji oraz w macierzy związków. 
