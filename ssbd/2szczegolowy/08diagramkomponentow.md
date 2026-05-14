@@ -5,6 +5,6 @@
 
 Rys. 2.8.1 Diagram komponentów dla MOK
 
-![Rys 2.8.1](/2szczegolowy/img/2_8_2.svg)
+![Rys 2.8.1](2szczegolowy/img/2_8_2.svg)
 
 Rys. 2.8.1 Diagram komponentów dla MPP
