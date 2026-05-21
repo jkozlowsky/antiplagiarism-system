@@ -1,5 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +34,25 @@ import java.util.UUID;
 @RequestMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @MethodCallLogged
+@Tag(name = "Konta", description = "Api służące do zarządzania kontami użytkowników")
 public class AccountController {
 
     private final AccountService accountService;
     private final AccountMapper accountMapper;
     private final VersionHashService versionHashService;
 
+    @Operation(summary = "Pobierz konto po ID", description = "Pobiera szczegóły konta wraz z poziomami dostępu na podstawie UUID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Poprawnie pobrano dane konta"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta o podanym ID.")
+                    )
+            )
+    })
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -46,6 +65,18 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Pobierz konto po loginie", description = "Pobiera szczegóły konta wraz z poziomami dostępu na podstawie loginu.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Poprawnie pobrano dane konta"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta o podanym loginie.")
+                    )
+            )
+    })
     @GetMapping("/login/{login}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) or #login == authentication.name")
     @ResponseStatus(HttpStatus.OK)
@@ -57,6 +88,18 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Pobierz podstawowe dane konta po loginie", description = "Pobiera podstawowe szczegóły konta (bez poziomów dostępu) na podstawie loginu.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Poprawnie pobrano dane konta"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta o podanym loginie.")
+                    )
+            )
+    })
     @GetMapping("/login/no-access-level/{login}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -68,6 +111,8 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Pobierz wszystkie konta", description = "Pobiera stronicowaną listę wszystkich kont, opcjonalnie filtrowaną po frazie.")
+    @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę kont")
     @GetMapping
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -94,6 +139,18 @@ public class AccountController {
         ));
     }
 
+    @Operation(summary = "Zarejestruj konto", description = "Tworzy nowe konto w systemie na podstawie przesłanych danych.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Żądanie rejestracji przyjęte (konto oczekuje na aktywację)"),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Konflikt - podany login lub email już istnieje",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Konflikt - podany login lub email już istnieje")
+                    )
+            )
+    })
     @PostMapping("/register")
     @PreAuthorize("permitAll()")
     public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
@@ -102,6 +159,11 @@ public class AccountController {
         return ResponseEntity.accepted().build();
     }
 
+    @Operation(summary = "Aktywuj konto", description = "Aktywuje konto użytkownika na podstawie tokenu przesłanego na email.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Konto zostało pomyślnie aktywowane"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono tokenu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Token aktywacyjny jest nieprawidłowy lub wygasł.")))
+    })
     @PostMapping("/activate")
     @PreAuthorize("permitAll()")
     public ResponseEntity<?> activate(@RequestParam String token) {
@@ -109,6 +171,12 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Przyznaj poziom dostępu", description = "Nadaje wybranemu kontu konkretny poziom dostępu. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Poziom dostępu został pomyślnie nadany"),
+            @ApiResponse(responseCode = "404", description = "Brak zasobu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto lub poziom dostępu nie istnieje."))),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto posiada już ten poziom dostępu."))),
+    })
     @PostMapping("/{id}/access-levels/{accessLevelName}/grant")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -119,6 +187,12 @@ public class AccountController {
         return accountService.grantAccessLevel(id, accessLevelName, ifMatch);
     }
 
+    @Operation(summary = "Odbierz poziom dostępu", description = "Odbiera wybranemu kontu konkretny poziom dostępu (rolę). Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Poziom dostępu został pomyślnie odebrany"),
+            @ApiResponse(responseCode = "404", description = "Brak zasobu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto lub poziom dostępu nie istnieje."))),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto nie posiadało tego poziomu dostępu."))),
+    })
     @PostMapping("/{id}/access-levels/{accessLevelName}/revoke")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -136,6 +210,12 @@ public class AccountController {
                 versionHashService.hashObjectVersion(updatedAccount.getId(), updatedAccount.getVersion()));
     }
 
+    @Operation(summary = "Zmień adres e-mail (Administrator)", description = "Zmienia adres e-mail dowolnego konta przez administratora. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Adres e-mail został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Konto nie istnieje", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono konta."))),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Podany adres e-mail jest już w użyciu."))),
+    })
     @PatchMapping("/{login}/email")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) and #login != authentication.name")
     @ResponseStatus(HttpStatus.OK)
@@ -148,7 +228,11 @@ public class AccountController {
         return accountMapper.toAccountDTONoHash(account);
     }
 
-
+    @Operation(summary = "Zmień własne hasło", description = "Pozwala zalogowanemu użytkownikowi zmienić swoje hasło. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Hasło zostało pomyślnie zmienione"),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Niezgodność wersji danych (If-Match).")))
+    })
     @PostMapping("/security/password")
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -167,6 +251,12 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Zablokuj konto", description = "Pozwala administratorowi ręcznie zablokować konto użytkownika. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Konto zostało pomyślnie zablokowane"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono konta o podanym ID."))),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto jest już zablokowane."))),
+    })
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @PostMapping("/block/{id}")
@@ -177,6 +267,12 @@ public class AccountController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Odblokuj konto", description = "Pozwala administratorowi ręcznie odblokować zablokowane konto użytkownika. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Konto zostało pomyślnie odblokowane"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono konta o podanym ID."))),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto jest już odblokowane."))),
+    })
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @PostMapping("/unblock/{id}")
@@ -187,6 +283,8 @@ public class AccountController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Zarządaj zmiany e-maila", description = "Inicjuje proces zmiany własnego adresu e-mail przez wysłanie tokenu autoryzacyjnego.")
+    @ApiResponse(responseCode = "200", description = "Proces zainicjowany, wiadomość e-mail została wysłana")
     @PostMapping("/email/change")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> requestEmailChange(
@@ -196,6 +294,11 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Potwierdź zmianę e-maila", description = "Weryfikuje token i aktualizuje adres na nowy.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Adres e-mail został zmieniony poprawnie"),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Podany nowy adres e-mail jest już zajęty.")))
+    })
     @PostMapping("/email/confirm")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> confirmEmailChange(@Valid @RequestBody OwnEmailChangeDTO request) {
@@ -203,6 +306,8 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Wyślij ponownie link do zmiany e-maila", description = "Ponownie wysyła token autoryzacyjny.")
+    @ApiResponse(responseCode = "200", description = "Wiadomość z linkiem wysłana ponownie")
     @PostMapping("/email/change/resend")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> resendEmailChangeRequest(Authentication authentication) {
@@ -211,6 +316,11 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Cofnij zmianę e-maila", description = "Przywraca stary adres e-mail w przypadku omyłkowej zmiany.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Adres e-mail został zmieniony poprawnie"),
+            @ApiResponse(responseCode = "409", description = "Konflikt", content = @Content(mediaType = "text/plain", examples = @ExampleObject("czas życia tokenu odświeżającego wygasł")))
+    })
     @PostMapping("/email/revert")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> revertEmailChange(@RequestParam String token) {
@@ -218,6 +328,12 @@ public class AccountController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Aktualizuj konto użytkownika", description = "Modyfikuje podstawowe dane konta użytkownika przez administratora. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Konto zostało pomyślnie zaktualizowane"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono konta."))),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto zostało zmodyfikowane, odśwież stronę.")))
+    })
     @PatchMapping(value = "/{id}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -233,6 +349,11 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Aktualizuj konto użytkownika", description = "Modyfikuje podstawowe dane konta użytkownika przez administratora. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Konto zostało pomyślnie zaktualizowane"),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto zostało zmodyfikowane, odśwież stronę.")))
+    })
     @PatchMapping("/update-myself")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
@@ -250,7 +371,12 @@ public class AccountController {
         );
     }
 
-
+    @Operation(summary = "Zmień hasło innego użytkownika", description = "Administrator wymusza zmianę hasła na koncie innego użytkownika. Wymaga nagłówka If-Match.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Hasło użytkownika zostało pomyślnie zmienione"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono użytkownika."))),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Konto zostało zmodyfikowane, odśwież stronę.")))
+    })
     @PostMapping("/{login}/password")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN) and #login != authentication.name")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -266,6 +392,8 @@ public class AccountController {
         );
     }
 
+    @Operation(summary = "Logowanie zmiany roli", description = "Zapisuje w logach serwera zmianę poziomu dostępu/roli w panelu UI.")
+    @ApiResponse(responseCode = "204", description = "Zdarzenie zmiany roli zalogowane pomyślnie", content = @Content)
     @PostMapping("/role/change")
     @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -274,6 +402,8 @@ public class AccountController {
         log.info("User access level changed | User: {} | Logical address (IP): {} | New Role: {}", principal.getName(), ipAddress, role);
     }
 
+    @Operation(summary = "Odblokuj konto po dłuższej nieaktywności", description = "Umożliwia odblokowanie wygasłego konta dedykowanym tokenem.")
+    @ApiResponse(responseCode = "204", description = "Konto zostało pomyślnie odblokowane", content = @Content)
     @PostMapping("/unblock-inactive")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> unblockAccountViaToken(@RequestParam String token) {
