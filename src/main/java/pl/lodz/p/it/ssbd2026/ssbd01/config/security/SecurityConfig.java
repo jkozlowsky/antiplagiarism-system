@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/account/email/confirm").permitAll()
                         .requestMatchers("/account/unblock-inactive").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         //TODO: trzeba zmienić ścieżki dodając wersje do nich
                         .anyRequest().authenticated()
                 )

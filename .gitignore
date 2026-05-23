@@ -51,3 +51,5 @@ secrets/
 *.http
 .DS_Store
 
+repos/
+reports/

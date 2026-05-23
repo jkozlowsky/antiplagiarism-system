@@ -1,7 +1,9 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
