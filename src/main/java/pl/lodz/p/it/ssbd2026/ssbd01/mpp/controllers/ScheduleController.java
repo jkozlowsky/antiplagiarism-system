@@ -1,7 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
@@ -27,8 +30,9 @@ public class ScheduleController  {
 
     
     @PutMapping("/{scheduleId}")
-    public void updateSchedule(@PathVariable UUID scheduleId, @RequestBody Object scheduleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public ResponseEntity<Void> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody UpdateScheduleDTO scheduleDto) {
+        scheduleService.updateSchedule(scheduleId, scheduleDto);
+        return ResponseEntity.noContent().build();
     }
 
     
