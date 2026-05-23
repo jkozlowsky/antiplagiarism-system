@@ -1,4 +1,4 @@
-package pl.lodz.p.it.ssbd2026.ssbd01.dto;
+package pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;

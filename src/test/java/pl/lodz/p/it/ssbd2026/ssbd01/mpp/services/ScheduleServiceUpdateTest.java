@@ -7,10 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.UpdateScheduleDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
@@ -44,7 +41,7 @@ class ScheduleServiceUpdateTest {
     private Subject mockSubject;
     private UpdateScheduleDTO updateScheduleDTO;
     private final UUID scheduleId = UUID.randomUUID();
-    private final String teacherLogin = "scheduleupdatetester";
+    private final String login = "scheduleupdatetester";
 
     @BeforeEach
     void setUp() {
@@ -60,22 +57,16 @@ class ScheduleServiceUpdateTest {
         updateScheduleDTO = new UpdateScheduleDTO();
         updateScheduleDTO.setScheduleDateTime(LocalDateTime.now().plusDays(5));
         updateScheduleDTO.setTag("newTag");
-
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        lenient().when(authentication.getName()).thenReturn(teacherLogin);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
     @DisplayName("Update schedule when user has permision and all provided data is valid")
     void POS01_updateSchedule() {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, teacherLogin))
+        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, login))
                 .thenReturn(true);
 
-        scheduleService.updateSchedule(scheduleId, updateScheduleDTO);
+        scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login);
 
         assertEquals("newTag", mockSchedule.getTag());
         assertEquals(updateScheduleDTO.getScheduleDateTime(), mockSchedule.getScheduleDateTime());
@@ -86,11 +77,11 @@ class ScheduleServiceUpdateTest {
     @DisplayName("Verify if, while trying to change a schedule without permissions it would be not possible and error would be thrown.")
     void NEG01_updateSchedule() {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, teacherLogin))
+        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, login))
                 .thenReturn(false);
 
         assertThrows(NoPermissionToEditScheduleException.class,
-                () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO));
+                () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login));
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -101,7 +92,7 @@ class ScheduleServiceUpdateTest {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.empty());
 
         assertThrows(ScheduleNotFoundException.class,
-                () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO));
+                () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login));
 
         verify(subjectAssignmentRepository, never()).existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(any(), any());
         verify(scheduleRepository, never()).save(any());
