@@ -1,5 +1,8 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +36,13 @@ public class ScheduleController {
 
     @PutMapping("/{scheduleId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Operation(summary = "Edycja harmonogramu", description = "Prowadzący może zmianić date skanowania repozytoriów.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Harmonogram został pomyślnie zaktualizowany"),
+            @ApiResponse(responseCode = "400", description = "Wprowadzono nieprawidłowe dane"),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do edycji harmonogramu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono harmonogramu")
+    })
     public ResponseEntity<Void> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody UpdateScheduleDTO scheduleDto, Principal principal) {
         scheduleService.updateSchedule(scheduleId, scheduleDto, principal.getName());
         return ResponseEntity.noContent().build();
