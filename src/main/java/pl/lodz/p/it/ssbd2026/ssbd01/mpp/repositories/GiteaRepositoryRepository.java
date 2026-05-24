@@ -13,4 +13,6 @@ import java.util.UUID;
 public interface GiteaRepositoryRepository extends AbstractRepository<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> {
 
     List<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> findBySubjectId(UUID subjectId);
+
+    List<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> findBySubject_Name(String subjectName);
 }

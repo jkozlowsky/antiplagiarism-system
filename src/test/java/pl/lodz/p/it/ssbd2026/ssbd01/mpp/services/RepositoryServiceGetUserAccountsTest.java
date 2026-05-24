@@ -16,7 +16,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -30,7 +29,7 @@ public class RepositoryServiceGetUserAccountsTest {
     @InjectMocks
     private RepositoryService repositoryService;
 
-    private UUID subjectId;
+    private String wholeSubjectName;
     private Repository repo;
     private Student student;
 
@@ -41,7 +40,7 @@ public class RepositoryServiceGetUserAccountsTest {
 
     @BeforeEach
     void setUp() {
-        subjectId = UUID.randomUUID();
+        wholeSubjectName = "SysOpMax`2024";
 
         Account account = new Account();
         account.setName(name);
@@ -58,9 +57,9 @@ public class RepositoryServiceGetUserAccountsTest {
     @Test
     @DisplayName("Verify if, valid DTO was returned while trying to get user accounts")
     void POS01_getUserAccounts() {
-        when(giteaRepositoryRepository.findBySubjectId(subjectId)).thenReturn(List.of(repo));
+        when(giteaRepositoryRepository.findBySubject_Name(wholeSubjectName)).thenReturn(List.of(repo));
 
-        List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(subjectId);
+        List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(wholeSubjectName);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -78,9 +77,9 @@ public class RepositoryServiceGetUserAccountsTest {
     @Test
     @DisplayName("Verify if, empty list of students in subject is handled properly")
     void NEG01_getUserAccounts() {
-        when(giteaRepositoryRepository.findBySubjectId(subjectId)).thenReturn(Collections.emptyList());
+        when(giteaRepositoryRepository.findBySubject_Name(wholeSubjectName)).thenReturn(Collections.emptyList());
 
-        List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(subjectId);
+        List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(wholeSubjectName);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
