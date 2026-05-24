@@ -94,7 +94,6 @@ public class PasswordResetService {
         OneTimeTokenEnt tokenEntity = tokenRepository
                 .findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(hashedTokenInput, OneTimeTokenType.PASSWORD_RESET, LocalDateTime.now())
                 .orElseThrow(() -> new OneTimeTokenInvalidException("error.token.reset.expired"));
-        //TODO: i18n
 
         tokenEntity.setIsUsed(true);
         //Nie rozumiem dlaczego, ale jeżeli robię manualny save albo saveAndFlush

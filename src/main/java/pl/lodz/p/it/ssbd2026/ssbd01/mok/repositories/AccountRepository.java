@@ -37,12 +37,15 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     List<Account> findAllByIsVerifiedFalseAndCreationDateBefore(LocalDateTime date);
 
+    @EntityGraph(attributePaths = {"createdBy", "modifiedBy", "accessLevelList"})
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<Account> findByLogin(@NotBlank @Size(max = LOGIN_LENGTH) String login);
 
+    @EntityGraph(attributePaths = {"createdBy", "modifiedBy", "accessLevelList"})
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<Account> findByEmail(@Email @Size(max = EMAIL_LENGTH) String email);
 
+    @EntityGraph(attributePaths = {"createdBy", "modifiedBy", "accessLevelList"})
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     Optional<Account> findById(UUID id);
 

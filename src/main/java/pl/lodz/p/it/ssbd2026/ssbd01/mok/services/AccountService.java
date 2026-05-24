@@ -134,12 +134,14 @@ public class AccountService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     public Account getAccountWithAccessLevels(UUID id) {
         Account account = accountRepository.findById(id).orElseThrow(AccountNotFoundException::new);
-        if (account.getCreatedBy() != null) {
-            Hibernate.initialize(account.getCreatedBy());
-        }
-        if (account.getModifiedBy() != null) {
-            Hibernate.initialize(account.getModifiedBy());
-        }
+//        account.getCreatedBy();
+//        account.getModifiedBy();
+//        if (account.getCreatedBy() != null) {
+//            Hibernate.initialize(account.getCreatedBy());
+//        }
+//        if (account.getModifiedBy() != null) {
+//            Hibernate.initialize(account.getModifiedBy());
+//        }
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -170,12 +172,14 @@ public class AccountService {
     public Account getAccountByLogin(String login) {
         Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
 
-        if (account.getCreatedBy() != null) {
-            Hibernate.initialize(account.getCreatedBy());
-        }
-        if (account.getModifiedBy() != null) {
-            Hibernate.initialize(account.getModifiedBy());
-        }
+//        account.getCreatedBy();
+//        account.getModifiedBy();
+//        if (account.getCreatedBy() != null) {
+//            Hibernate.initialize(account.getCreatedBy());
+//        }
+//        if (account.getModifiedBy() != null) {
+//            Hibernate.initialize(account.getModifiedBy());
+//        }
         account.getAccessLevelList().forEach(accessLevel -> {
             if (accessLevel.getAccessLevelDict() != null) {
                 accessLevel.getAccessLevelDict().getAccessLevelName();
@@ -281,12 +285,14 @@ public class AccountService {
         Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
         mokRefreshRepository.refresh(account);
         String expectedVersionHash = hashService.hashObjectVersion(account.getId(), account.getVersion());
-        if (account.getCreatedBy() != null) {
-            Hibernate.initialize(account.getCreatedBy());
-        }
-        if (account.getModifiedBy() != null) {
-            Hibernate.initialize(account.getModifiedBy());
-        }
+//        account.getCreatedBy();
+//        account.getModifiedBy();
+//        if (account.getCreatedBy() != null) {
+//            Hibernate.initialize(account.getCreatedBy());
+//        }
+//        if (account.getModifiedBy() != null) {
+//            Hibernate.initialize(account.getModifiedBy());
+//        }
         if (!expectedVersionHash.equals(frontendVersionHash)) {
             throw new ConcurrentUpdateException();
         }
