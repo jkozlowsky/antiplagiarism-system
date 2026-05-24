@@ -3,24 +3,29 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ReportGenerateTest extends BaseTestSetup {
+public class ReportGenerateManualTest extends BaseTestSetup {
     @Autowired
     ReportService reportService;
 
+    @Autowired
+    SubjectRepository subjectRepository;
 
     @Test
     @Disabled
     void testGenerateReport() throws IOException, InterruptedException {
-        reportService.generateReportOnDemand(UUID.randomUUID(), "v1");
+        Subject subject = subjectRepository.findAll().get(0);
+
+        reportService.generateReportOnDemand(subject.getId(), "v1");
         File reportDir = new File("reports/report_" + "A");
 
         String reportPath = reportDir.getAbsolutePath() + ".jplag";

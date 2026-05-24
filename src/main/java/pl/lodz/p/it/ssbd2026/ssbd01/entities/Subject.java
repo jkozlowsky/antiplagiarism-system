@@ -11,15 +11,18 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name="subject",
+@Table(name = "subject",
         indexes = {
-        @Index(name = "idx_subject_created_by", columnList = "created_by"),
-        @Index(name = "idx_subject_modified_by", columnList = "modified_by")
-})
+                @Index(name = "idx_subject_created_by", columnList = "created_by"),
+                @Index(name = "idx_subject_modified_by", columnList = "modified_by")
+        })
 public class Subject extends AbstractEntity {
 
     @Column(name = "name", nullable = false, length = SubjectConsts.SUBJECT_NAME_LENGTH)
     private String name;
+
+    @Column(name = "organization_name", nullable = false, length = SubjectConsts.SUBJECT_NAME_LENGTH)
+    private String organizationName;
 
     @Column(name = "edition", nullable = false, length = SubjectConsts.SUBJECT_EDITION_LENGTH)
     private String edition;

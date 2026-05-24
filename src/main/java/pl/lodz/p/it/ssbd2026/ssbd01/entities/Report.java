@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.ReportConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.TagConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AbstractEntity;
 
 import java.util.List;
@@ -20,6 +21,9 @@ public class Report extends AbstractEntity {
 
     @Column(name = "path_to_report", nullable = false, length = ReportConsts.PATH_LENGTH)
     private String pathToReport;
+
+    @Column(name = "tag", nullable = false, length = TagConsts.TAG_LENGTH)
+    private String tag;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
