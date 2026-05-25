@@ -1,13 +1,20 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
+import java.security.Principal;
 import java.util.UUID;
 
-@RequestMapping("/api/subjects")
+@RequestMapping("/subjects")
 @RequiredArgsConstructor
 @MethodCallLogged
 @RestController
@@ -39,9 +46,24 @@ public class SubjectController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia przedmiotu (nie jesteś głównym prowadzącym)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu"),
+            @ApiResponse(responseCode = "409", description = "Dane uległy zmianie (Błąd blokady optymistycznej) - odśwież widok")
+    })
     @DeleteMapping("/{subjectId}")
-    public void deleteSubject(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteSubject(
+            @PathVariable UUID subjectId,
+            @RequestHeader("If-Match") String ifMatch,
+            @RequestParam(required = false, defaultValue = "false") boolean deleteGiteaOrg,
+            Principal principal) {
+
+        subjectService.deleteSubject(subjectId, ifMatch, principal.getName(), deleteGiteaOrg);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{subjectId}/aggregated-values")
