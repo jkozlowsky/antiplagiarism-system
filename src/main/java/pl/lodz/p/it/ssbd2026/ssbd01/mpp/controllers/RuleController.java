@@ -10,11 +10,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
@@ -56,13 +58,25 @@ public class RuleController {
     public void createRulePreset(
             @PathVariable UUID subjectId,
             @Valid @RequestBody CreateRulePresetDTO ruleDto) {
-
         ruleService.createRulePreset(subjectId, ruleDto);
     }
 
+
+    @Operation(summary = "Aktualizuj regułę", description = "Modyfikuje istniejącą regułę na podstawie przekazanego ID oraz nowych danych. Wymaga uprawnień nauczyciela.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reguła zaktualizowana pomyślnie"),
+            @ApiResponse(responseCode = "400", description = "Niepoprawne dane wejściowe", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono reguły o podanym ID lub wskazany poziom raportu nie istnieje", content = @Content(mediaType = "text/plain"))
+    })
     @PutMapping("/{ruleId}")
-    public void updateRulePreset(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void updateRulePreset(
+            @PathVariable UUID ruleId,
+            @Valid @RequestBody UpdateRulePresetDTO ruleDto) {
+
+        ruleService.updateRulePreset(ruleId, ruleDto);
     }
 
     @DeleteMapping("/{ruleId}")
