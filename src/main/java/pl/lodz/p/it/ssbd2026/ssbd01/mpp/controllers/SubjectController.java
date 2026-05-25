@@ -44,7 +44,8 @@ public class SubjectController  {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Przedmiot został poprawnie utworzony"),
             @ApiResponse(responseCode = "400", description = "Błąd walidacji danych wejściowych", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "403", description = "Brak odpowiednich uprawnień", content = @Content(mediaType = "application/json"))
+            @ApiResponse(responseCode = "403", description = "Brak odpowiednich uprawnień", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "Użytkownik nie posiada aktywnego poziomu dostępu Nauczyciel", content = @Content(mediaType = "application/json"))
     })
     @PostMapping
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
