@@ -1,10 +1,14 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
 
 public record CreateRulePresetDTO(
-        @Min(0) @NotNull Integer studentTicketCount,
-        @NotBlank String raportLevelName
-) {}
+        @Min(0) Integer studentTicketCount,
+        String raportLevelName,
+        UUID presetId,
+        @Min(1) Integer minimumTokensMatch,
+        Boolean enableNormalization
+) {
+}

@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +25,7 @@ import java.util.UUID;
 @RequestMapping("/rules")
 @RequiredArgsConstructor
 @MethodCallLogged
-public class RuleController  {
+public class RuleController {
     private final RuleService ruleService;
 
     @Operation(summary = "Pobierz listę szablonów reguł", description = "Pobiera listę wszystkich dostępnych szablonów reguł.")
@@ -38,21 +41,30 @@ public class RuleController  {
         return ruleService.getRulePresetsTemplates();
     }
 
-    
+    @Operation(
+            summary = "Utworzenie konfiguracji reguł dla przedmiotu",
+            description = "Tworzy nową konfigurację reguł dla określonego przedmiotu. Konfiguracja może bazować na istniejącym szablonie (poprzez podanie presetId) lub zostać utworzona ręcznie poprzez przekazanie własnych parametrów."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Konfiguracja reguł została pomyślnie utworzona i przypisana do przedmiotu"),
+            @ApiResponse(responseCode = "400", description = "Nieprawidłowe parametry żądania lub brak wymaganych pól do utworzenia własnej konfiguracji"),
+            @ApiResponse(responseCode = "403", description = "Odmowa dostępu - wymagana rola NAUCZYCIEL (TEACHER)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu, wskazanego szablonu reguł lub słownika dla poziomu raportów")
+    })
     @PostMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void createRulePreset(@PathVariable UUID subjectId,
-                                 @Valid @RequestBody CreateRulePresetDTO ruleDto) {
+    public void createRulePreset(
+            @PathVariable UUID subjectId,
+            @Valid @RequestBody CreateRulePresetDTO ruleDto) {
+
         ruleService.createRulePreset(subjectId, ruleDto);
     }
 
-    
     @PutMapping("/{ruleId}")
     public void updateRulePreset(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
     @DeleteMapping("/{ruleId}")
     public void deleteRulePreset(@PathVariable UUID ruleId) {
         throw new UnsupportedOperationException("Not implemented yet");
