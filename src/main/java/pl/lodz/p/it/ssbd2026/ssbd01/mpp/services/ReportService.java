@@ -19,6 +19,7 @@ import org.springframework.web.client.RestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -71,27 +72,27 @@ public class ReportService  {
 //        throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     public void getAllReports(UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     public void getReportDetails(UUID reportId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     public void deleteReport(UUID reportId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     public void getStudentOwnReports(UUID studentId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     public void generateReportBySchedule() {
         throw new UnsupportedOperationException("Not implemented yet");
     }

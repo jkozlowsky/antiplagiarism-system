@@ -5,12 +5,13 @@ import io.restassured.http.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GitService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.*;
 
@@ -40,7 +41,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
     private AccessLevelDictTestRepository accessLevelDictTestRepository;
 
     @MockitoBean
-    private GitService gitService;
+    private GiteaService giteaService;
 
     @Autowired
     @Qualifier("adminTransactionManager")
@@ -107,7 +108,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
             assertTrue(subjectTestRepository.findById(subjectId).isEmpty(), "Przedmiot powinien zostać kaskadowo usunięty");
         });
 
-        verify(gitService, times(1)).deleteGiteaOrganization("Programowanie Aplikacji Sieciowych");
+        verify(giteaService, times(1)).deleteGiteaOrganization("Programowanie Aplikacji Sieciowych");
     }
 
     @Test
@@ -131,7 +132,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
             assertTrue(subjectTestRepository.findById(subjectId).isEmpty(), "Przedmiot powinien zostać kaskadowo usunięty");
         });
 
-        verify(gitService, never()).deleteGiteaOrganization(anyString());
+        verify(giteaService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test

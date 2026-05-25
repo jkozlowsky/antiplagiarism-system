@@ -37,7 +37,7 @@ public class SubjectServiceDeleteSubjectTest {
     private PostCommitTransactionManager postCommitTransactionManager;
 
     @Mock
-    private GitService gitService;
+    private GiteaService giteaService;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -85,7 +85,7 @@ public class SubjectServiceDeleteSubjectTest {
         verify(subjectRepository, times(1)).flush();
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
 
-        verify(gitService, times(1)).deleteGiteaOrganization(subject.getName());
+        verify(giteaService, times(1)).deleteGiteaOrganization(subject.getName());
     }
 
     @Test
@@ -100,7 +100,7 @@ public class SubjectServiceDeleteSubjectTest {
         verify(subjectRepository, times(1)).flush();
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
 
-        verify(gitService, never()).deleteGiteaOrganization(anyString());
+        verify(giteaService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class SubjectServiceDeleteSubjectTest {
                 subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(gitService, never()).deleteGiteaOrganization(anyString());
+        verify(giteaService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class SubjectServiceDeleteSubjectTest {
                 subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(gitService, never()).deleteGiteaOrganization(anyString());
+        verify(giteaService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test
@@ -140,6 +140,6 @@ public class SubjectServiceDeleteSubjectTest {
                 subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(gitService, never()).deleteGiteaOrganization(anyString());
+        verify(giteaService, never()).deleteGiteaOrganization(anyString());
     }
 }

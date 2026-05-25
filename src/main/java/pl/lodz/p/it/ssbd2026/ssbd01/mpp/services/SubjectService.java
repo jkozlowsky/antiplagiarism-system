@@ -44,7 +44,7 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
     private final VersionHashService versionHashService;
     private final PostCommitTransactionManager postCommitTransactionManager;
-    private final GitService gitService;
+    private final GiteaService giteaService;
     private final RestClient giteaClient;
 
     public void syncSubjectWithGitea(UUID subjectId) {
@@ -97,7 +97,7 @@ public class SubjectService {
 
         if (deleteGiteaOrg) {
             try {
-                gitService.deleteGiteaOrganization(subject.getName());
+                giteaService.deleteGiteaOrganization(subject.getName());
             } catch (Exception e) {
                 log.error("Nie udało się usunąć przedmiotu z serwera Gitea: {}", subject.getName(), e);
                 throw new RuntimeException("Błąd podczas usuwania przedmiotu z Gitea", e);
