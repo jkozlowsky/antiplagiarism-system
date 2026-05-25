@@ -1,5 +1,11 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +23,16 @@ import java.util.UUID;
 public class RuleController  {
     private final RuleService ruleService;
 
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Operation(summary = "Pobierz listę szablonów reguł", description = "Pobiera listę wszystkich dostępnych szablonów reguł.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista szablonów pobrana pomyślnie",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = RulePresetDTO.class)))),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień", content = @Content(mediaType = "text/plain"))
+    })
     @GetMapping("/templates")
-    public List<RulePresetDTO> getRulePresets() {
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public List<RulePresetDTO> getRulePresetsTemplates() {
         return ruleService.getRulePresetsTemplates();
     }
 
