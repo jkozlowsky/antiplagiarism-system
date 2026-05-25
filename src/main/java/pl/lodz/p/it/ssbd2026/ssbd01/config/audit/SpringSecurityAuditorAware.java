@@ -21,8 +21,7 @@ public class SpringSecurityAuditorAware implements AuditorAware<Account> {
     private final AccountRepository accountRepository;
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED, transactionManager = "mppTransactionManager", readOnly = true)
-    public Optional<Account> getCurrentAuditor() {
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", readOnly = true)    public Optional<Account> getCurrentAuditor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null ||

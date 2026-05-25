@@ -14,16 +14,26 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 
+import java.util.ArrayList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -46,6 +56,8 @@ public class SubjectService {
     private final PostCommitTransactionManager postCommitTransactionManager;
     private final GiteaService giteaService;
     private final RestClient giteaClient;
+    private final SubjectAssignmentRepository subjectAssignmentRepository;
+    private final TeacherRepository teacherRepository;
 
     public void syncSubjectWithGitea(UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -59,8 +71,33 @@ public class SubjectService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public void createSubject(Object subjectDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void createSubject(SubjectDTO subjectDto, String creatorLogin) {
+
+        Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
+        Subject subject = new Subject();
+        subject.setName(subjectDto.name());
+        subject.setEdition(subjectDto.edition());
+        subject.setSubjectDescription(subjectDto.subjectDescription());
+        subject.setGiteaURL(subjectDto.giteaURL());
+        subject.setArchived(false);
+        subject.setRepositoryList(new ArrayList<>());
+        subject.setReportList(new ArrayList<>());
+        subject.setSubjectAssignmentList(new ArrayList<>());
+
+        subjectRepository.saveAndFlush(subject);
+
+        SubjectAssignment assignment = new SubjectAssignment();
+        assignment.setSubject(subject);
+        assignment.setTeacher(teacher);
+        assignment.setHasEditPermissions(true);
+
+        subjectAssignmentRepository.saveAndFlush(assignment);
     }
 
     public void updateSubject(UUID subjectId, Object subjectDto) {
