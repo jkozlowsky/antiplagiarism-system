@@ -51,6 +51,13 @@ public class RuleController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Operation(summary = "Usuwanie presetu reguł (MPP.13)", description = "Pozwala Prowadzącemu na usunięcie całego presetu reguł powiązanego z przedmiotem wraz ze wszystkimi powiązanymi harmonogramami.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Zestaw reguł został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "400", description = "Brak uprawnień do edycji przedmiotu i usuwania reguł"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego zestawu reguł"),
+            @ApiResponse(responseCode = "409", description = "Dane zostały zmodyfikowane przez innego użytkownika")
+    })
     @DeleteMapping("/{ruleId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
