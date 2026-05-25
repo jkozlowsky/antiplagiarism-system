@@ -44,6 +44,7 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
     private final VersionHashService versionHashService;
     private final PostCommitTransactionManager postCommitTransactionManager;
+    private final GitService gitService;
     private final RestClient giteaClient;
 
     public void syncSubjectWithGitea(UUID subjectId) {
@@ -93,6 +94,8 @@ public class SubjectService {
                 .map(Report::getPathToReport)
                 .filter(Objects::nonNull)
                 .toList();
+
+        gitService.deleteGiteaOrganization(subject.getName());
 
         subjectRepository.delete(subject);
         subjectRepository.flush();

@@ -37,6 +37,9 @@ public class SubjectServiceDeleteSubjectTest {
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
 
+    @Mock
+    private GitService gitService;
+
     @InjectMocks
     private SubjectService subjectService;
 
@@ -82,6 +85,8 @@ public class SubjectServiceDeleteSubjectTest {
         verify(subjectRepository, times(1)).delete(subject);
         verify(subjectRepository, times(1)).flush();
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
+
+        verify(gitService, times(1)).deleteGiteaOrganization(subject.getName());
     }
 
     @Test
