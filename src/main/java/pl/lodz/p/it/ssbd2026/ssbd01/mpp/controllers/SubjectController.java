@@ -1,5 +1,8 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +46,13 @@ public class SubjectController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot, jego dane skojarzone z bazy oraz skojarzone pliki raportów z dysku.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia przedmiotu (nie jesteś głównym prowadzącym)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu"),
+            @ApiResponse(responseCode = "409", description = "Dane uległy zmianie (Błąd blokady optymistycznej) - odśwież widok")
+    })
     @DeleteMapping("/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
