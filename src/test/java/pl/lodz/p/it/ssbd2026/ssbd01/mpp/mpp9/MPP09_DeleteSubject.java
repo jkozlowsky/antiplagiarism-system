@@ -17,8 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.*;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class MPP09_DeleteSubject extends BaseTestSetup {
 
@@ -68,7 +67,6 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
             teacher.setAccessLevelDict(teacherDict);
 
             teacherTestRepository.save(teacher);
-            teacherTestRepository.save(teacher);
 
             Subject subject = new Subject();
             subject.setName("Programowanie Aplikacji Sieciowych");
@@ -89,14 +87,14 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
     }
 
     @Test
-    @DisplayName("POS01: Powinien poprawnie usunąć przedmiot i zwrócić HTTP 204")
-    public void POS01_deleteSubject_ShouldReturn204() {
+    @DisplayName("POS01: Powinien poprawnie usunąć przedmiot i usunąć organizację z Gitea (flaga true)")
+    public void POS01_deleteSubject_ShouldReturn204_AndCallGitea() {
         Headers headers = new Headers(
                 new Header("Content-Type", "application/json"),
                 new Header("If-Match", versionHash)
         );
 
-        String url = "/api/subjects/" + subjectId;
+        String url = "/api/subjects/" + subjectId + "?deleteGiteaOrg=true";
 
         io.restassured.RestAssured.given()
                 .headers(headers)
@@ -113,6 +111,30 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
     }
 
     @Test
+    @DisplayName("POS02: Powinien usunąć przedmiot, ale POMINĄĆ usuwanie z Gitea (flaga false)")
+    public void POS02_deleteSubject_ShouldReturn204_AndSkipGitea() {
+        Headers headers = new Headers(
+                new Header("Content-Type", "application/json"),
+                new Header("If-Match", versionHash)
+        );
+
+        String url = "/api/subjects/" + subjectId + "?deleteGiteaOrg=false";
+
+        io.restassured.RestAssured.given()
+                .headers(headers)
+                .delete(url)
+                .then()
+                .statusCode(204);
+
+        var txTemplate = new org.springframework.transaction.support.TransactionTemplate(adminTransactionManager);
+        txTemplate.executeWithoutResult(status -> {
+            assertTrue(subjectTestRepository.findById(subjectId).isEmpty(), "Przedmiot powinien zostać kaskadowo usunięty");
+        });
+
+        verify(gitService, never()).deleteGiteaOrganization(anyString());
+    }
+
+    @Test
     @DisplayName("NEG01: Powinien zwrócić błąd konfliktu HTTP 409 przy podaniu błędnego nagłówka If-Match")
     public void NEG01_deleteSubject_ShouldReturn409_WhenIfMatchIsInvalid() {
         Headers headers = new Headers(
@@ -120,7 +142,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
                 new Header("If-Match", "niepoprawny-hash-wersji-1234")
         );
 
-        String url = "/api/subjects/" + subjectId;
+        String url = "/api/subjects/" + subjectId + "?deleteGiteaOrg=true";
 
         io.restassured.RestAssured.given()
                 .headers(headers)

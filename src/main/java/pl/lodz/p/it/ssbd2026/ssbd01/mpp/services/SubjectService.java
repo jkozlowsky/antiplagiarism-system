@@ -71,7 +71,7 @@ public class SubjectService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void deleteSubject(UUID subjectId, String versionHash, String currentUsername) {
+    public void deleteSubject(UUID subjectId, String versionHash, String currentUsername, boolean deleteGiteaOrg) {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
@@ -95,7 +95,16 @@ public class SubjectService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        gitService.deleteGiteaOrganization(subject.getName());
+        if (deleteGiteaOrg) {
+            try {
+                gitService.deleteGiteaOrganization(subject.getName());
+            } catch (Exception e) {
+                log.error("Nie udało się usunąć przedmiotu z serwera Gitea: {}", subject.getName(), e);
+                throw new RuntimeException("Błąd podczas usuwania przedmiotu z Gitea", e);
+            }
+        } else {
+            log.info("Pominięto usuwanie organizacji na serwerze Gitea dla przedmiotu: {}", subject.getName());
+        }
 
         subjectRepository.delete(subject);
         subjectRepository.flush();

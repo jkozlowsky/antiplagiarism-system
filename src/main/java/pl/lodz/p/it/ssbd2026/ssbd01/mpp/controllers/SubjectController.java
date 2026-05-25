@@ -46,7 +46,7 @@ public class SubjectController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot, jego dane skojarzone z bazy oraz skojarzone pliki raportów z dysku.")
+    @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie usunięty"),
             @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia przedmiotu (nie jesteś głównym prowadzącym)"),
@@ -59,9 +59,10 @@ public class SubjectController  {
     public ResponseEntity<Void> deleteSubject(
             @PathVariable UUID subjectId,
             @RequestHeader("If-Match") String ifMatch,
+            @RequestParam(required = false, defaultValue = "false") boolean deleteGiteaOrg,
             Principal principal) {
 
-        subjectService.deleteSubject(subjectId, ifMatch, principal.getName());
+        subjectService.deleteSubject(subjectId, ifMatch, principal.getName(), deleteGiteaOrg);
         return ResponseEntity.noContent().build();
     }
 

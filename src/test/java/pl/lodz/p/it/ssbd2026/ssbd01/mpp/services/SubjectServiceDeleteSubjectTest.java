@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
@@ -64,10 +63,10 @@ public class SubjectServiceDeleteSubjectTest {
         assignment.setHasEditPermissions(true);
 
         subject = new Subject();
-        // potrzebne do ustawienia pól prywatnych
         ReflectionTestUtils.setField(subject, "id", subjectId);
         ReflectionTestUtils.setField(subject, "version", 1);
         subject.setSubjectAssignmentList(List.of(assignment));
+        subject.setName("Programowanie Aplikacji Sieciowych");
 
         Report report = new Report();
         report.setPathToReport("/tmp/report.pdf");
@@ -75,12 +74,12 @@ public class SubjectServiceDeleteSubjectTest {
     }
 
     @Test
-    @DisplayName("POS01: Powinien poprawnie usunąć przedmiot, jeśli dane i uprawnienia są prawidłowe")
-    void POS01_deleteSubject_ShouldDeleteSuccessfully() {
+    @DisplayName("POS01: Powinien usunąć przedmiot i wywołać API Gitea (deleteGiteaOrg = true)")
+    void POS01_deleteSubject_ShouldDeleteSuccessfullyAndCallGitea() {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
 
-        subjectService.deleteSubject(subjectId, validHash, currentUsername);
+        subjectService.deleteSubject(subjectId, validHash, currentUsername, true);
 
         verify(subjectRepository, times(1)).delete(subject);
         verify(subjectRepository, times(1)).flush();
@@ -90,15 +89,30 @@ public class SubjectServiceDeleteSubjectTest {
     }
 
     @Test
+    @DisplayName("POS02: Powinien usunąć z bazy, ale POMINĄĆ wywołanie API Gitea (deleteGiteaOrg = false)")
+    void POS02_deleteSubject_ShouldDeleteFromDbButSkipGitea() {
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
+
+        subjectService.deleteSubject(subjectId, validHash, currentUsername, false);
+
+        verify(subjectRepository, times(1)).delete(subject);
+        verify(subjectRepository, times(1)).flush();
+        verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
+
+        verify(gitService, never()).deleteGiteaOrganization(anyString());
+    }
+
+    @Test
     @DisplayName("NEG01: Powinien rzucić wyjątek SubjectNotFoundException, gdy przedmiot nie istnieje")
     void NEG01_deleteSubject_ShouldThrowWhenSubjectNotFound() {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.empty());
 
         assertThrows(SubjectNotFoundException.class, () ->
-                subjectService.deleteSubject(subjectId, validHash, currentUsername)
+                subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(subjectRepository, never()).delete(any());
+        verify(gitService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test
@@ -108,10 +122,10 @@ public class SubjectServiceDeleteSubjectTest {
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("differentHash");
 
         assertThrows(ConcurrentUpdateException.class, () ->
-                subjectService.deleteSubject(subjectId, validHash, currentUsername)
+                subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(subjectRepository, never()).delete(any());
+        verify(gitService, never()).deleteGiteaOrganization(anyString());
     }
 
     @Test
@@ -123,9 +137,9 @@ public class SubjectServiceDeleteSubjectTest {
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
 
         assertThrows(SubjectAccessDeniedException.class, () ->
-                subjectService.deleteSubject(subjectId, validHash, currentUsername)
+                subjectService.deleteSubject(subjectId, validHash, currentUsername, false)
         );
 
-        verify(subjectRepository, never()).delete(any());
+        verify(gitService, never()).deleteGiteaOrganization(anyString());
     }
 }
