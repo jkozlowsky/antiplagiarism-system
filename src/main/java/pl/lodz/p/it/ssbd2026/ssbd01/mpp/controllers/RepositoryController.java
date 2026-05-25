@@ -24,12 +24,12 @@ public class RepositoryController {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @GetMapping("/subject/{subjectId}/users")
+    @GetMapping("/subject/{subjectName}/users")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Operation(summary = "Przeglądanie kont użytkowników", description = "Pobiera listę kont studentów w danym przedmiocie")
     @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę kont studentów w danym przedmiocie")
-    public List<SubjectStudentStatsDTO> getUserAccounts(@PathVariable UUID subjectId) {
-        return repositoryService.getUserAccounts(subjectId);
+    public List<SubjectStudentStatsDTO> getUserAccounts(@PathVariable String subjectName) {
+        return repositoryService.getUserAccounts(subjectName);
     }
 
     @PostMapping("/{repositoryId}/check")

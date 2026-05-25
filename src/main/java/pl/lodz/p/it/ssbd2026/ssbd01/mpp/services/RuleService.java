@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
@@ -14,11 +17,14 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -31,37 +37,39 @@ public class RuleService {
     private final RuleRepository ruleRepository;
     private final SubjectRepository subjectRepository;
     private final RaportLevelDictRepository raportLevelDictRepository;
+    private final RuleMapper ruleMapper;
 
-    public void getRules(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public List<RulePresetDTO> getRulePresetsTemplates() {
+        return ruleRepository.findAllByIsPreset(true).stream()
+                .map(ruleMapper::toRuleDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createRulePreset(UUID subjectId, CreateRulePresetDTO dto) {
-        Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(SubjectNotFoundException::new);
+    public void createRulePreset(UUID subjectId, CreateRulePresetDTO dto){
+            Subject subject = subjectRepository.findById(subjectId)
+                    .orElseThrow(SubjectNotFoundException::new);
 
-        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName());
-        if (raportLevel == null) {
-            throw new SubjectNotFoundException();
+            RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName());
+            if (raportLevel == null) {
+                throw new SubjectNotFoundException();
+            }
+
+            RulePreset newPreset = new RulePreset();
+            newPreset.setIsPreset(false);
+            newPreset.setSubject(subject);
+            newPreset.setRaportLevel(raportLevel);
+            newPreset.setStudentTicketCount(dto.studentTicketCount());
+
+            ruleRepository.save(newPreset);
         }
 
-        RulePreset newPreset = new RulePreset();
-        newPreset.setIsPreset(false);
-        newPreset.setSubject(subject);
-        newPreset.setRaportLevel(raportLevel);
-        newPreset.setStudentTicketCount(dto.studentTicketCount());
-
-        ruleRepository.save(newPreset);
-    }
-
-
-    public void updateRule(UUID ruleId, Object ruleDto) {
+    public void updateRulePreset(UUID ruleId, Object ruleDto) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-
-    public void deleteRule(UUID ruleId) {
+    public void deleteRulePreset(UUID ruleId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }
