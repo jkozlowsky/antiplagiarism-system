@@ -34,6 +34,8 @@ public class FindRulePresetsRepositoryTest extends BaseTestSetup {
         template.setIsPreset(true);
         template.setStudentTicketCount(10);
         template.setRaportLevel(raportLevel);
+        template.setMinimumTokensMatch(20);
+        template.setEnableNormalization(true);
         ruleRepository.save(template);
     }
 
