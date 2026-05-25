@@ -32,8 +32,8 @@ public class RepositoryService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public List<SubjectStudentStatsDTO> getUserAccounts(UUID subjectId) {
-        List<Repository> repos = giteaRepositoryRepository.findBySubjectId(subjectId);
+    public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {
+        List<Repository> repos = giteaRepositoryRepository.findBySubject_Name(subjectName);
         List<SubjectStudentStatsDTO> results = new ArrayList<>();
 
         repos.forEach(repo -> {
