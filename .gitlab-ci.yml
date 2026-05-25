@@ -24,6 +24,8 @@ test-backend:
     - echo "$CI_MOK_PASSWORD" > secrets/mok_password.txt
     - echo "$CI_MPP_PASSWORD" > secrets/mpp_password.txt
     - echo "test_mail_password" > secrets/mail_password.txt
+    - echo "dummy_test_token" > secrets/gitea_token.txt
+    - export GITEA_URL=http://localhost:3000
     - export MAIL_HOST=localhost
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test

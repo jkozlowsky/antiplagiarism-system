@@ -53,3 +53,8 @@ secrets/
 
 repos/
 reports/
+
+# Gitea
+gitea-data/
+gitea-config/
+gitea-postgresql/

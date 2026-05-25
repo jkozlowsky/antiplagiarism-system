@@ -7,9 +7,15 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.SubjectStudentStatsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -17,14 +23,35 @@ import java.util.UUID;
 @MethodCallLogged
 @TransactionLogged
 @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-@Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")public class RepositoryService  {
+@Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+public class RepositoryService {
+
+    private final GiteaRepositoryRepository giteaRepositoryRepository;
 
     public void getRepositories(UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public void getUserAccounts(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public List<SubjectStudentStatsDTO> getUserAccounts(UUID subjectId) {
+        List<Repository> repos = giteaRepositoryRepository.findBySubjectId(subjectId);
+        List<SubjectStudentStatsDTO> results = new ArrayList<>();
+
+        repos.forEach(repo -> {
+            repo.getStudentList().forEach(student -> {
+                Account account = student.getAccount();
+
+                results.add(new SubjectStudentStatsDTO(
+                        student.getId(),
+                        account.getName(),
+                        account.getSurname(),
+                        repo.getId(),
+                        repo.getRepositoryName(),
+                        null // TODO: jak będę robił przypadek MPP.23 to tutaj będzie średni wskaźnik plagiatu dla każdego studenta
+                ));
+            });
+        });
+
+        return results;
     }
 
     public void checkOwnCode(UUID repositoryId, String tag) {
