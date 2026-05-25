@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.test.context.TestPropertySource;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -30,6 +31,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.consts.OauthData;
         },
         entityManagerFactoryRef = "adminEntityManagerFactory",
         transactionManagerRef = "adminTransactionManager")
+@TestPropertySource(properties = {
+        "GITEA_URL=http://localhost:3000",
+        "gitea.url=http://localhost:3000"
+})
 public abstract class BaseTestSetup extends TestContainersSetupInit {
 
     @Autowired

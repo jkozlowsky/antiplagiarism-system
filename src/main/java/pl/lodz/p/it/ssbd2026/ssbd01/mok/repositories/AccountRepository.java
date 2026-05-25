@@ -67,7 +67,7 @@ public interface AccountRepository extends AbstractRepository<Account> {
 
     @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
     @Query("SELECT a FROM Account a WHERE a.login = :login")
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     Optional<Account> findAuditorByLogin(@Param("login") String login);
 
     @Query("SELECT a FROM Account a WHERE a.isBlocked = false AND " +

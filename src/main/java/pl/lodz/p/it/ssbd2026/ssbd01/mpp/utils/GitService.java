@@ -5,6 +5,8 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JGitException;
 
 import java.io.File;
 
@@ -22,7 +24,7 @@ public class GitService {
                 .call()) { // TODO: remove git token from here!!!!!!!!!
 
         } catch (GitAPIException e) {
-//            throw new GitCloneException(e);
+            throw new GitCloneException(e);
         } catch (JGitInternalException e){
             log.warn("Cannot clone repository {} at tag {} because it is already present in the folder", repoUrl, tagName);
 //            throw new JGitException(e);
