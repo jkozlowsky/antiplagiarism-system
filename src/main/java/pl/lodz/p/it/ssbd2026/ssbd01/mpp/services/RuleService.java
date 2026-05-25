@@ -80,6 +80,7 @@ public class RuleService {
             throw new RulePresetNoAccessException();
         }
 
+        subject.setRulePreset(null);
         ruleRepository.delete(rulePreset);
         ruleRepository.flush();
     }
