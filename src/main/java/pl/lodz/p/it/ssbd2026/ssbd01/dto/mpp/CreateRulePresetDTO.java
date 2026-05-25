@@ -7,7 +7,6 @@ import java.util.UUID;
 public record CreateRulePresetDTO(
         @Min(0) Integer studentTicketCount,
         String raportLevelName,
-        UUID presetId,
         @Min(1) Integer minimumTokensMatch,
         Boolean enableNormalization
 ) {

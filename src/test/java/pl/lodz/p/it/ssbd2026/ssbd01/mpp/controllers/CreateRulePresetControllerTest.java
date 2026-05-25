@@ -8,17 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 
@@ -33,22 +25,9 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Autowired
     private RequestFunctions requestFunctions;
 
-    @Autowired
-    private SubjectRepository subjectRepository;
-
-    @Autowired
-    private RuleRepository ruleRepository;
-
-    @Autowired
-    private RaportLevelDictRepository raportLevelDictRepository;
-
-    @Autowired
-    private PlatformTransactionManager mppTransactionManager;
-
     private Headers teacherHeaders;
     private Headers studentHeaders;
-    private UUID subjectId;
-    private UUID templateId;
+    private Headers emptyHeaders;
 
     @BeforeEach
     public void setupData() {
@@ -60,156 +39,136 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
         String studentToken = jwtAuthService.generateToken(mockStudentUuid, List.of(AccountConsts.ROLE_STUDENT), false);
         studentHeaders = new Headers(new io.restassured.http.Header("Authorization", "Bearer " + studentToken));
 
-        TransactionTemplate transactionTemplate = new TransactionTemplate(mppTransactionManager);
-        transactionTemplate.execute(_ -> {
-            Subject subject = new Subject();
-            subject.setName("TestowyPrzedmiot");
-            subject.setEdition("2026");
-            subject.setGiteaURL("http://gitea.com");
-            subject.setArchived(false);
-            subject.setOrganizationName("TestowyPrzedmiot");
-
-            subjectId = subjectRepository.save(subject).getId();
-
-            RaportLevelDict dict = raportLevelDictRepository.findByName("FULL_VIEW");
-
-            RulePreset template = new RulePreset();
-            template.setIsPreset(true);
-            template.setStudentTicketCount(5);
-            template.setRaportLevel(dict);
-            template.setMinimumTokensMatch(20);
-            template.setEnableNormalization(false);
-
-            templateId = ruleRepository.save(template).getId();
-
-            return null;
-        });
+        emptyHeaders = new Headers();
     }
 
     @Test
-    @DisplayName("Powinno pomyślnie utworzyć własny preset przy poprawnych parametrach")
-    public void shouldCreateCustomRulePresetSuccessfully() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", null, 20, true);
+    @DisplayName("Powinno pomyślnie utworzyć predefiniowany szablon reguł przy poprawnych parametrach")
+    public void shouldCreateRulePresetTemplateSuccessfully() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 200,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno pomyślnie utworzyć preset na podstawie szablonu")
-    public void shouldCreateRulePresetFromTemplateSuccessfully() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, null, templateId, null, null);
+    @DisplayName("Powinno pomyślnie utworzyć szablon z poprawnymi wartościami brzegowymi")
+    public void shouldCreateRulePresetTemplateWithBoundaryValues() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(0, "FULL_VIEW", 1, false);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 200,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 404, gdy przedmiot nie istnieje")
-    public void shouldReturnWhenSubjectNotFound() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, null, templateId, null, null);
+    @DisplayName("Powinno zwrócić kod 404, gdy wskazany poziom raportowania nie istnieje w systemie")
+    public void shouldReturn404WhenRaportLevelNotFound() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "NON_EXISTENT_LEVEL_DICT", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 404,
-                "/api/rules/subject/" + UUID.randomUUID(),
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 404, gdy podany szablon presetu nie istnieje")
-    public void shouldReturnWhenTemplateNotFound() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, null, UUID.randomUUID(), null, null);
-        String jsonBody = new ObjectMapper().writeValueAsString(dto);
-
-        requestFunctions.sendPostRequest(
-                jsonBody,
-                404,
-                "/api/rules/subject/" + subjectId,
-                teacherHeaders
-        );
-    }
-
-    @Test
-    @DisplayName("Powinno zwrócić kod 400, gdy nie podano szablonu i brakuje parametrów własnych")
-    public void shouldReturnWhenCustomParametersAreMissing() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, "FULL_VIEW", null, null, null);
+    @DisplayName("Powinno zwrócić kod 400, gdy obiekt DTO jest całkowicie pusty")
+    public void shouldReturn400WhenAllParametersAreMissing() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, null, null, null);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 400,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 400, gdy minimumTokensMatch ma niedozwoloną wartość graniczną")
-    public void shouldReturnWhenMinimumTokensMatchIsInvalid() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", null, 0, true);
+    @DisplayName("Powinno zwrócić kod 400, gdy minimumTokensMatch ma niedozwoloną wartość poniżej zera")
+    public void shouldReturn400WhenMinimumTokensMatchIsNegative() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", -5, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 400,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 400, gdy studentTicketCount ma niedozwoloną wartość graniczną")
-    public void shouldReturnWhenStudentTicketCountIsInvalid() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(-1, "FULL_VIEW", null, 20, true);
+    @DisplayName("Powinno zwrócić kod 400, gdy minimumTokensMatch wynosi 0 (wymagane min. 1)")
+    public void shouldReturn400WhenMinimumTokensMatchIsZero() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 0, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 400,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 400 przy błędnym formacie UUID")
-    public void shouldReturnWhenUuidFormatIsInvalid() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", null, 20, true);
+    @DisplayName("Powinno zwrócić kod 400, gdy studentTicketCount ma niedozwoloną wartość poniżej zera")
+    public void shouldReturn400WhenStudentTicketCountIsNegative() throws Exception {
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(-1, "FULL_VIEW", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 400,
-                "/api/rules/subject/to-nie-jest-uuid",
+                "/api/rules/templates",
                 teacherHeaders
         );
     }
 
     @Test
-    @DisplayName("Powinno zwrócić kod 403, gdy użytkownik nie ma roli nauczyciela")
-    public void shouldReturnWhenUserIsNotTeacher() throws Exception {
+    @DisplayName("Powinno zwrócić kod 403, gdy zalogowany użytkownik posiada rolę ucznia zamiast nauczyciela")
+    public void shouldReturn403WhenUserIsStudent() throws Exception {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(null, null, templateId, null, null);
+
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
                 jsonBody,
                 403,
-                "/api/rules/subject/" + subjectId,
+                "/api/rules/templates",
                 studentHeaders
+        );
+    }
+
+    @Test
+    @DisplayName("Powinno zwrócić kod 401, gdy zapytanie nie posiada nagłówka autoryzacji")
+    public void shouldReturn401WhenNoAuthorizationHeaderProvided() throws Exception {
+        ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
+
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
+        String jsonBody = new ObjectMapper().writeValueAsString(dto);
+
+        requestFunctions.sendPostRequest(
+                jsonBody,
+                401,
+                "/api/rules/templates",
+                emptyHeaders
         );
     }
 }

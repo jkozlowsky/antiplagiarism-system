@@ -6,10 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,23 +40,21 @@ public class RuleController {
     }
 
     @Operation(
-            summary = "Utworzenie konfiguracji reguł dla przedmiotu",
-            description = "Tworzy nową konfigurację reguł dla określonego przedmiotu. Konfiguracja może bazować na istniejącym szablonie (poprzez podanie presetId) lub zostać utworzona ręcznie poprzez przekazanie własnych parametrów."
+            summary = "Utworzenie predefiniowanego szablonu reguł",
+            description = "Tworzy nowy, globalny szablon konfiguracji reguł, który może być później wykorzystany jako podstawa dla przedmiotów."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Konfiguracja reguł została pomyślnie utworzona i przypisana do przedmiotu"),
-            @ApiResponse(responseCode = "400", description = "Nieprawidłowe parametry żądania lub brak wymaganych pól do utworzenia własnej konfiguracji"),
+            @ApiResponse(responseCode = "200", description = "Szablon reguł został pomyślnie utworzony"),
+            @ApiResponse(responseCode = "400", description = "Nieprawidłowe parametry żądania lub brak wymaganych pól"),
             @ApiResponse(responseCode = "403", description = "Odmowa dostępu - wymagana rola NAUCZYCIEL (TEACHER)"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu, wskazanego szablonu reguł lub słownika dla poziomu raportów")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono słownika dla poziomu raportów")
     })
-    @PostMapping("/subject/{subjectId}")
+    @PostMapping("/templates")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void createRulePreset(
-            @PathVariable UUID subjectId,
+    public void createRulePresetTemplate(
             @Valid @RequestBody CreateRulePresetDTO ruleDto) {
-        ruleService.createRulePreset(subjectId, ruleDto);
+        ruleService.createRulePreset(ruleDto);
     }
-
 
     @Operation(summary = "Aktualizuj regułę", description = "Modyfikuje istniejącą regułę na podstawie przekazanego ID oraz nowych danych. Wymaga uprawnień nauczyciela.")
     @ApiResponses({

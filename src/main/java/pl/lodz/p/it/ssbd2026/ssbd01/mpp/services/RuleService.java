@@ -1,6 +1,5 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
@@ -16,14 +15,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
@@ -59,39 +52,25 @@ public class RuleService {
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createRulePreset(UUID subjectId, CreateRulePresetDTO dto) {
-        Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(SubjectNotFoundException::new);
-
+    public void createRulePreset(CreateRulePresetDTO dto) {
         RulePreset newPreset = new RulePreset();
-        newPreset.setIsPreset(false);
-        newPreset.setSubject(subject);
+        newPreset.setIsPreset(true);
+        newPreset.setSubject(null);
 
-        if (dto.presetId() != null) {
-            RulePreset template = ruleRepository.findById(dto.presetId())
-                    .orElseThrow(RulePresetTemplateNotFoundException::new);
-
-            newPreset.setRaportLevel(template.getRaportLevel());
-            newPreset.setStudentTicketCount(template.getStudentTicketCount());
-            newPreset.setMinimumTokensMatch(template.getMinimumTokensMatch());
-            newPreset.setEnableNormalization(template.getEnableNormalization());
+        if (dto.raportLevelName() == null || dto.studentTicketCount() == null ||
+                dto.minimumTokensMatch() == null || dto.enableNormalization() == null) {
+            throw new RulePresetInvalidPartametersException();
         }
-        else {
-            if (dto.raportLevelName() == null || dto.studentTicketCount() == null ||
-                    dto.minimumTokensMatch() == null || dto.enableNormalization() == null) {
-                throw new RulePresetInvalidPartametersException();
-            }
 
-            RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName());
-            if (raportLevel == null) {
-                throw new RaportLevelDictNotFoundException();
-            }
-
-            newPreset.setRaportLevel(raportLevel);
-            newPreset.setStudentTicketCount(dto.studentTicketCount());
-            newPreset.setMinimumTokensMatch(dto.minimumTokensMatch());
-            newPreset.setEnableNormalization(dto.enableNormalization());
+        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName());
+        if (raportLevel == null) {
+            throw new RaportLevelDictNotFoundException();
         }
+
+        newPreset.setRaportLevel(raportLevel);
+        newPreset.setStudentTicketCount(dto.studentTicketCount());
+        newPreset.setMinimumTokensMatch(dto.minimumTokensMatch());
+        newPreset.setEnableNormalization(dto.enableNormalization());
 
         ruleRepository.save(newPreset);
     }
