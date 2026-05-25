@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ReportMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
@@ -20,6 +22,8 @@ import java.util.UUID;
 public class ReportController {
 
     private final ReportService reportService;
+    private final ReportMapper reportMapper;
+
     @Operation(summary = "Wykonaj skanowanie", description = "Uruchom skanowanie repozytoriów za etykietą w przedmiocie")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Skanowanie ukończone pomyślnie"),
@@ -29,8 +33,8 @@ public class ReportController {
     })
     @PostMapping("/demand/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void generateReportOnDemand(@PathVariable UUID subjectId, @RequestParam String tag) {
-        reportService.generateReportOnDemand(subjectId, tag);
+    public ReportDTO generateReportOnDemand(@PathVariable UUID subjectId, @RequestParam String tag) {
+        return reportMapper.toDto(reportService.generateReportOnDemand(subjectId, tag));
     }
 
     @GetMapping("/subject/{subjectId}")

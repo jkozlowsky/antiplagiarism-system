@@ -8,6 +8,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 
 @Repository
-//@Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
+@Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface SubjectRepository extends AbstractRepository<Subject> {
 }
