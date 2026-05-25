@@ -14,7 +14,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 import java.security.Principal;
 import java.util.UUID;
 
-@RequestMapping("/api/subjects")
+@RequestMapping("/subjects")
 @RequiredArgsConstructor
 @MethodCallLogged
 @RestController
