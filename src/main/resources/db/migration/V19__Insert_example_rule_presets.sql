@@ -11,7 +11,9 @@ INSERT INTO rule_preset (
     raport_level_id,
     student_ticket_count,
     is_preset,
-    subject_id
+    subject_id,
+    minimum_tokens_match,
+    normalization
 )
 VALUES
     (
@@ -21,7 +23,9 @@ VALUES
         (SELECT id FROM raport_level_dict WHERE name = 'FULL_VIEW'),
         10,
         true,
-        NULL
+        NULL,
+        20,
+        false
     ),
     (
         gen_random_uuid(),
@@ -30,7 +34,9 @@ VALUES
         (SELECT id FROM raport_level_dict WHERE name = 'ONLY_PERCENTAGES'),
         5,
         true,
-        NULL
+        NULL,
+        20,
+        false
     ),
     (
         gen_random_uuid(),
@@ -39,5 +45,7 @@ VALUES
         (SELECT id FROM raport_level_dict WHERE name = 'NOTHING'),
         0,
         true,
-        NULL
+        NULL,
+        20,
+        false
     );
