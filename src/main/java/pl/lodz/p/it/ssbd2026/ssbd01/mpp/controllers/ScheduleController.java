@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -50,7 +51,16 @@ public class ScheduleController {
 
 
     @DeleteMapping("/{scheduleId}")
-    public void deleteSchedule(@PathVariable UUID scheduleId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Operation(summary = "Usuwanie harmonogramu", description = "Prowadzący posiadający uprawnienia edycji może usunąć istniejący harmonogram.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Harmonogram został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia harmonogramu (np. rola studenta lub brak przypisania z prawem edycji)", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono harmonogramu", content = @Content(mediaType = "text/plain"))
+    })
+    public ResponseEntity<Void> deleteSchedule(@PathVariable UUID scheduleId, Principal principal) {
+        scheduleService.deleteSchedule(scheduleId, principal.getName());
+        return ResponseEntity.noContent().build();
     }
 }

@@ -58,7 +58,19 @@ public class ScheduleService {
         scheduleRepository.save(schedule);
     }
 
-    public void deleteSchedule(UUID scheduleId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void deleteSchedule(UUID scheduleId, String userLogin) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(ScheduleNotFoundException::new);
+
+        Subject subject = schedule.getRulePreset().getSubject();
+        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin);
+
+        if (!hasPermission) {
+            throw new NoPermissionToEditScheduleException();
+        }
+
+        scheduleRepository.delete(schedule);
     }
 }
