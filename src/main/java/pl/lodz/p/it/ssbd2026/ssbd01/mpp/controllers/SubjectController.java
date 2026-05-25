@@ -1,10 +1,14 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @RequestMapping("/api/subjects")
@@ -40,8 +44,15 @@ public class SubjectController  {
     }
 
     @DeleteMapping("/{subjectId}")
-    public void deleteSubject(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteSubject(
+            @PathVariable UUID subjectId,
+            @RequestHeader("If-Match") String ifMatch,
+            Principal principal) {
+
+        subjectService.deleteSubject(subjectId, ifMatch, principal.getName());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{subjectId}/aggregated-values")
