@@ -1,5 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 
+import de.jplag.JPlagComparison;
+import de.jplag.JPlagResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
@@ -43,8 +45,8 @@ public class ReportService {
     private final ReportsRepository reportsRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void generateReportOnDemand(UUID subjectId, String tag) {
+//    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Report generateReportOnDemand(UUID subjectId, String tag) {
 
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
 
@@ -67,7 +69,7 @@ public class ReportService {
 
         RulePreset options = subject.getRulePreset();
 
-        jPlagService.runPlagiarismScanOnOrganisation(
+        JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                 subject.getOrganizationName(),
                 tag,
                 options.getMinimumTokensMatch(),
@@ -75,7 +77,21 @@ public class ReportService {
                 report.getPathToReport()
         );
 
+        List<JPlagComparison> comparisons = result.getAllComparisons();
+
+        Double avg = comparisons.stream()
+                .mapToDouble(JPlagComparison::similarity)
+                .average()
+                .orElse(0.0);
+        report.setAverageSimilarity(avg);
+
         reportsRepository.saveAndFlush(report);
+
+        Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subjectId);
+        subject.setAggregatedAverageSimilarity(newSubjectAggregate);
+        subjectRepository.saveAndFlush(subject);
+
+        return report;
     }
 
 

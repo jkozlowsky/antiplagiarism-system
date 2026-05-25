@@ -3,6 +3,7 @@ import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.exceptions.ExitException;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -77,7 +78,8 @@ class JPlagServiceTest {
         String orgName = "TestOrg";
         String tag = "v1.0";
 
-        String reportPath = "/this/directory/does/not/exist/report.zip";
+        String reportPath = System.getProperty("user.dir");
+
         JPlagResult mockResult = mock(JPlagResult.class);
 
         try (MockedStatic<JPlag> mockedJPlag = mockStatic(JPlag.class)) {

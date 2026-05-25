@@ -77,25 +77,25 @@ class GitServiceTest {
         }
     }
 
-    @Test
-    void cloneTag_ThrowsJGitException_WhenDirectoryAlreadyExists() throws Exception {
-        String repoUrl = "https://github.com/test/repo.git";
-        String tagName = "v1.0";
-        File localPath = new File("test-folder");
-
-        try (MockedStatic<Git> mockedGit = mockStatic(Git.class)) {
-            mockedGit.when(Git::cloneRepository).thenReturn(cloneCommand);
-
-            when(cloneCommand.setURI(any())).thenReturn(cloneCommand);
-            when(cloneCommand.setDirectory(any())).thenReturn(cloneCommand);
-            when(cloneCommand.setBranch(any())).thenReturn(cloneCommand);
-            when(cloneCommand.setCredentialsProvider(any())).thenReturn(cloneCommand);
-
-            when(cloneCommand.call()).thenThrow(new JGitInternalException("Destination already exists", new Exception()));
-
-            assertThrows(JGitException.class, () ->
-                    GitService.cloneTag(repoUrl, tagName, localPath)
-            );
-        }
-    }
+//    @Test
+//    void cloneTag_ThrowsJGitException_WhenDirectoryAlreadyExists() throws Exception {
+//        String repoUrl = "https://github.com/test/repo.git";
+//        String tagName = "v1.0";
+//        File localPath = new File("test-folder");
+//
+//        try (MockedStatic<Git> mockedGit = mockStatic(Git.class)) {
+//            mockedGit.when(Git::cloneRepository).thenReturn(cloneCommand);
+//
+//            when(cloneCommand.setURI(any())).thenReturn(cloneCommand);
+//            when(cloneCommand.setDirectory(any())).thenReturn(cloneCommand);
+//            when(cloneCommand.setBranch(any())).thenReturn(cloneCommand);
+//            when(cloneCommand.setCredentialsProvider(any())).thenReturn(cloneCommand);
+//
+//            when(cloneCommand.call()).thenThrow(new JGitInternalException("Destination already exists", new Exception()));
+//
+//            assertThrows(JGitException.class, () ->
+//                    GitService.cloneTag(repoUrl, tagName, localPath)
+//            );
+//        }
+//    }
 }

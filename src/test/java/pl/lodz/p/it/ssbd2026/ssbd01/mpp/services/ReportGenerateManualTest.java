@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
@@ -25,10 +26,10 @@ public class ReportGenerateManualTest extends BaseTestSetup {
     void testGenerateReport() throws IOException, InterruptedException {
         Subject subject = subjectRepository.findAll().get(0);
 
-        reportService.generateReportOnDemand(subject.getId(), "v1");
-        File reportDir = new File("reports/report_" + "A");
+        Report report = reportService.generateReportOnDemand(subject.getId(), "v1");
+        File reportDir = new File(report.getPathToReport());
 
-        String reportPath = reportDir.getAbsolutePath() + ".jplag";
+        String reportPath = reportDir.getAbsolutePath();
         String jplagJarPath = "tools/jplag-6.3.0-jar-with-dependencies.jar";
 
         if (System.getenv("CI") == null) {

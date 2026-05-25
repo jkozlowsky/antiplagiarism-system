@@ -25,6 +25,9 @@ public class Report extends AbstractEntity {
     @Column(name = "tag", nullable = false, length = TagConsts.TAG_LENGTH)
     private String tag;
 
+    @Column(name = "average_similarity", nullable = false)
+    private Double averageSimilarity;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "report_repository",

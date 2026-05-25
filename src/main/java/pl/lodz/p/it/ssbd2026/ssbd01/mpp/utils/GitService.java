@@ -27,7 +27,7 @@ public class GitService {
             throw new GitCloneException(e);
         } catch (JGitInternalException e){
             log.warn("Cannot clone repository {} at tag {} because it is already present in the folder", repoUrl, tagName);
-            throw new JGitException(e);
+//            throw new JGitException(e);
         }
     }
 

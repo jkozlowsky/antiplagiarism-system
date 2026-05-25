@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.MPP02;
 
+import de.jplag.JPlagResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -49,7 +50,6 @@ public class GenerateReportServiceTest {
 
     @Test
     void generateReportOnDemand_Success() {
-        // 1. Setup Mock Data
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
         String orgName = "TestOrg";
@@ -63,13 +63,24 @@ public class GenerateReportServiceTest {
         subject.setRulePreset(rulePreset);
 
         GiteaRepoDTO validRepo = new GiteaRepoDTO("test-repo", "url1", false);
-        GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo", "url2", true); // Should be filtered out
+        GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo", "url2", true);
 
         List<Repository> dbRepositories = List.of(new Repository(), new Repository());
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(giteaService.getRepositoriesFromOrganization(orgName)).thenReturn(List.of(validRepo, templateRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subjectId)).thenReturn(dbRepositories);
+
+        JPlagResult mockResult = mock(JPlagResult.class);
+        when(mockResult.getAllComparisons()).thenReturn(List.of());
+
+        when(jPlagService.runPlagiarismScanOnOrganisation(
+                eq(orgName),
+                eq(tag),
+                eq(12),
+                eq(true),
+                anyString()
+        )).thenReturn(mockResult);
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
             reportService.generateReportOnDemand(subjectId, tag);
@@ -81,14 +92,6 @@ public class GenerateReportServiceTest {
                     ), times(1)
             );
         }
-
-        verify(jPlagService).runPlagiarismScanOnOrganisation(
-                eq(orgName),
-                eq(tag),
-                eq(12),
-                eq(true),
-                anyString()
-        );
 
         verify(reportsRepository).saveAndFlush(reportCaptor.capture());
         Report savedReport = reportCaptor.getValue();
@@ -126,6 +129,16 @@ public class GenerateReportServiceTest {
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(giteaService.getRepositoriesFromOrganization("TestOrg")).thenReturn(List.of(templateRepo));
+        JPlagResult mockResult = mock(JPlagResult.class);
+        when(mockResult.getAllComparisons()).thenReturn(List.of());
+
+        when(jPlagService.runPlagiarismScanOnOrganisation(
+                eq("TestOrg"),
+                eq(tag),
+                eq(null),
+                eq(null),
+                anyString()
+        )).thenReturn(mockResult);
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
             reportService.generateReportOnDemand(subjectId, tag);
