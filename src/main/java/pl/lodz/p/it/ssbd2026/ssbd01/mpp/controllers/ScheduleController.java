@@ -31,6 +31,12 @@ public class ScheduleController  {
 
     @GetMapping("/subject/{subjectId}")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Pobierz harmonogramy dla przedmiotu", description = "Zwraca listę harmonogramów dla wybranego przedmiotu")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista harmonogramów została pobrana pomyślnie"),
+            @ApiResponse(responseCode = "401", description = "Użytkownik nie jest uwierzytelniony"),
+            @ApiResponse(responseCode = "403", description = "Użytkownik nie ma uprawnień do tego przedmiotu (nieodpowiednia rola lub brak przypisania do przedmiotu)")
+    })
     public List<ScheduleDTO> getSchedules(@PathVariable UUID subjectId) {
         return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
     }
