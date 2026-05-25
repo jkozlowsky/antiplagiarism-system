@@ -61,4 +61,29 @@ public class RequestFunctions {
                 .body()
                 .asString();
     }
+
+    public String sendPutRequest(String body, int expectedStatusCode, String url, Headers headers) {
+        return RestAssured.given()
+                .headers(headers)
+                .body(body)
+                .when()
+                .put(url)
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .asString();
+    }
+
+    public String sendDeleteRequest(int expectedStatusCode, String url, Headers headers) {
+        return RestAssured.given()
+                .headers(headers)
+                .when()
+                .delete(url)
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .asString();
+    }
 }

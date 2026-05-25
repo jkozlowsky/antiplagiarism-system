@@ -51,3 +51,10 @@ secrets/
 *.http
 .DS_Store
 
+repos/
+reports/
+
+# Gitea
+gitea-data/
+gitea-config/
+gitea-postgresql/

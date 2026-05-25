@@ -25,6 +25,12 @@ public class RulePreset extends AbstractEntity {
     @Column(name = "student_ticket_count", nullable = false)
     private Integer studentTicketCount;
 
+    @Column(name = "minimum_tokens_match", nullable = false)
+    private Integer minimumTokensMatch;
+
+    @Column(name = "normalization", nullable = false)
+    private Boolean enableNormalization;
+
     @Column(name = "is_preset", nullable = false)
     private Boolean isPreset;
 
@@ -34,7 +40,4 @@ public class RulePreset extends AbstractEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
-
-
-
 }
