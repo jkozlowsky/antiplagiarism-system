@@ -1,7 +1,10 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
@@ -19,12 +22,12 @@ public class RuleController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
     @PostMapping("/subject/{subjectId}")
-    public void createRule(@PathVariable UUID subjectId, @RequestBody Object ruleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void createRulePreset(@PathVariable UUID subjectId,
+                                 @Valid @RequestBody CreateRulePresetDTO ruleDto) {
+        ruleService.createRulePreset(subjectId, ruleDto);
     }
-
     
     @PutMapping("/{ruleId}")
     public void updateRule(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
