@@ -49,7 +49,7 @@ public class ReportGenerateManualTest extends BaseTestSetup {
         ReportDTO report = objectMapper.readValue(result, ReportDTO.class);
 
 //        Report report = reportService.generateReportOnDemand(subject.getId(), "v1");
-        File reportDir = new File(report.path_to_report());
+        File reportDir = new File(""/*report.path_to_report()*/);
 
         String reportPath = reportDir.getAbsolutePath();
         String jplagJarPath = "tools/jplag-6.3.0-jar-with-dependencies.jar";
