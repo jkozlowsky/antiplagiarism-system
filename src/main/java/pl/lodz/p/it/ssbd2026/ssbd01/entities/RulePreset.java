@@ -40,7 +40,4 @@ public class RulePreset extends AbstractEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
-
-
-
 }
