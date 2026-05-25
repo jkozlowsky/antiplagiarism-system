@@ -1,10 +1,13 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -13,27 +16,28 @@ import java.util.UUID;
 @MethodCallLogged
 public class RuleController  {
     private final RuleService ruleService;
-    
-    @GetMapping("/subject/{subjectId}")
-    public void getRules(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @GetMapping("/templates")
+    public List<RulePresetDTO> getRulePresets() {
+        return ruleService.getRulePresetsTemplates();
     }
 
     
     @PostMapping("/subject/{subjectId}")
-    public void createRule(@PathVariable UUID subjectId, @RequestBody Object ruleDto) {
+    public void createRulePreset(@PathVariable UUID subjectId, @RequestBody Object ruleDto) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     
     @PutMapping("/{ruleId}")
-    public void updateRule(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
+    public void updateRulePreset(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     
     @DeleteMapping("/{ruleId}")
-    public void deleteRule(@PathVariable UUID ruleId) {
+    public void deleteRulePreset(@PathVariable UUID ruleId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }
