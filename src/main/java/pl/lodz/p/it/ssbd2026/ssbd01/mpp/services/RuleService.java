@@ -62,10 +62,8 @@ public class RuleService {
             throw new RulePresetInvalidPartametersException();
         }
 
-        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName());
-        if (raportLevel == null) {
-            throw new RaportLevelDictNotFoundException();
-        }
+        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName())
+                .orElseThrow(RaportLevelDictNotFoundException::new);
 
         newPreset.setRaportLevel(raportLevel);
         newPreset.setStudentTicketCount(dto.studentTicketCount());

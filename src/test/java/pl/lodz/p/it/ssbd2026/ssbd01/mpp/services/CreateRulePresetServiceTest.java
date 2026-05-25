@@ -15,6 +15,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidParta
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,7 +39,7 @@ public class CreateRulePresetServiceTest {
         CreateRulePresetDTO dto = new CreateRulePresetDTO(10, "FULL_VIEW", 15, false);
         RaportLevelDict raportLevel = new RaportLevelDict();
 
-        when(raportLevelDictRepository.findByName("FULL_VIEW")).thenReturn(raportLevel);
+        when(raportLevelDictRepository.findByName("FULL_VIEW")).thenReturn(Optional.of(raportLevel));
 
         ruleService.createRulePreset(dto);
 
@@ -59,7 +61,7 @@ public class CreateRulePresetServiceTest {
         CreateRulePresetDTO dto = new CreateRulePresetDTO(0, "RESTRICTED_VIEW", 1, true);
         RaportLevelDict raportLevel = new RaportLevelDict();
 
-        when(raportLevelDictRepository.findByName("RESTRICTED_VIEW")).thenReturn(raportLevel);
+        when(raportLevelDictRepository.findByName("RESTRICTED_VIEW")).thenReturn(Optional.of(raportLevel));
 
         ruleService.createRulePreset(dto);
 
@@ -95,7 +97,7 @@ public class CreateRulePresetServiceTest {
     public void shouldThrowExceptionWhenRaportLevelMissing() {
         CreateRulePresetDTO dto = new CreateRulePresetDTO(10, "INVALID_LEVEL", 20, false);
 
-        when(raportLevelDictRepository.findByName("INVALID_LEVEL")).thenReturn(null);
+        when(raportLevelDictRepository.findByName("INVALID_LEVEL")).thenReturn(Optional.empty());
 
         assertThrows(RaportLevelDictNotFoundException.class, () -> ruleService.createRulePreset(dto));
         verify(ruleRepository, never()).save(any());
