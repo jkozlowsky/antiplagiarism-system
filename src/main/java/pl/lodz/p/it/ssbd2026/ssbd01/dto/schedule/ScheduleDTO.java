@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,7 +14,7 @@ public record ScheduleDTO(
         @NotNull(groups = OnCreate.class)
         UUID id,
         @NotNull(groups = OnCreate.class)
-        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
         LocalDateTime scheduleDateTime,
         @NotNull(groups = OnCreate.class)
         @NotBlank(groups = {OnCreate.class, OnUpdate.class})

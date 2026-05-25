@@ -1,10 +1,14 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -13,10 +17,12 @@ import java.util.UUID;
 @MethodCallLogged
 public class ScheduleController  {
     private final ScheduleService scheduleService;
-    
+    private final ScheduleMapper scheduleMapper;
+
     @GetMapping("/subject/{subjectId}")
-    public void getSchedules(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @ResponseStatus(HttpStatus.OK)
+    public List<ScheduleDTO> getSchedules(@PathVariable UUID subjectId) {
+        return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
     }
 
     
