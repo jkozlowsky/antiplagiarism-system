@@ -1,37 +1,54 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
 @MethodCallLogged
-public class ScheduleController  {
+public class ScheduleController {
     private final ScheduleService scheduleService;
-    
+
     @GetMapping("/subject/{subjectId}")
     public void getSchedules(@PathVariable UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     @PostMapping("/subject/{subjectId}")
     public void createSchedule(@PathVariable UUID subjectId, @RequestBody Object scheduleDto) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    
+
     @PutMapping("/{scheduleId}")
-    public void updateSchedule(@PathVariable UUID scheduleId, @RequestBody Object scheduleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Operation(summary = "Edycja harmonogramu", description = "Prowadzący może zmianić date skanowania repozytoriów.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Harmonogram został pomyślnie zaktualizowany"),
+            @ApiResponse(responseCode = "400", description = "Wprowadzono nieprawidłowe dane"),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do edycji harmonogramu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono harmonogramu")
+    })
+    public ResponseEntity<Void> updateSchedule(@PathVariable UUID scheduleId, @Valid @RequestBody UpdateScheduleDTO scheduleDto, Principal principal) {
+        scheduleService.updateSchedule(scheduleId, scheduleDto, principal.getName());
+        return ResponseEntity.noContent().build();
     }
 
-    
+
     @DeleteMapping("/{scheduleId}")
     public void deleteSchedule(@PathVariable UUID scheduleId) {
         throw new UnsupportedOperationException("Not implemented yet");
