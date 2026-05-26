@@ -74,6 +74,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
             subject.setEdition("2026L");
             subject.setGiteaURL("http://gitea.example.com/PAS");
             subject.setArchived(false);
+            subject.setOrganizationName("PAS");
             subjectTestRepository.save(subject);
 
             SubjectAssignment assignment = new SubjectAssignment();

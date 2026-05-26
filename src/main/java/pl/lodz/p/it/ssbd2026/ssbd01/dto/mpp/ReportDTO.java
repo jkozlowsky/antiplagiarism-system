@@ -10,6 +10,5 @@ public record ReportDTO(
     LocalDateTime created_at,
     String created_by,
     String subject_name
-//    String path_to_report
 ) {
 }

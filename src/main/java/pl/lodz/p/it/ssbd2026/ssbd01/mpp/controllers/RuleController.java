@@ -6,12 +6,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
@@ -23,7 +26,7 @@ import java.util.UUID;
 @RequestMapping("/rules")
 @RequiredArgsConstructor
 @MethodCallLogged
-public class RuleController  {
+public class RuleController {
     private final RuleService ruleService;
 
     @Operation(summary = "Pobierz listę szablonów reguł", description = "Pobiera listę wszystkich dostępnych szablonów reguł.")
@@ -39,16 +42,38 @@ public class RuleController  {
         return ruleService.getRulePresetsTemplates();
     }
 
-    
-    @PostMapping("/subject/{subjectId}")
-    public void createRulePreset(@PathVariable UUID subjectId, @RequestBody Object ruleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Operation(
+            summary = "Utworzenie predefiniowanego szablonu reguł",
+            description = "Tworzy nowy, globalny szablon konfiguracji reguł, który może być później wykorzystany jako podstawa dla przedmiotów."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Szablon reguł został pomyślnie utworzony"),
+            @ApiResponse(responseCode = "400", description = "Nieprawidłowe parametry żądania lub brak wymaganych pól"),
+            @ApiResponse(responseCode = "403", description = "Odmowa dostępu - wymagana rola NAUCZYCIEL (TEACHER)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono słownika dla poziomu raportów")
+    })
+    @PostMapping("/templates")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void createRulePresetTemplate(
+            @Valid @RequestBody CreateRulePresetDTO ruleDto) {
+        ruleService.createRulePreset(ruleDto);
     }
 
-    
+    @Operation(summary = "Aktualizuj regułę", description = "Modyfikuje istniejącą regułę na podstawie przekazanego ID oraz nowych danych. Wymaga uprawnień nauczyciela.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reguła zaktualizowana pomyślnie"),
+            @ApiResponse(responseCode = "400", description = "Niepoprawne dane wejściowe", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono reguły o podanym ID lub wskazany poziom raportu nie istnieje", content = @Content(mediaType = "text/plain"))
+    })
     @PutMapping("/{ruleId}")
-    public void updateRulePreset(@PathVariable UUID ruleId, @RequestBody Object ruleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void updateRulePreset(
+            @PathVariable UUID ruleId,
+            @Valid @RequestBody UpdateRulePresetDTO ruleDto) {
+
+        ruleService.updateRulePreset(ruleId, ruleDto);
     }
 
     @Operation(summary = "Usuwanie presetu reguł (MPP.13)", description = "Pozwala Prowadzącemu na usunięcie całego presetu reguł powiązanego z przedmiotem wraz ze wszystkimi powiązanymi harmonogramami.")
