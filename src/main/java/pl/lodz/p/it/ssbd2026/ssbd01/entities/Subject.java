@@ -6,6 +6,7 @@ import lombok.Setter;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.SubjectConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.AbstractEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -40,15 +41,15 @@ public class Subject extends AbstractEntity {
     private Double aggregatedAverageSimilarity;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    private List<Report> reportList;
+    private List<Report> reportList = new ArrayList<>();
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    private List<Repository> repositoryList;
+    private List<Repository> repositoryList = new ArrayList<>();
 
     @OneToOne(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private RulePreset rulePreset;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    private List<SubjectAssignment> subjectAssignmentList;
+    private List<SubjectAssignment> subjectAssignmentList = new ArrayList<>();
 
 }

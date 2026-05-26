@@ -1,13 +1,17 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
@@ -36,9 +40,19 @@ public class SubjectController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Operation(summary = "Utwórz nowy przedmiot (MPP.7)", description = "Tworzy nowy przedmiot i przypisuje do niego aktualnie zalogowanego prowadzącego.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Przedmiot został poprawnie utworzony"),
+            @ApiResponse(responseCode = "400", description = "Błąd walidacji danych wejściowych", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "403", description = "Brak odpowiednich uprawnień", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "Użytkownik nie posiada aktywnego poziomu dostępu Nauczyciel", content = @Content(mediaType = "application/json"))
+    })
     @PostMapping
-    public void createSubject(@RequestBody Object subjectDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createSubject(@Validated(OnCreate.class) @RequestBody SubjectDTO subjectDto, Principal principal) {
+        String userLogin = principal.getName();
+        subjectService.createSubject(subjectDto, userLogin);
     }
 
     @PutMapping("/{subjectId}")
