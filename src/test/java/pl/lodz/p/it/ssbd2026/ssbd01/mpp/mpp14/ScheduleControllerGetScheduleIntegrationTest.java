@@ -7,8 +7,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.specification.FilterableRequestSpecification;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -53,8 +52,9 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     private Headers teacherHeaders;
     private Headers otherTeacherHeaders;
     private UUID subjectId;
+    private UUID createdScheduleId;
 
-    @BeforeEach
+    @BeforeAll
     public void setUpScheduleTest() {
         String token = jwtAuthService.generateToken("jkowalski", List.of(AccountConsts.ROLE_TEACHER), false);
         teacherHeaders = new Headers(new Header("Authorization", "Bearer " + token));
@@ -74,9 +74,21 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
             schedule.setTag("v1.0");
             schedule.setRulePreset(rulePreset);
 
-            scheduleTestRepository.save(schedule);
+            Schedule savedSchedule = scheduleTestRepository.save(schedule);
+            createdScheduleId = savedSchedule.getId();
             return null;
         });
+    }
+
+    @AfterAll
+    public void tearDownScheduleTest() {
+        if (createdScheduleId != null) {
+            TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+            txTemplate.execute(_ -> {
+                scheduleTestRepository.deleteById(createdScheduleId);
+                return null;
+            });
+        }
     }
 
     @Test
