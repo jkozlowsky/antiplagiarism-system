@@ -11,6 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNoAccessException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
@@ -41,6 +51,9 @@ public class RuleService {
     private final RaportLevelDictRepository raportLevelDictRepository;
     private final RuleMapper ruleMapper;
     private final RaportLevelRepository raportLevelRepository;
+
+    private final VersionHashService versionHashService;
+    private final SubjectAssignmentRepository subjectAssignmentRepository;
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
@@ -90,7 +103,24 @@ public class RuleService {
         ruleRepository.saveAndFlush(rulePreset);
     }
 
-    public void deleteRulePreset(UUID ruleId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    public void deleteRulePreset(UUID ruleId, String versionHash) {
+
+        RulePreset rulePreset = ruleRepository.findById(ruleId)
+                .orElseThrow(RulePresetNotFoundException::new);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(ruleId, rulePreset.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        if (!Boolean.TRUE.equals(rulePreset.getIsPreset())) {
+            throw new RulePresetNoAccessException();
+        }
+
+        ruleRepository.delete(rulePreset);
+        ruleRepository.flush();
     }
 }

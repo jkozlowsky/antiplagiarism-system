@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
@@ -16,6 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,8 +76,20 @@ public class RuleController {
         ruleService.updateRulePreset(ruleId, ruleDto);
     }
 
+    @Operation(summary = "Usuwanie globalnego szablonu reguł (MPP.13)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Szablon reguł został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego szablonu reguł"),
+            @ApiResponse(responseCode = "409", description = "Dane zostały zmodyfikowane przez innego użytkownika")
+    })
     @DeleteMapping("/{ruleId}")
-    public void deleteRulePreset(@PathVariable UUID ruleId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteRulePreset(
+            @PathVariable UUID ruleId,
+            @RequestHeader("If-Match") String ifMatch) {
+
+        ruleService.deleteRulePreset(ruleId, ifMatch);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -50,8 +50,19 @@ public class ReportController {
 
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<ReportDTO> getAllReports(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
-        return reportService.getAllReports(subjectId, pageable)
+    public Page<ReportDTO> getAllReportsForSubject(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
+        return reportService.getAllReportsForSubject(subjectId, pageable)
+                .map(reportMapper::toDto);
+    }
+
+    @Operation(summary = "Pobierz swoje raporty", description = "Pobierz listę raportów dla swojego konta użytkownika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Zwrócono listę raportów"),
+    })
+    @GetMapping("/teacher")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Page<ReportDTO> getAllReportsForTeacher(Principal principal, @ParameterObject Pageable pageable) {
+        return reportService.getAllReportsForTeacher(principal.getName(), pageable)
                 .map(reportMapper::toDto);
     }
 
@@ -86,10 +97,16 @@ public class ReportController {
     public void getReportDetails(@PathVariable UUID reportId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
-    
+
+    @Operation(summary = "Usuń raport", description = "Usuwa raporty z bazy oraz pliki z maszyny")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usunięto raport"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono raportu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Podany raport nie istnieje."))),
+    })
     @DeleteMapping("/{reportId}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void deleteReport(@PathVariable UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        reportService.deleteReport(reportId);
     }
 
     @GetMapping("/student/{studentId}")

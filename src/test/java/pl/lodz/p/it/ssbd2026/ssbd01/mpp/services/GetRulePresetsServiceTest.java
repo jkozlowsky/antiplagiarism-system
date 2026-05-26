@@ -44,7 +44,7 @@ public class GetRulePresetsServiceTest {
         template.setRaportLevel(raportLevel);
         template.setStudentTicketCount(10);
 
-        RulePresetDTO dto = new RulePresetDTO(template.getId(), "FULL_VIEW", 10);
+        RulePresetDTO dto = new RulePresetDTO(template.getId(), "FULL_VIEW", 10, 1, true);
 
         when(ruleRepository.findAllByIsPreset(true)).thenReturn(List.of(template));
         when(ruleMapper.toRuleDTO(template)).thenReturn(dto);

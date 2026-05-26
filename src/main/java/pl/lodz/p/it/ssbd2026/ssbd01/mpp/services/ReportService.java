@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 import de.jplag.JPlagComparison;
 import de.jplag.JPlagResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -20,6 +21,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
@@ -28,16 +30,19 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JplagReportParser;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @MethodCallLogged
@@ -104,7 +109,7 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<Report> getAllReports(UUID subjectId, Pageable pageable) {
+    public Page<Report> getAllReportsForSubject(UUID subjectId, Pageable pageable) {
         return reportsRepository.findAllBySubjectId(subjectId, pageable);
     }
 
@@ -180,6 +185,10 @@ public class ReportService {
                 report.getCreatedAt(),
                 filteredMatches
         );
+
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
+        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
     }
 
 
@@ -187,8 +196,22 @@ public class ReportService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void deleteReport(UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
+        Path filePath = Path.of(report.getPathToReport());
+
+        try {
+            boolean deleted = Files.deleteIfExists(filePath);
+            if (!deleted) {
+                log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete the report file physically", e);
+        }
+
+        reportsRepository.delete(report);
     }
 
     public void generateReportBySchedule() {
