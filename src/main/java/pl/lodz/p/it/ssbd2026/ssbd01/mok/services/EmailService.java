@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,10 +10,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.i18n.Translator;
 
+import java.util.List;
+
 
 @RequiredArgsConstructor
 @Service
 @PreAuthorize("permitAll()")
+@Slf4j
 public class EmailService {
     private final JavaMailSender mailSender;
 
@@ -21,8 +25,18 @@ public class EmailService {
 
     private final Translator translator;
 
+    private static final List<String> BYPASS_EMAILS = List.of(
+            "test_admin@ssbd.edu.pl",
+            "test_teacher@ssbd.edu.pl",
+            "test_student@ssbd.edu.pl"
+    );
+
     @PreAuthorize("permitAll()")
     public void sendEmail(String toAddress, String subject, String content) {
+        if (toAddress != null && BYPASS_EMAILS.contains(toAddress)) {
+            log.info("[DRY BYPASS] Pominięto fizyczne wysyłanie wiadomości e-mail dla konta testowego: {}", toAddress);
+            return;
+        }
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("ssbd01.2026@gmail.com");
         message.setTo(toAddress);
