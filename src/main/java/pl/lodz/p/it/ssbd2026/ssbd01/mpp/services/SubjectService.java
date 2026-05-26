@@ -82,6 +82,7 @@ public class SubjectService {
 
         Subject subject = new Subject();
         subject.setName(subjectDto.name());
+        subject.setOrganizationName(subjectDto.organizationName());
         subject.setEdition(subjectDto.edition());
         subject.setSubjectDescription(subjectDto.subjectDescription());
         subject.setGiteaURL(subjectDto.giteaURL());

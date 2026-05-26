@@ -28,6 +28,11 @@ public record SubjectDTO(
     @Size(max = SubjectConsts.SUBJECT_NAME_LENGTH, groups = {OnCreate.class, OnUpdate.class})
     String name,
 
+    @Schema(description = "Nazwa organizacji na serwerze Gitea", example = "SSBD_64", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(groups = OnCreate.class)
+    @Size(max = SubjectConsts.SUBJECT_NAME_LENGTH, groups = {OnCreate.class, OnUpdate.class})
+    String organizationName,
+
     @Schema(description = "Edycja (rok)", example = "2026", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(groups = OnCreate.class)
     @Size(max = SubjectConsts.SUBJECT_EDITION_LENGTH, groups = {OnCreate.class, OnUpdate.class})
