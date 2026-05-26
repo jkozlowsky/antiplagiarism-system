@@ -67,10 +67,16 @@ public class ReportController {
     public void getReportDetails(@PathVariable UUID reportId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
-    
+
+    @Operation(summary = "Usuń raport", description = "Usuwa raporty z bazy oraz pliki z maszyny")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usunięto raport"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono raportu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Podany raport nie istnieje."))),
+    })
     @DeleteMapping("/{reportId}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void deleteReport(@PathVariable UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        reportService.deleteReport(reportId);
     }
 
     @GetMapping("/student/{studentId}")
