@@ -24,6 +24,7 @@ public interface ReportsRepository extends AbstractRepository<Report> {
     Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
 
     @Query("SELECT DISTINCT r FROM Report r " +
+            "JOIN FETCH r.subject " +
             "JOIN r.repositoryList repo " +
             "JOIN repo.studentList s " +
             "WHERE s.account.login = :login " +
