@@ -8,10 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 
 import java.util.List;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
@@ -31,10 +33,12 @@ class SubjectControllerIT extends BaseTestSetup {
         teacherToken = jwtAuthService.generateToken("jkowalski", List.of("TEACHER"), false);
         studentToken = jwtAuthService.generateToken("anowak", List.of("STUDENT"), false);
 
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true);
+
         validDto = new SubjectDTO(
-                null, null, "Inżynieria Oprogramowania", "elo zelo","2026",
+                null, null, "Inżynieria Oprogramowania", "elo zelo", "2026",
                 "Opis przedmiotu", "https://gitea.example.com/io",
-                null, null, null, null, null
+                null, null, null, null, null, null, rules
         );
     }
 
@@ -45,7 +49,7 @@ class SubjectControllerIT extends BaseTestSetup {
                 .contentType(ContentType.JSON)
                 .body(validDto)
                 .when()
-                .post("/api/api/subjects")
+                .post("/api/subjects")
                 .then()
                 .statusCode(HttpStatus.CREATED.value());
     }
@@ -55,7 +59,7 @@ class SubjectControllerIT extends BaseTestSetup {
         SubjectDTO invalidDto = new SubjectDTO(
                 null, null, "", "", "",
                 "Opis", "invalid_url",
-                null, null, null, null, null
+                null, null, null, null, null, null, null
         );
 
         given()
@@ -63,7 +67,7 @@ class SubjectControllerIT extends BaseTestSetup {
                 .contentType(ContentType.JSON)
                 .body(invalidDto)
                 .when()
-                .post("/api/api/subjects")
+                .post("/api/subjects")
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value());
     }
@@ -75,7 +79,7 @@ class SubjectControllerIT extends BaseTestSetup {
                 .contentType(ContentType.JSON)
                 .body(validDto)
                 .when()
-                .post("/api/api/subjects")
+                .post("/api/subjects")
                 .then()
                 .statusCode(HttpStatus.FORBIDDEN.value());
     }
