@@ -22,4 +22,11 @@ public interface ReportsRepository extends AbstractRepository<Report> {
 
     @EntityGraph(attributePaths = {"subject"})
     Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
+
+    @Query("SELECT DISTINCT r FROM Report r " +
+            "JOIN r.repositoryList repo " +
+            "JOIN repo.studentList s " +
+            "WHERE s.account.login = :login " +
+            "AND r.subject.rulePreset.raportLevel.name != 'NOTHING'")
+    List<Report> findVisibleReportsForStudent(@Param("login") String login);
 }
