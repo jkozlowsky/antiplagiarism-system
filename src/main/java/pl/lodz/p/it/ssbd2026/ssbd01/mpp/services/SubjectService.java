@@ -19,9 +19,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
@@ -31,6 +34,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 
 import java.util.ArrayList;
@@ -58,6 +62,7 @@ public class SubjectService {
     private final RestClient giteaClient;
     private final SubjectAssignmentRepository subjectAssignmentRepository;
     private final TeacherRepository teacherRepository;
+    private final RaportLevelRepository raportLevelRepository;
 
     public void syncSubjectWithGitea(UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -80,6 +85,9 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
+        RaportLevelDict defaultRaportLevel = raportLevelRepository.findByName("FULL_VIEW")
+                .orElseThrow(RaportLevelDictNotFoundException::new);
+
         Subject subject = new Subject();
         subject.setName(subjectDto.name());
         subject.setOrganizationName(subjectDto.organizationName());
@@ -87,9 +95,17 @@ public class SubjectService {
         subject.setSubjectDescription(subjectDto.subjectDescription());
         subject.setGiteaURL(subjectDto.giteaURL());
         subject.setArchived(false);
-        subject.setRepositoryList(new ArrayList<>());
-        subject.setReportList(new ArrayList<>());
-        subject.setSubjectAssignmentList(new ArrayList<>());
+
+        RulePreset defaultPreset = new RulePreset();
+        defaultPreset.setRaportLevel(defaultRaportLevel);
+        defaultPreset.setStudentTicketCount(3);
+        defaultPreset.setMinimumTokensMatch(10);
+        defaultPreset.setEnableNormalization(true);
+        defaultPreset.setIsPreset(false);
+        defaultPreset.setSubject(subject);
+        defaultPreset.setScheduleList(new ArrayList<>());
+
+        subject.setRulePreset(defaultPreset);
 
         subjectRepository.saveAndFlush(subject);
 
