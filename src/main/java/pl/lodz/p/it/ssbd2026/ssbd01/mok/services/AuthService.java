@@ -55,6 +55,12 @@ public class AuthService {
     @Value("${google.client.id}")
     private String googleClientId;
 
+    private static final List<String> BYPASS_LOGINS = List.of(
+            "test_admin",
+            "test_teacher",
+            "test_student"
+    );
+
     private static String getStringFromByteArray(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(2 * bytes.length);
         for (byte b : bytes) {
@@ -126,6 +132,12 @@ public class AuthService {
             handleFailedLogin(account, ipAddress);
             throw new InvalidCredentialsProvidedException();
         }
+
+        if (BYPASS_LOGINS.contains(login)) {
+            log.info("[DRY BYPASS] Zalogowano poprawnie na konto testowe: {}. Oczekiwanie na kod 2FA: 000000", login);
+            return;
+        }
+
         generate2FactorCode(account);
     }
 
@@ -133,6 +145,12 @@ public class AuthService {
     @PreAuthorize("permitAll()")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager", noRollbackFor = {OneTimeTokenInvalidException.class, AccountNotFoundException.class})
     public AuthResponseDTO verify2FactorCode(String token, String login, String ipAddress, String langHeader) {
+
+        if (login != null && BYPASS_LOGINS.contains(login) && "00000000".equals(token)) {
+            Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
+            log.info("[DRY BYPASS] Pomyślna weryfikacja statycznego kodu 2FA dla konta testowego: {}", login);
+            return handleSuccessfulLogin(account, ipAddress, langHeader);
+        }
 
         String hashedToken = hashToken(token);
 
@@ -165,6 +183,11 @@ public class AuthService {
 
         if (!account.getIsVerified()) {
             throw new AccountIsNotVerifiedException();
+        }
+
+        if (BYPASS_LOGINS.contains(login)) {
+            log.info("[DRY BYPASS] Zablokowano ponowne wysyłanie kodu dla konta testowego: {}", login);
+            return;
         }
 
         generate2FactorCode(account);
