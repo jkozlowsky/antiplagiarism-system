@@ -6,6 +6,7 @@ import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
 import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +90,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
         );
     }
 
+//    @Disabled
     @Test
     @DisplayName("Pomyślne zapisanie preferencji sortowania i stronicowania i wczytanie ich dla zapytań bez parametrów")
     public void shouldRememberPaginationAndSortingPreferences() {

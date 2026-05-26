@@ -12,6 +12,7 @@ import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 
 /**
  * Interceptor odpowiedzialny za logowanie wejścia do metody, przekazanych argumentów,
@@ -72,9 +73,13 @@ public class MethodCallLoggingInterceptor {
             result = joinPoint.proceed();
 
         } catch (Throwable t) {
-            message.append(" | Thrown exception: ").append(t.toString()).append(" - ").append(t.getMessage());
-            ;
-            log.warn(message.toString(), t);
+            message.append(" | Thrown exception: ").append(t.getClass().getSimpleName()).append(" - ").append(t.getMessage());
+
+            if (t instanceof AppBaseException) {
+                log.warn(message.toString());
+            } else {
+                log.error(message.toString(), t);
+            }
             throw t;
         }
 
