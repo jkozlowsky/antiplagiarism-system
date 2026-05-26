@@ -8,11 +8,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
+import java.util.List;
 import java.security.Principal;
 import java.util.UUID;
 
@@ -20,15 +24,24 @@ import java.util.UUID;
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
 @MethodCallLogged
-public class ScheduleController {
+public class ScheduleController  {
     private final ScheduleService scheduleService;
+    private final ScheduleMapper scheduleMapper;
+
 
     @GetMapping("/subject/{subjectId}")
-    public void getSchedules(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Pobierz harmonogramy dla przedmiotu", description = "Zwraca listę harmonogramów dla wybranego przedmiotu")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista harmonogramów została pobrana pomyślnie"),
+            @ApiResponse(responseCode = "401", description = "Użytkownik nie jest uwierzytelniony"),
+            @ApiResponse(responseCode = "403", description = "Użytkownik nie ma uprawnień do tego przedmiotu (nieodpowiednia rola lub brak przypisania do przedmiotu)")
+    })
+    public List<ScheduleDTO> getSchedules(@PathVariable UUID subjectId) {
+        return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
     }
 
-
+    
     @PostMapping("/subject/{subjectId}")
     public void createSchedule(@PathVariable UUID subjectId, @RequestBody Object scheduleDto) {
         throw new UnsupportedOperationException("Not implemented yet");

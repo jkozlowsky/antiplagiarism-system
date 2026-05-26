@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @RequestMapping("/rules")
 @RequiredArgsConstructor
 @MethodCallLogged
-public class RuleController  {
+public class RuleController {
     private final RuleService ruleService;
 
     @Operation(summary = "Pobierz listę szablonów reguł", description = "Pobiera listę wszystkich dostępnych szablonów reguł.")
@@ -38,12 +39,22 @@ public class RuleController  {
         return ruleService.getRulePresetsTemplates();
     }
 
-    
-    @PostMapping("/subject/{subjectId}")
-    public void createRulePreset(@PathVariable UUID subjectId, @RequestBody Object ruleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Operation(
+            summary = "Utworzenie predefiniowanego szablonu reguł",
+            description = "Tworzy nowy, globalny szablon konfiguracji reguł, który może być później wykorzystany jako podstawa dla przedmiotów."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Szablon reguł został pomyślnie utworzony"),
+            @ApiResponse(responseCode = "400", description = "Nieprawidłowe parametry żądania lub brak wymaganych pól"),
+            @ApiResponse(responseCode = "403", description = "Odmowa dostępu - wymagana rola NAUCZYCIEL (TEACHER)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono słownika dla poziomu raportów")
+    })
+    @PostMapping("/templates")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void createRulePresetTemplate(
+            @Valid @RequestBody CreateRulePresetDTO ruleDto) {
+        ruleService.createRulePreset(ruleDto);
     }
-
 
     @Operation(summary = "Aktualizuj regułę", description = "Modyfikuje istniejącą regułę na podstawie przekazanego ID oraz nowych danych. Wymaga uprawnień nauczyciela.")
     @ApiResponses({
@@ -62,7 +73,6 @@ public class RuleController  {
         ruleService.updateRulePreset(ruleId, ruleDto);
     }
 
-    
     @DeleteMapping("/{ruleId}")
     public void deleteRulePreset(@PathVariable UUID ruleId) {
         throw new UnsupportedOperationException("Not implemented yet");
