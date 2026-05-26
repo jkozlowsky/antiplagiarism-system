@@ -128,8 +128,8 @@ public class GlobalExceptionHandler {
      * @param request Obiekt żądania webowego.
      * @return Zwraca status 403 Forbidden z komunikatem o braku uprawnień (możemy go dostosować pod siebie).
      */
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<Object> handleAuthorizationException(AuthorizationDeniedException exception, WebRequest request) {
+    @ExceptionHandler({AuthorizationDeniedException.class, org.springframework.security.access.AccessDeniedException.class})
+    public ResponseEntity<Object> handleAuthorizationException(RuntimeException exception, WebRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: " + exception.getMessage());
@@ -137,6 +137,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body("No access: " + exception.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ValidationErrorResponse handleTypeMismatchException(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e) {
+        ValidationErrorResponse error = new ValidationErrorResponse();
+        error.getViolations().add(
+                new ValidationErrorResponse.Violation(
+                        e.getName(),
+                        "Invalid format for value: " + e.getValue()
+                )
+        );
+        return error;
     }
 
     /**
