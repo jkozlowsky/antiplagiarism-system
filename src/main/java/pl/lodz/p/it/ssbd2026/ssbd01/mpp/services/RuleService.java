@@ -59,7 +59,7 @@ public class RuleService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    public void deleteRulePreset(UUID ruleId, String versionHash, String currentUsername) {
+    public void deleteRulePreset(UUID ruleId, String versionHash) {
 
         RulePreset rulePreset = ruleRepository.findById(ruleId)
                 .orElseThrow(RulePresetNotFoundException::new);
@@ -68,19 +68,10 @@ public class RuleService {
             throw new ConcurrentUpdateException();
         }
 
-        Subject subject = rulePreset.getSubject();
-
-        if (subject == null) {
+        if (!Boolean.TRUE.equals(rulePreset.getIsPreset())) {
             throw new RulePresetNoAccessException();
         }
 
-        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, currentUsername);
-
-        if (!hasPermission) {
-            throw new RulePresetNoAccessException();
-        }
-
-        subject.setRulePreset(null);
         ruleRepository.delete(rulePreset);
         ruleRepository.flush();
     }

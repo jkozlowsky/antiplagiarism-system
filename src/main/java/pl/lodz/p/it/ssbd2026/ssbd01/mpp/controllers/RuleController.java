@@ -51,11 +51,10 @@ public class RuleController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @Operation(summary = "Usuwanie presetu reguł (MPP.13)", description = "Pozwala Prowadzącemu na usunięcie całego presetu reguł powiązanego z przedmiotem wraz ze wszystkimi powiązanymi harmonogramami.")
+    @Operation(summary = "Usuwanie globalnego szablonu reguł (MPP.13)")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Zestaw reguł został pomyślnie usunięty"),
-            @ApiResponse(responseCode = "400", description = "Brak uprawnień do edycji przedmiotu i usuwania reguł"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego zestawu reguł"),
+            @ApiResponse(responseCode = "204", description = "Szablon reguł został pomyślnie usunięty"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego szablonu reguł"),
             @ApiResponse(responseCode = "409", description = "Dane zostały zmodyfikowane przez innego użytkownika")
     })
     @DeleteMapping("/{ruleId}")
@@ -63,10 +62,9 @@ public class RuleController  {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteRulePreset(
             @PathVariable UUID ruleId,
-            @RequestHeader("If-Match") String ifMatch,
-            Principal principal) {
+            @RequestHeader("If-Match") String ifMatch) {
 
-        ruleService.deleteRulePreset(ruleId, ifMatch, principal.getName());
+        ruleService.deleteRulePreset(ruleId, ifMatch);
         return ResponseEntity.noContent().build();
     }
 }
