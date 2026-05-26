@@ -123,7 +123,7 @@ public class ReportService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public StudentReportDetailsDTO getStudentReportDetails(UUID reportId, String login) {
         Report report = reportsRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Raport nie znaleziony")); // ReportNotFoundException
+                .orElseThrow(ReportNotFoundException::new);
 
         boolean hasAccess = report.getRepositoryList().stream()
                 .flatMap(repo -> repo.getStudentList().stream())
@@ -135,7 +135,7 @@ public class ReportService {
 
         String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
 
-        if ("NOTHING".equals(raportLevel)) {
+        if (raportLevel.equals("NOTHING")) {
             throw new SubjectAccessDeniedException();
         }
 
