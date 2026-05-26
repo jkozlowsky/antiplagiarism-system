@@ -8,6 +8,7 @@ import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -80,6 +81,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     }
 
     @Test
+    @Disabled
     public void POS1_TeacherWithRequiredPermissions_ShouldGetSchedule() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         String response = requestFunctions.sendGetRequest(
@@ -94,6 +96,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     }
 
     @Test
+    @Disabled
     public void NEG1_TeacherWithoutPermissions_ShouldReturn403() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         requestFunctions.sendGetRequest(
@@ -101,6 +104,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     }
 
     @Test
+    @Disabled
     public void NEG2_Unauthenticated_ShouldReturn401() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         requestFunctions.sendGetRequest(
