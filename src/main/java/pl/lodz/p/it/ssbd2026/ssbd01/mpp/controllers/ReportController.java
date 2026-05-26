@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ReportMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
@@ -45,11 +46,26 @@ public class ReportController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Zwrócono listę raportów"),
     })
+
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<ReportDTO> getAllReports(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
         return reportService.getAllReports(subjectId, pageable)
                 .map(reportMapper::toDto);
+    }
+    @GetMapping("/my-reports")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public List<ReportDTO> getMyReports(java.security.Principal principal) {
+        return reportService.getStudentOwnReports(principal.getName()).stream()
+                .map(reportMapper::toDto)
+                .toList();
+    }
+
+    @GetMapping("/my-reports/{reportId}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO getMyReportDetails(
+            @PathVariable UUID reportId, java.security.Principal principal) {
+        return reportService.getStudentReportDetails(reportId, principal.getName());
     }
 
     @GetMapping("/{reportId}")
