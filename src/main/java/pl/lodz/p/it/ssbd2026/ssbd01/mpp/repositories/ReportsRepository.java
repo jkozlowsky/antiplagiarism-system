@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -22,4 +21,10 @@ public interface ReportsRepository extends AbstractRepository<Report> {
 
     @EntityGraph(attributePaths = {"subject"})
     Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"subject", "createdBy"})
+    @Query("SELECT r FROM Report r " +
+            "JOIN SubjectAssignment sa ON r.subject.id = sa.subject.id " +
+            "WHERE sa.teacher.account.login = :login")
+    Page<Report> findAllReportsForAssignedTeacherByLogin(@Param("login") String login, Pageable pageable);
 }

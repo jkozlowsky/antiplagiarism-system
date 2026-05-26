@@ -16,7 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
-import java.util.List;
+import java.security.Principal;
 import java.util.UUID;
 
 @RequestMapping("/reports")
@@ -47,8 +47,19 @@ public class ReportController {
     })
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<ReportDTO> getAllReports(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
-        return reportService.getAllReports(subjectId, pageable)
+    public Page<ReportDTO> getAllReportsForSubject(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
+        return reportService.getAllReportsForSubject(subjectId, pageable)
+                .map(reportMapper::toDto);
+    }
+
+    @Operation(summary = "Pobierz swoje raporty", description = "Pobierz listę raportów dla swojego konta użytkownika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Zwrócono listę raportów"),
+    })
+    @GetMapping("/teacher")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Page<ReportDTO> getAllReportsForTeacher(Principal principal, @ParameterObject Pageable pageable) {
+        return reportService.getAllReportsForTeacher(principal.getName(), pageable)
                 .map(reportMapper::toDto);
     }
 
