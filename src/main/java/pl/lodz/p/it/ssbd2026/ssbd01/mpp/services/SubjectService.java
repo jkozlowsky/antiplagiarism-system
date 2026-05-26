@@ -28,13 +28,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFou
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 
 import java.util.ArrayList;
@@ -63,6 +62,7 @@ public class SubjectService {
     private final SubjectAssignmentRepository subjectAssignmentRepository;
     private final TeacherRepository teacherRepository;
     private final RaportLevelRepository raportLevelRepository;
+    private final RuleRepository ruleRepository;
 
     public void syncSubjectWithGitea(UUID subjectId) {
         throw new UnsupportedOperationException("Not implemented yet");
@@ -85,9 +85,6 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        RaportLevelDict defaultRaportLevel = raportLevelRepository.findByName("FULL_VIEW")
-                .orElseThrow(RaportLevelDictNotFoundException::new);
-
         Subject subject = new Subject();
         subject.setName(subjectDto.name());
         subject.setOrganizationName(subjectDto.organizationName());
@@ -96,17 +93,36 @@ public class SubjectService {
         subject.setGiteaURL(subjectDto.giteaURL());
         subject.setArchived(false);
 
-        RulePreset defaultPreset = new RulePreset();
-        defaultPreset.setRaportLevel(defaultRaportLevel);
-        defaultPreset.setStudentTicketCount(3);
-        defaultPreset.setMinimumTokensMatch(10);
-        defaultPreset.setEnableNormalization(true);
-        defaultPreset.setIsPreset(false);
-        defaultPreset.setSubject(subject);
-        defaultPreset.setScheduleList(new ArrayList<>());
+        RulePreset preset = new RulePreset();
 
-        subject.setRulePreset(defaultPreset);
+        if (subjectDto.templateId() != null) {
+            RulePreset template = ruleRepository.findById(subjectDto.templateId())
+                    .orElseThrow(RulePresetTemplateNotFoundException::new);
 
+            preset.setRaportLevel(template.getRaportLevel());
+            preset.setStudentTicketCount(template.getStudentTicketCount());
+            preset.setMinimumTokensMatch(template.getMinimumTokensMatch());
+            preset.setEnableNormalization(template.getEnableNormalization());
+        }
+        else if (subjectDto.manualRules() != null) {
+            RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
+                    .findFirst()
+                    .orElseThrow(RaportLevelDictNotFoundException::new);
+
+            preset.setRaportLevel(raportLevel);
+            preset.setStudentTicketCount(subjectDto.manualRules().studentTicketCount());
+            preset.setMinimumTokensMatch(subjectDto.manualRules().minimumTokensMatch());
+            preset.setEnableNormalization(subjectDto.manualRules().enableNormalization());
+        }
+        else {
+            throw new RulePresetInvalidPartametersException();
+        }
+
+        preset.setIsPreset(false);
+        preset.setSubject(subject);
+        preset.setScheduleList(new ArrayList<>());
+
+        subject.setRulePreset(preset);
         subjectRepository.saveAndFlush(subject);
 
         SubjectAssignment assignment = new SubjectAssignment();
