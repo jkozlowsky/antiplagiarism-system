@@ -13,10 +13,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ReportMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("/reports")
@@ -45,6 +47,7 @@ public class ReportController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Zwrócono listę raportów"),
     })
+
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<ReportDTO> getAllReportsForSubject(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {
@@ -61,6 +64,33 @@ public class ReportController {
     public Page<ReportDTO> getAllReportsForTeacher(Principal principal, @ParameterObject Pageable pageable) {
         return reportService.getAllReportsForTeacher(principal.getName(), pageable)
                 .map(reportMapper::toDto);
+    }
+
+    @Operation(summary = "Pobierz moje raporty", description = "Zwraca listę raportów do których student ma wgląd w oparciu o politykę prywatności.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista raportów pobrana pomyślnie"),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia (np. brak lub nieważny token)")
+    })
+    @GetMapping("/my-reports")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public List<ReportDTO> getMyReports(Principal principal) {
+        return reportService.getStudentOwnReports(principal.getName()).stream()
+                .map(reportMapper::toDto)
+                .toList();
+    }
+
+    @Operation(summary = "Szczegóły mojego raportu", description = "Pobiera wynik analizy antyplagiatowej dla wybranego raportu wyselekcjonowanej specjalnie dla studenta. Inne dane są zanonimizowane.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Raport pobrany pomyślnie"),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia"),
+            @ApiResponse(responseCode = "403", description = "Brak dostępu do raportu lub raport został ukryty"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono raportu o podanym identyfikatorze")
+    })
+    @GetMapping("/my-reports/{reportId}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO getMyReportDetails(
+            @PathVariable UUID reportId, Principal principal) {
+        return reportService.getStudentReportDetails(reportId, principal.getName());
     }
 
     @GetMapping("/{reportId}")

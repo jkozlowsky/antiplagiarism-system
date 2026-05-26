@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -21,6 +22,14 @@ public interface ReportsRepository extends AbstractRepository<Report> {
 
     @EntityGraph(attributePaths = {"subject"})
     Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
+
+    @Query("SELECT DISTINCT r FROM Report r " +
+            "JOIN FETCH r.subject " +
+            "JOIN r.repositoryList repo " +
+            "JOIN repo.studentList s " +
+            "WHERE s.account.login = :login " +
+            "AND r.subject.rulePreset.raportLevel.name != 'NOTHING'")
+    List<Report> findVisibleReportsForStudent(@Param("login") String login);
 
     @EntityGraph(attributePaths = {"subject", "createdBy"})
     @Query("SELECT r FROM Report r " +

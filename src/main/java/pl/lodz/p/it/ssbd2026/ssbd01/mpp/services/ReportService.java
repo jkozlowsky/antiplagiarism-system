@@ -13,20 +13,25 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.FilteredComparisonDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JplagReportParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,41 +114,108 @@ public class ReportService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
-        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public List<Report> getStudentOwnReports(String login) {
+        return reportsRepository.findVisibleReportsForStudent(login);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO getStudentReportDetails(UUID reportId, String login) {
+        Report report = reportsRepository.findById(reportId)
+                .orElseThrow(ReportNotFoundException::new);
 
-    public void getReportDetails(UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
+        boolean hasAccess = report.getRepositoryList().stream()
+                .flatMap(repo -> repo.getStudentList().stream())
+                .anyMatch(student -> student.getAccount().getLogin().equals(login));
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void deleteReport(UUID reportId) {
-        Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
-        Path filePath = Path.of(report.getPathToReport());
-
-        try {
-            boolean deleted = Files.deleteIfExists(filePath);
-            if (!deleted) {
-                log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not delete the report file physically", e);
+        if (!hasAccess) {
+            throw new SubjectAccessDeniedException();
         }
 
-        reportsRepository.delete(report);
+        String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
+
+        if (raportLevel.equals("NOTHING")) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        List<String> studentRepoNames = report.getRepositoryList().stream()
+                .filter(repo -> repo.getStudentList().stream()
+                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
+                .map(Repository::getRepositoryName)
+                .toList();
+
+        List<TopComparison> allComparisons = JplagReportParser.readJplagArchive(report.getPathToReport());
+
+        List<FilteredComparisonDTO> filteredMatches = allComparisons.stream()
+                .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
+                .map(c -> {
+                    String anonymizedMatchedWith = "Repozytorium Innego Studenta";
+
+                    Double maxSim = null, avgSim = null, longest = null;
+
+                    if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
+                        maxSim = c.similarities().max();
+                    } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
+                        maxSim = c.similarities().max();
+                        avgSim = c.similarities().avg();
+                    } else if ("FULL_VIEW".equals(raportLevel)) {
+                        maxSim = c.similarities().max();
+                        avgSim = c.similarities().avg();
+                        longest = c.similarities().longestMatch();
+                    }
+
+                    return new FilteredComparisonDTO(anonymizedMatchedWith, maxSim, avgSim, longest);
+                })
+                .sorted((c1, c2) -> {
+                    double sim1 = c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0;
+                    double sim2 = c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0;
+                    return Double.compare(sim2, sim1);
+                })
+                .toList();
+
+        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !filteredMatches.isEmpty()) {
+            filteredMatches = List.of(filteredMatches.get(0));
+        }
+
+        return new StudentReportDetailsDTO(
+                report.getId(),
+                report.getTag(),
+                report.getSubject().getName(),
+                report.getCreatedAt(),
+                filteredMatches
+        );
     }
 
+        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+        public Page<Report> getAllReportsForTeacher (String login, Pageable pageable){
+            return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
+        }
 
-    public void getStudentOwnReports(UUID studentId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        public void getReportDetails (UUID reportId){
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+        public void deleteReport (UUID reportId){
+            Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
+            Path filePath = Path.of(report.getPathToReport());
+
+            try {
+                boolean deleted = Files.deleteIfExists(filePath);
+                if (!deleted) {
+                    log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Could not delete the report file physically", e);
+            }
+
+            reportsRepository.delete(report);
+        }
+
+        public void generateReportBySchedule () {
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
     }
-
-
-    public void generateReportBySchedule() {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-}
