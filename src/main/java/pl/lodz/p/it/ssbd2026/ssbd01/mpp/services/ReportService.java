@@ -24,7 +24,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
 import java.io.File;
@@ -99,8 +98,14 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<Report> getAllReports(UUID subjectId, Pageable pageable) {
+    public Page<Report> getAllReportsForSubject(UUID subjectId, Pageable pageable) {
         return reportsRepository.findAllBySubjectId(subjectId, pageable);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
+        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
     }
 
 

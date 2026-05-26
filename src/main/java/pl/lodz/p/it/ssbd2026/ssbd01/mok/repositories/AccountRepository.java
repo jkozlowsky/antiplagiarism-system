@@ -58,7 +58,7 @@ public interface AccountRepository extends AbstractRepository<Account> {
     Page<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCaseOrNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String login, String email, String name, String surname, Pageable pageable);
 
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
-    @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict"})
+    @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict", "createdBy", "modifiedBy"})
     Page<Account> findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String name, String surname, Pageable pageable);
 //    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
 
