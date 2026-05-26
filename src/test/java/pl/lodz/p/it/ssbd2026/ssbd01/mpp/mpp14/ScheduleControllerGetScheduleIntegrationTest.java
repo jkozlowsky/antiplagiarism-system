@@ -56,7 +56,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
 
     @BeforeAll
     public void setUpScheduleTest() {
-        String token = jwtAuthService.generateToken("jkowalski", List.of(AccountConsts.ROLE_TEACHER), false);
+        String token = jwtAuthService.generateToken("test_teacher", List.of(AccountConsts.ROLE_TEACHER), false);
         teacherHeaders = new Headers(new Header("Authorization", "Bearer " + token));
 
         String otherToken = jwtAuthService.generateToken("mkarbowańczyk", List.of(AccountConsts.ROLE_TEACHER), false);
@@ -64,7 +64,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
 
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
         txTemplate.execute(_ -> {
-            SubjectAssignment assignment = subjectAssignmentTestRepository.findByTeacherAccountLogin("jkowalski").getFirst();
+            SubjectAssignment assignment = subjectAssignmentTestRepository.findByTeacherAccountLogin("test_teacher").getFirst();
             subjectId = assignment.getSubject().getId();
 
             RulePreset rulePreset = rulePresetTestRepository.findBySubjectId(subjectId).getFirst();
