@@ -81,7 +81,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     }
 
     @Test
-    @Disabled
+    @Disabled("Nie działa przez zmianę w RulePreset chyba")
     public void POS1_TeacherWithRequiredPermissions_ShouldGetSchedule() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
         String response = requestFunctions.sendGetRequest(
