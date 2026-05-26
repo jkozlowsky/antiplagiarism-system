@@ -185,36 +185,37 @@ public class ReportService {
                 report.getCreatedAt(),
                 filteredMatches
         );
-
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
-        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
     }
 
-
-    public void getReportDetails(UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void deleteReport(UUID reportId) {
-        Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
-        Path filePath = Path.of(report.getPathToReport());
-
-        try {
-            boolean deleted = Files.deleteIfExists(filePath);
-            if (!deleted) {
-                log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not delete the report file physically", e);
+        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+        public Page<Report> getAllReportsForTeacher (String login, Pageable pageable){
+            return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
         }
 
-        reportsRepository.delete(report);
-    }
 
-    public void generateReportBySchedule() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        public void getReportDetails (UUID reportId){
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+        public void deleteReport (UUID reportId){
+            Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
+            Path filePath = Path.of(report.getPathToReport());
+
+            try {
+                boolean deleted = Files.deleteIfExists(filePath);
+                if (!deleted) {
+                    log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Could not delete the report file physically", e);
+            }
+
+            reportsRepository.delete(report);
+        }
+
+        public void generateReportBySchedule () {
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
     }
-}

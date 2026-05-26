@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
