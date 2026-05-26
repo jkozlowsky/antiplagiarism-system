@@ -32,7 +32,7 @@ class SubjectControllerIT extends BaseTestSetup {
         studentToken = jwtAuthService.generateToken("anowak", List.of("STUDENT"), false);
 
         validDto = new SubjectDTO(
-                null, null, "Inżynieria Oprogramowania", "2026",
+                null, null, "Inżynieria Oprogramowania", "elo zelo","2026",
                 "Opis przedmiotu", "https://gitea.example.com/io",
                 null, null, null, null, null
         );
@@ -53,7 +53,7 @@ class SubjectControllerIT extends BaseTestSetup {
     @Test
     void createSubject_ValidationError() {
         SubjectDTO invalidDto = new SubjectDTO(
-                null, null, "", "",
+                null, null, "", "", "",
                 "Opis", "invalid_url",
                 null, null, null, null, null
         );

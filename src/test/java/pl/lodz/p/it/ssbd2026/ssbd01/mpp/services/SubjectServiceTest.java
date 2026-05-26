@@ -14,6 +14,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ class SubjectServiceTest {
     @BeforeEach
     void setUp() {
         validDto = new SubjectDTO(
-                null, null, "SSBD", "2026", "64 osoby IAS",
+                null, null, "SSBD","elo zelo" ,"2026", "64 osoby IAS",
                 "https://gitea.example.com/ssbd", null, null, null, null, null
         );
     }
