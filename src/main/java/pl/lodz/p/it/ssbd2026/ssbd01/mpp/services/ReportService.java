@@ -13,13 +13,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.FilteredComparisonDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
@@ -106,7 +105,6 @@ public class ReportService {
         return report;
     }
 
-
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<Report> getAllReportsForSubject(UUID subjectId, Pageable pageable) {
@@ -154,12 +152,12 @@ public class ReportService {
 
                     Double maxSim = null, avgSim = null, longest = null;
 
-                    if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
+                    if (raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
                         maxSim = c.similarities().max();
-                    } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
+                    } else if (raportLevel.equals("ONLY_PERCENTAGES")) {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
-                    } else if ("FULL_VIEW".equals(raportLevel)) {
+                    } else if (raportLevel.equals("FULL_VIEW")) {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
                         longest = c.similarities().longestMatch();
@@ -174,7 +172,7 @@ public class ReportService {
                 })
                 .toList();
 
-        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !filteredMatches.isEmpty()) {
+        if (raportLevel.equals("ONLY_HIGHEST_PERCENT") && !filteredMatches.isEmpty()) {
             filteredMatches = List.of(filteredMatches.get(0));
         }
 
@@ -187,35 +185,77 @@ public class ReportService {
         );
     }
 
-        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-        public Page<Report> getAllReportsForTeacher (String login, Pageable pageable){
-            return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
-        }
-
-
-        public void getReportDetails (UUID reportId){
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-        @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-        public void deleteReport (UUID reportId){
-            Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
-            Path filePath = Path.of(report.getPathToReport());
-
-            try {
-                boolean deleted = Files.deleteIfExists(filePath);
-                if (!deleted) {
-                    log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Could not delete the report file physically", e);
-            }
-
-            reportsRepository.delete(report);
-        }
-
-        public void generateReportBySchedule () {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Page<Report> getAllReportsForTeacher (String login, Pageable pageable){
+        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public TeacherReportDetailsDTO getReportDetails(UUID reportId, String login) {
+        Report report = reportsRepository.findById(reportId)
+                .orElseThrow(ReportNotFoundException::new);
+
+        // poki co tak robie rozroznienie na prowadzacego i dodatkowego
+        boolean isCreator = report.getSubject().getCreatedBy().equals(login);
+        boolean isAssigned = report.getSubject().getSubjectAssignmentList().stream()
+                .anyMatch(sa -> sa.getTeacher().getAccount().getLogin().equals(login));
+
+        if (!isCreator && !isAssigned) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        List<TopComparison> allComparisons;
+        try {
+            allComparisons = JplagReportParser.readJplagArchive(report.getPathToReport());
+        } catch (ReportFileException e) {
+            throw new ReportFileException(e);
+        }
+
+        // mapowanie wynikow
+        List<TeacherComparisonDTO> mappedComparisons = allComparisons.stream()
+                .map(c -> new TeacherComparisonDTO(
+                        c.firstSubmission(),
+                        c.secondSubmission(),
+                        c.similarities().max(),
+                        c.similarities().avg(),
+                        c.similarities().longestMatch()
+                ))
+                .sorted((c1, c2) -> Double.compare(
+                        c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0,
+                        c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0
+                ))
+                .toList();
+
+        return new TeacherReportDetailsDTO(
+                report.getId(),
+                report.getTag(),
+                report.getSubject().getName(),
+                report.getCreatedAt(),
+                report.getAverageSimilarity(),
+                mappedComparisons
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void deleteReport (UUID reportId){
+        Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
+        Path filePath = Path.of(report.getPathToReport());
+
+        try {
+            boolean deleted = Files.deleteIfExists(filePath);
+            if (!deleted) {
+                log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete the report file physically", e);
+        }
+
+        reportsRepository.delete(report);
+    }
+
+    public void generateReportBySchedule () {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+}
