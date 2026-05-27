@@ -9,6 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.NoPermissionForThisSubjectException;
@@ -16,10 +18,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.NoPermissionToEditScheduleException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ScheduleNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +39,8 @@ public class ScheduleService  {
 
     private final ScheduleRepository scheduleRepository;
     private final SubjectAssignmentRepository subjectAssignmentRepository;
+    private final SubjectRepository subjectRepository;
+    private final ScheduleMapper scheduleMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
@@ -48,9 +54,18 @@ public class ScheduleService  {
         return scheduleRepository.findAllBySubjectId(subjectId);
     }
 
-
-    public void createSchedule(UUID subjectId, Object scheduleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public Schedule createSchedule(UUID subjectId, ScheduleDTO scheduleDto) {
+        String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+        if (!subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, teacherLogin)) {
+            throw new NoPermissionForThisSubjectException();
+        }
+        Schedule schedule = scheduleMapper.toSchedule(scheduleDto);
+        schedule.setRulePreset(subject.getRulePreset());
+        return scheduleRepository.saveAndFlush(schedule);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
