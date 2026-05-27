@@ -48,7 +48,7 @@ class SubjectServiceTest {
 
     @BeforeEach
     void setUp() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true);
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
 
         validDto = new SubjectDTO(
                 null, null, "SSBD", "elo zelo", "2026", "64 osoby IAS",

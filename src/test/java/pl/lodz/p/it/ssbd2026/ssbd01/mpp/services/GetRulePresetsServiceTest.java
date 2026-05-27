@@ -11,6 +11,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 
 import java.util.List;
@@ -29,6 +30,9 @@ public class GetRulePresetsServiceTest {
     @Mock
     private RuleMapper ruleMapper;
 
+    @Mock
+    private VersionHashService versionHashService;
+
     @InjectMocks
     private RuleService ruleService;
 
@@ -40,21 +44,25 @@ public class GetRulePresetsServiceTest {
 
         RulePreset template = new RulePreset();
         ReflectionTestUtils.setField(template, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(template, "version", 1);
         template.setIsPreset(true);
         template.setRaportLevel(raportLevel);
         template.setStudentTicketCount(10);
 
-        RulePresetDTO dto = new RulePresetDTO(template.getId(), "FULL_VIEW", 10, 1, true);
+        RulePresetDTO dto = new RulePresetDTO(template.getId(), "FULL_VIEW", 10, 1, true, 1, "hash123");
 
         when(ruleRepository.findAllByIsPreset(true)).thenReturn(List.of(template));
         when(ruleMapper.toRuleDTO(template)).thenReturn(dto);
+
+        when(versionHashService.hashObjectVersion(template.getId(), template.getVersion())).thenReturn("hash123");
 
         List<RulePresetDTO> result = ruleService.getRulePresetsTemplates();
 
         assertAll(
                 () -> assertEquals(1, result.size()),
                 () -> assertEquals("FULL_VIEW", result.get(0).raportLevelName()),
-                () -> assertEquals(10, result.get(0).studentTicketCount())
+                () -> assertEquals(10, result.get(0).studentTicketCount()),
+                () -> assertEquals("hash123", result.get(0).versionHash())
         );
     }
 }

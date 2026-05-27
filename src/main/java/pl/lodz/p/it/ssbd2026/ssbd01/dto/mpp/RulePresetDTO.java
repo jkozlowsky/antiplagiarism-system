@@ -11,6 +11,8 @@ public record RulePresetDTO(
         @NotBlank String raportLevelName,
         @NotNull @Min(0) Integer studentTicketCount,
         @NotNull @Min(1) Integer minimumTokensMatch,
-        @NotBlank Boolean enableNormalization
+        @NotBlank Boolean enableNormalization,
+        @NotNull Integer version,
+        String versionHash
 ) {
 }
