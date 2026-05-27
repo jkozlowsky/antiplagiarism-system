@@ -17,8 +17,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
 })
 public class SubjectAssignment extends AbstractEntity {
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "has_edit_permissions", nullable = false)
-    private Boolean hasEditPermissions;
+    private TeacherSubjectRole hasEditPermissions;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", updatable = false)

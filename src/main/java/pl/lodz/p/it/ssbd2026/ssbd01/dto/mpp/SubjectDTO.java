@@ -71,6 +71,14 @@ public record SubjectDTO(
         UUID templateId,
 
         @Schema(description = "Ręczne definicje reguł, jeśli nie wybrano szablonu")
-        RulePresetDTO manualRules
+        RulePresetDTO manualRules,
 
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canEdit,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canManageTeachers,
+
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canViewStats
 ) {}
