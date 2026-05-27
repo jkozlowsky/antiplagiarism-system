@@ -128,4 +128,20 @@ public class ReportController {
     public void generateReportBySchedule() {
         throw new UnsupportedOperationException("Not implemented yet");
     }
+
+    @Operation(summary = "Sprawdzenie swojego kodu", description = "Student może sprawdzić swój kod zgodnie z ustawioną obecnie regułą. Warunkiem skanowania jest posiadanie odpowiedniej liczby dostępnych skanowań.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Skanowanie kodu ukończone pomyślnie."),
+            @ApiResponse(responseCode = "403", description = "Brak dostępnych skanowań."),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono danego repozytorium."),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej.")
+    })
+    @PostMapping("/student-scan/{repositoryId}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO generateStudentReport(
+            @PathVariable UUID repositoryId,
+            @RequestParam String tag,
+            Principal principal) {
+        return reportService.generateStudentReport(repositoryId, tag, principal.getName());
+    }
 }
