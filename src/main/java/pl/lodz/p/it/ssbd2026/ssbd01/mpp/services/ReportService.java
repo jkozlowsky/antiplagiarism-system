@@ -197,7 +197,7 @@ public class ReportService {
                 .orElseThrow(ReportNotFoundException::new);
 
         // poki co tak robie rozroznienie na prowadzacego i dodatkowego
-        boolean isCreator = report.getSubject().getCreatedBy().equals(login);
+        boolean isCreator = report.getSubject().getCreatedBy().getLogin().equals(login);
         boolean isAssigned = report.getSubject().getSubjectAssignmentList().stream()
                 .anyMatch(sa -> sa.getTeacher().getAccount().getLogin().equals(login));
 
