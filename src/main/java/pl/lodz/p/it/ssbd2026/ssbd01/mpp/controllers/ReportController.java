@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ReportMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
@@ -94,8 +95,9 @@ public class ReportController {
     }
 
     @GetMapping("/{reportId}")
-    public void getReportDetails(@PathVariable UUID reportId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public TeacherReportDetailsDTO getReportDetails(@PathVariable UUID reportId, Principal principal) {
+        return reportService.getReportDetails(reportId, principal.getName());
     }
 
     @Operation(summary = "Usuń raport", description = "Usuwa raporty z bazy oraz pliki z maszyny")
