@@ -33,7 +33,7 @@ class SubjectControllerIT extends BaseTestSetup {
         teacherToken = jwtAuthService.generateToken("jkowalski", List.of("TEACHER"), false);
         studentToken = jwtAuthService.generateToken("anowak", List.of("STUDENT"), false);
 
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true);
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
 
         validDto = new SubjectDTO(
                 null, null, "Inżynieria Oprogramowania", "elo zelo", "2026",
