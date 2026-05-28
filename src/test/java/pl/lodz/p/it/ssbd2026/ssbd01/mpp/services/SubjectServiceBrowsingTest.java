@@ -13,6 +13,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
@@ -39,6 +41,12 @@ class SubjectServiceBrowsingTest {
 
     @Mock
     private SubjectAssignmentRepository subjectAssignmentRepository;
+
+    @Mock
+    private SubjectMapper subjectMapper;
+
+    @Mock
+    private RuleMapper ruleMapper;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -79,13 +87,17 @@ class SubjectServiceBrowsingTest {
         doReturn(Collections.singletonList(authority)).when(authentication).getAuthorities();
     }
 
-
-
     @Test
     @DisplayName("POS01_getAllSubjects: Admin powinien otrzymać wszystkie przedmioty z pełnymi prawami")
     void POS01_AdminShouldGetAllSubjectsWithAllPermissions() {
         mockSecurityContext("test_admin", "ADMIN");
         when(subjectRepository.findAll()).thenReturn(List.of(subject));
+
+        SubjectDTO mockedDto = mock(SubjectDTO.class);
+        when(mockedDto.canEdit()).thenReturn(true);
+        when(mockedDto.canManageTeachers()).thenReturn(true);
+        when(mockedDto.canViewStats()).thenReturn(true);
+        when(subjectMapper.toSubjectDTO(subject, true, true, true, null, null)).thenReturn(mockedDto);
 
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
@@ -106,10 +118,16 @@ class SubjectServiceBrowsingTest {
 
         SubjectAssignment assignment = new SubjectAssignment();
         assignment.setSubject(subject);
-        assignment.setSubjectRole(TeacherSubjectRole.OWNER); // Symulujemy bycie właścicielem
+        assignment.setSubjectRole(TeacherSubjectRole.OWNER);
 
         when(subjectAssignmentRepository.findAllByTeacherLogin("test_teacher"))
                 .thenReturn(List.of(assignment));
+
+        SubjectDTO mockedDto = mock(SubjectDTO.class);
+        when(mockedDto.canEdit()).thenReturn(true);
+        when(mockedDto.canManageTeachers()).thenReturn(true);
+        when(mockedDto.canViewStats()).thenReturn(true);
+        when(subjectMapper.toSubjectDTO(subject, true, true, true, null, null)).thenReturn(mockedDto);
 
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
@@ -126,6 +144,12 @@ class SubjectServiceBrowsingTest {
         mockSecurityContext("test_student", "STUDENT");
         when(subjectRepository.findAllByStudentLogin("test_student")).thenReturn(List.of(subject));
 
+        SubjectDTO mockedDto = mock(SubjectDTO.class);
+        when(mockedDto.canEdit()).thenReturn(false);
+        when(mockedDto.canManageTeachers()).thenReturn(false);
+        when(mockedDto.canViewStats()).thenReturn(false);
+        when(subjectMapper.toSubjectDTO(subject, false, false, false, null, null)).thenReturn(mockedDto);
+
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
         assertEquals(1, result.size());
@@ -135,14 +159,17 @@ class SubjectServiceBrowsingTest {
         assertFalse(dto.canViewStats());
     }
 
-
-
     @Test
     @DisplayName("POS04_getSubjectDetails: Student poprawnie przypisany otrzymuje detale przedmiotu")
     void POS04_AssignedStudentShouldGetDetails() {
         mockSecurityContext("test_student", "STUDENT");
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(subjectRepository.isStudentAssignedToSubject(subjectId, "test_student")).thenReturn(true);
+
+        SubjectDTO mockedDto = mock(SubjectDTO.class);
+        when(mockedDto.name()).thenReturn("Architektura Systemów Komputerowych");
+        when(mockedDto.canEdit()).thenReturn(false);
+        when(subjectMapper.toSubjectDTO(subject, false, false, false, null, null)).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 

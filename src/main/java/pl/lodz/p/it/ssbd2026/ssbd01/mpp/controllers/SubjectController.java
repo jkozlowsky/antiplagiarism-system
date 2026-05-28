@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -32,13 +33,13 @@ public class SubjectController  {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
         return ResponseEntity.ok(subjectService.getAllSubjects());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID id) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(id));
     }

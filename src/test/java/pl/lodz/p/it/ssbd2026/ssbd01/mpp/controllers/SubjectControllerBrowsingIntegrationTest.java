@@ -69,7 +69,7 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
         studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
 
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
-        txTemplate.execute(_ -> {
+        txTemplate.execute(status -> {
             SubjectAssignment assignment = subjectAssignmentTestRepository.findByTeacherAccountLogin("test_teacher").getFirst();
             testSubjectId = assignment.getSubject().getId();
             return null;
@@ -85,29 +85,30 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @Test
     @DisplayName("POS01: Admin pobiera listę wszystkich przedmiotów")
     public void POS01_AdminShouldGetAllSubjects() throws JsonProcessingException {
-        // Zmieniono adres na /api/subjects
         String response = requestFunctions.sendGetRequest(
                 HttpStatus.OK.value(), "/api/subjects", adminHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
+
         assertFalse(subjects.isEmpty());
+        assertTrue(subjects.get(0).canEdit());
     }
 
     @Test
     @DisplayName("POS02: Prowadzący pobiera listę swoich przedmiotów")
     public void POS02_TeacherShouldGetOwnSubjects() throws JsonProcessingException {
-        // Zmieniono adres na /api/subjects
         String response = requestFunctions.sendGetRequest(
                 HttpStatus.OK.value(), "/api/subjects", teacherHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
+
         assertFalse(subjects.isEmpty());
+        assertTrue(subjects.get(0).canEdit());
     }
 
     @Test
     @DisplayName("POS03: Student pobiera listę swoich przedmiotów")
     public void POS03_StudentShouldBeAbleToHitEndpoint() throws JsonProcessingException {
-        // Zmieniono adres na /api/subjects
         String response = requestFunctions.sendGetRequest(
                 HttpStatus.OK.value(), "/api/subjects", studentHeaders);
 
@@ -118,18 +119,18 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @Test
     @DisplayName("POS04: Prowadzący pobiera szczegóły przedmiotu")
     public void POS04_TeacherShouldGetSubjectDetails() throws JsonProcessingException {
-        // Zmieniono adres na /api/subjects/{id}
         String response = requestFunctions.sendGetRequest(
                 HttpStatus.OK.value(), "/api/subjects/" + testSubjectId, teacherHeaders);
 
         SubjectDTO subject = objectMapper.readValue(response, SubjectDTO.class);
+
         assertNotNull(subject);
+        assertEquals(testSubjectId, subject.id());
     }
 
     @Test
     @DisplayName("NEG01: 404 dla nieistniejącego przedmiotu")
     public void NEG01_ShouldReturn404ForNonExistentSubject() {
-        // Zmieniono adres na /api/subjects/{id}
         requestFunctions.sendGetRequest(
                 HttpStatus.NOT_FOUND.value(), "/api/subjects/" + UUID.randomUUID(), teacherHeaders);
     }
@@ -137,7 +138,6 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @Test
     @DisplayName("NEG02: 401 dla niezalogowanego")
     public void NEG02_UnauthenticatedUserShouldGet401() {
-        // Zmieniono adres na /api/subjects
         requestFunctions.sendGetRequest(
                 HttpStatus.UNAUTHORIZED.value(), "/api/subjects", new Headers());
     }
