@@ -22,6 +22,8 @@ public class RepositoryController {
     private final RepositoryService repositoryService;
     private final RepositoryMapper repositoryMapper;
 
+    @Operation(summary = "Przeglądanie repozytoriów", description = "Pobiera listę repozytoriów razem z uczestnikami w danym przedmiocie")
+    @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę repozytoriów w danym przedmiocie")
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<RepositoryWithStudentDTO> getRepositories(@PathVariable UUID subjectId) {
