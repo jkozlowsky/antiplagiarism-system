@@ -10,10 +10,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.FilteredComparisonDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.mpp21.MPP21_ViewOwnReportsTest;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.Similarities;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JplagReportParser;
 
 import java.io.File;
 import java.util.List;
@@ -119,5 +124,108 @@ public class ReportServiceTest {
         assertThrows(SubjectAccessDeniedException.class, () -> {
             reportService.getStudentReportDetails(testReport.getId(), STUDENT_LOGIN);
         });
+    }
+
+    @Test
+    @DisplayName("Pobranie szczegółów raportu przez Głównego Prowadzącego - Sukces")
+    void getReportDetails_Success_MainTeacher() {
+        String teacherLogin = "main_teacher";
+
+        Account creatorAccount = new Account();
+        creatorAccount.setLogin(teacherLogin);
+        ReflectionTestUtils.setField(testReport.getSubject(), "createdBy", creatorAccount);
+
+        when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
+
+        List<TopComparison> mockComparisons = List.of(
+                new TopComparison("repo1", "repo2", new Similarities(50.0, 70.0, 100.0, 80.0))
+        );
+
+        try (var mockedParser = mockStatic(JplagReportParser.class)) {
+            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
+                    .thenReturn(mockComparisons);
+
+            TeacherReportDetailsDTO result = reportService.getReportDetails(testReport.getId(), teacherLogin);
+
+            assertNotNull(result);
+            assertEquals(1, result.comparisons().size());
+            assertEquals("repo1", result.comparisons().get(0).firstSubmission());
+            assertEquals(70.0, result.comparisons().get(0).maxSimilarity());
+        }
+    }
+
+    @Test
+    @DisplayName("Pobranie szczegółów raportu przez Prowadzącego dodatkowego - Sukces")
+    void getReportDetails_Success_AssignedTeacher() {
+        String teacherLogin = "assigned_teacher";
+
+        Account creatorAccount = new Account();
+        creatorAccount.setLogin("other_teacher");
+        ReflectionTestUtils.setField(testReport.getSubject(), "createdBy", creatorAccount);
+
+        Teacher assignedTeacher = new Teacher();
+        Account acc = new Account();
+        acc.setLogin(teacherLogin);
+        assignedTeacher.setAccount(acc);
+
+        SubjectAssignment assignment = new SubjectAssignment();
+        assignment.setTeacher(assignedTeacher);
+        testReport.getSubject().getSubjectAssignmentList().add(assignment);
+
+        when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
+
+        List<TopComparison> mockComparisons = List.of(
+                new TopComparison("repo3", "repo4", new Similarities(20.0, 30.0, 50.0, 20.0))
+        );
+
+        try (var mockedParser = mockStatic(JplagReportParser.class)) {
+            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
+                    .thenReturn(mockComparisons);
+
+            TeacherReportDetailsDTO result = reportService.getReportDetails(testReport.getId(), teacherLogin);
+
+            assertNotNull(result);
+            assertEquals(1, result.comparisons().size());
+            assertEquals("repo3", result.comparisons().get(0).firstSubmission());
+        }
+    }
+
+    @Test
+    @DisplayName("Pobranie szczegółów raportu przez nieprzypisanego nauczyciela - Wyjątek 403")
+    void getReportDetails_ThrowsAccessDenied_WhenNotAssignedTeacher() {
+        String teacherLogin = "unauthorized_teacher";
+
+        Account creatorAccount = new Account();
+        creatorAccount.setLogin("other_teacher");
+        ReflectionTestUtils.setField(testReport.getSubject(), "createdBy", creatorAccount);
+
+        testReport.getSubject().getSubjectAssignmentList().clear();
+
+        when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
+
+        assertThrows(SubjectAccessDeniedException.class, () -> {
+            reportService.getReportDetails(testReport.getId(), teacherLogin);
+        });
+    }
+
+    @Test
+    @DisplayName("Przepływ 3a: Plik raportu nie istnieje/jest uszkodzony - Wyjątek 500")
+    void getReportDetails_ThrowsReportFileException_WhenFileCorrupted() {
+        String teacherLogin = "main_teacher";
+
+        Account creatorAccount = new Account();
+        creatorAccount.setLogin(teacherLogin);
+        ReflectionTestUtils.setField(testReport.getSubject(), "createdBy", creatorAccount);
+
+        when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
+
+        try (var mockedParser = mockStatic(JplagReportParser.class)) {
+            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
+                    .thenThrow(new ReportFileException(new RuntimeException("Brak pliku")));
+
+            assertThrows(ReportFileException.class, () -> {
+                reportService.getReportDetails(testReport.getId(), teacherLogin);
+            });
+        }
     }
 }
