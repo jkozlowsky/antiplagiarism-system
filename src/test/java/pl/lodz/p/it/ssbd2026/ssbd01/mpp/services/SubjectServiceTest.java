@@ -53,7 +53,7 @@ class SubjectServiceTest {
         validDto = new SubjectDTO(
                 null, null, "SSBD", "elo zelo", "2026", "64 osoby IAS",
                 "https://gitea.example.com/ssbd", null, null, null, null, null,
-                null, rules
+                null, rules, true, true, true
         );
     }
 

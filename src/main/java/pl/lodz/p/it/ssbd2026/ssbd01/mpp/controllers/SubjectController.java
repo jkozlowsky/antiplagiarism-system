@@ -16,6 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("/subjects")
@@ -31,13 +32,15 @@ public class SubjectController  {
     }
 
     @GetMapping
-    public void getAllSubjects() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAnyAuthority('TEACHER', 'STUDENT', 'ADMIN')")
+    public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
+        return ResponseEntity.ok(subjectService.getAllSubjects());
     }
 
-    @GetMapping("/{subjectId}")
-    public void getSubjectDetails(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER', 'STUDENT')")
+    public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID id) {
+        return ResponseEntity.ok(subjectService.getSubjectDetails(id));
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (MPP.7)", description = "Tworzy nowy przedmiot i przypisuje do niego aktualnie zalogowanego prowadzącego.")

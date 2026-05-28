@@ -18,8 +18,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
 public class SubjectAssignment extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "has_edit_permissions", nullable = false)
-    private TeacherSubjectRole hasEditPermissions;
+    @Column(name = "subject_role", nullable = false)
+    private TeacherSubjectRole subjectRole;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", updatable = false)
@@ -28,6 +28,5 @@ public class SubjectAssignment extends AbstractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
-
 
 }

@@ -63,7 +63,7 @@ class ScheduleServiceUpdateTest {
     @DisplayName("Update schedule when user has permision and all provided data is valid")
     void POS01_updateSchedule() {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, login))
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, login))
                 .thenReturn(true);
 
         scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login);
@@ -77,7 +77,7 @@ class ScheduleServiceUpdateTest {
     @DisplayName("Verify if, while trying to change a schedule without permissions it would be not possible and error would be thrown.")
     void NEG01_updateSchedule() {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, login))
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, login))
                 .thenReturn(false);
 
         assertThrows(NoPermissionToEditScheduleException.class,
@@ -94,7 +94,7 @@ class ScheduleServiceUpdateTest {
         assertThrows(ScheduleNotFoundException.class,
                 () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login));
 
-        verify(subjectAssignmentRepository, never()).existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(any(), any());
+        verify(subjectAssignmentRepository, never()).hasEditPermissions(any(), any());
         verify(scheduleRepository, never()).save(any());
     }
 }
