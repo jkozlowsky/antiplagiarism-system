@@ -28,8 +28,9 @@ public class RepositoryService {
 
     private final GiteaRepositoryRepository giteaRepositoryRepository;
 
-    public void getRepositories(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+    public List<Repository> getRepositories(UUID subjectId) {
+        return giteaRepositoryRepository.findBySubjectId(subjectId);
     }
 
     public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {

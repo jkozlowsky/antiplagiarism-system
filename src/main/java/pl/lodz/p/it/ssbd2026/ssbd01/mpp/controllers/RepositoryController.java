@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RepositoryMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.repository.RepositoryWithStudentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.SubjectStudentStatsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RepositoryService;
@@ -18,10 +20,12 @@ import java.util.UUID;
 @MethodCallLogged
 public class RepositoryController {
     private final RepositoryService repositoryService;
+    private final RepositoryMapper repositoryMapper;
 
     @GetMapping("/subject/{subjectId}")
-    public void getRepositories(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public List<RepositoryWithStudentDTO> getRepositories(@PathVariable UUID subjectId) {
+        return repositoryService.getRepositories(subjectId).stream().map(repositoryMapper::toDto).toList();
     }
 
     @GetMapping("/subject/{subjectName}/users")
