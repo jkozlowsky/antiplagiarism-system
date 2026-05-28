@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +29,12 @@ public class RepositoryService {
 
     private final GiteaRepositoryRepository giteaRepositoryRepository;
 
-
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<Repository> getRepositories(UUID subjectId) {
         return giteaRepositoryRepository.findBySubjectId(subjectId);
     }
 
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {
         List<Repository> repos = giteaRepositoryRepository.findBySubject_Name(subjectName);
         List<SubjectStudentStatsDTO> results = new ArrayList<>();
