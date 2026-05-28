@@ -80,7 +80,7 @@ public class GetAllReportsForTeacherIT extends BaseTestSetup {
 
         SubjectAssignment assignment = new SubjectAssignment();
         assignment.setSubject(testSubject);
-        assignment.setHasEditPermissions(true);
+        assignment.setSubjectRole(TeacherSubjectRole.OWNER);
         assignment.setTeacher(testTeacher);
         subjectAssignmentTestRepository.save(assignment);
 

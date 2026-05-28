@@ -80,7 +80,7 @@ public class MPP09_DeleteSubject extends BaseTestSetup {
             SubjectAssignment assignment = new SubjectAssignment();
             assignment.setSubject(subject);
             assignment.setTeacher(teacher);
-            assignment.setHasEditPermissions(true);
+            assignment.setSubjectRole(TeacherSubjectRole.OWNER);
             subjectAssignmentTestRepository.save(assignment);
 
             subjectId = subject.getId();

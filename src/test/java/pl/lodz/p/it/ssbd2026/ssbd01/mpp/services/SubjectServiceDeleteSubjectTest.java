@@ -60,7 +60,7 @@ public class SubjectServiceDeleteSubjectTest {
 
         assignment = new SubjectAssignment();
         assignment.setTeacher(teacher);
-        assignment.setHasEditPermissions(true);
+        assignment.setSubjectRole(TeacherSubjectRole.OWNER);
 
         subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
@@ -131,7 +131,7 @@ public class SubjectServiceDeleteSubjectTest {
     @Test
     @DisplayName("NEG03: Powinien rzucić wyjątek SubjectAccessDeniedException, gdy użytkownik nie ma uprawnień")
     void NEG03_deleteSubject_ShouldThrowWhenAccessDenied() {
-        assignment.setHasEditPermissions(false);
+        assignment.setSubjectRole(TeacherSubjectRole.EDITOR);
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
