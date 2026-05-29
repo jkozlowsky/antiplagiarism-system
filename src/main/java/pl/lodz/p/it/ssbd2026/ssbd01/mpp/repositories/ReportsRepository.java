@@ -20,7 +20,7 @@ public interface ReportsRepository extends AbstractRepository<Report> {
     @Query("SELECT AVG(r.averageSimilarity) FROM Report r WHERE r.subject.id = :subjectId AND r.averageSimilarity IS NOT NULL")
     Double calculateAggregatedAverageForSubject(@Param("subjectId") UUID subjectId);
 
-    @EntityGraph(attributePaths = {"subject"})
+    @EntityGraph(attributePaths = {"subject", "createdBy"})
     Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
 
     @Query("SELECT DISTINCT r FROM Report r " +
