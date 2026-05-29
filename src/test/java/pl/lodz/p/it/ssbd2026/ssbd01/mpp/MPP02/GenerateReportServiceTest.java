@@ -10,6 +10,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
@@ -53,6 +54,7 @@ public class GenerateReportServiceTest {
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
         String orgName = "TestOrg";
+        String login = "teacher123";
 
         RulePreset rulePreset = new RulePreset();
         rulePreset.setMinimumTokensMatch(12);
@@ -68,8 +70,11 @@ public class GenerateReportServiceTest {
         List<Repository> dbRepositories = List.of(new Repository(), new Repository());
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization(orgName)).thenReturn(List.of(validRepo, templateRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subjectId)).thenReturn(dbRepositories);
+
+        when(reportsRepository.calculateAggregatedAverageForSubject(subjectId)).thenReturn(50.0);
 
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
@@ -83,7 +88,7 @@ public class GenerateReportServiceTest {
         )).thenReturn(mockResult);
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
-            reportService.generateReportOnDemand(subjectId, tag);
+            reportService.generateReportOnDemand(subjectId, tag, login);
             mockedGitService.verify(
                     () -> GitService.cloneTag(
                             eq("url1"),
@@ -108,10 +113,30 @@ public class GenerateReportServiceTest {
     @Test
     void generateReportOnDemand_ThrowsException_WhenSubjectNotFound() {
         UUID subjectId = UUID.randomUUID();
+        String login = "teacher123";
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.empty());
 
         assertThrows(SubjectNotFoundException.class, () ->
-                reportService.generateReportOnDemand(subjectId, "v1.0")
+                reportService.generateReportOnDemand(subjectId, "v1.0", login)
+        );
+
+        verifyNoInteractions(giteaService, jPlagService, giteaRepositoryRepository, reportsRepository);
+    }
+
+    @Test
+    void generateReportOnDemand_ThrowsException_WhenTeacherNotAssigned() {
+        UUID subjectId = UUID.randomUUID();
+        String login = "unauthorizedTeacher";
+        String tag = "v1.0";
+
+        Subject subject = new Subject();
+        subject.setOrganizationName("TestOrg");
+
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(false);
+
+        assertThrows(SubjectAccessDeniedException.class, () ->
+                reportService.generateReportOnDemand(subjectId, tag, login)
         );
 
         verifyNoInteractions(giteaService, jPlagService, giteaRepositoryRepository, reportsRepository);
@@ -121,6 +146,7 @@ public class GenerateReportServiceTest {
     void generateReportOnDemand_DoesNotClone_WhenOnlyTemplateReposExist() {
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
+        String login = "teacher123";
         Subject subject = new Subject();
         subject.setOrganizationName("TestOrg");
         subject.setRulePreset(new RulePreset());
@@ -128,7 +154,11 @@ public class GenerateReportServiceTest {
         GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo","url2", true);
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization("TestOrg")).thenReturn(List.of(templateRepo));
+
+        when(reportsRepository.calculateAggregatedAverageForSubject(subjectId)).thenReturn(0.0);
+
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
 
@@ -141,7 +171,7 @@ public class GenerateReportServiceTest {
         )).thenReturn(mockResult);
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
-            reportService.generateReportOnDemand(subjectId, tag);
+            reportService.generateReportOnDemand(subjectId, tag, login);
             mockedGitService.verifyNoInteractions();
         }
     }
