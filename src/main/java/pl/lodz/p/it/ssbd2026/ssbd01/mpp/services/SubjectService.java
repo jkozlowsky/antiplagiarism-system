@@ -78,7 +78,8 @@ public class SubjectService {
         if (isAdmin) {
             List<Subject> subjects = subjectRepository.findAll();
             for (Subject subject : subjects) {
-                result.add(subjectMapper.toSubjectDTO(subject, true, true, true, null, null));
+                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null));
             }
         } else if (isTeacher) {
             List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
@@ -87,12 +88,14 @@ public class SubjectService {
                 TeacherSubjectRole role = assignment.getSubjectRole();
                 boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
                 boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
-                result.add(subjectMapper.toSubjectDTO(subject, canEdit, canManageTeachers, true, null, null));
+                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null));
             }
         } else if (isStudent) {
             List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
             for (Subject subject : subjects) {
-                result.add(subjectMapper.toSubjectDTO(subject, false, false, false, null, null));
+                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+                result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
             }
         } else {
             throw new SubjectAccessDeniedException();
@@ -152,8 +155,11 @@ public class SubjectService {
             }
         }
 
+        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+
         return subjectMapper.toSubjectDTO(
                 subject,
+                hash,
                 canEdit,
                 canManageTeachers,
                 canViewStats,
@@ -257,13 +263,11 @@ public class SubjectService {
 
         if (deleteGiteaOrg) {
             try {
-                giteaService.deleteGiteaOrganization(subject.getName());
+                giteaService.deleteGiteaOrganization(subject.getOrganizationName());
             } catch (Exception e) {
-                log.error("Nie udało się usunąć przedmiotu z serwera Gitea: {}", subject.getName(), e);
+                log.error("Nie udało się usunąć przedmiotu z serwera Gitea: {}", subject.getOrganizationName(), e);
                 throw new RuntimeException("Błąd podczas usuwania przedmiotu z Gitea", e);
             }
-        } else {
-            log.info("Pominięto usuwanie organizacji na serwerze Gitea dla przedmiotu: {}", subject.getName());
         }
 
         subjectRepository.delete(subject);
