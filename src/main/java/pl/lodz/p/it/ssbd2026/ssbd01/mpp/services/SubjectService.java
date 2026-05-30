@@ -19,6 +19,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
@@ -265,8 +266,8 @@ public class SubjectService {
             try {
                 giteaService.deleteGiteaOrganization(subject.getOrganizationName());
             } catch (Exception e) {
-                log.error("Nie udało się usunąć przedmiotu z serwera Gitea: {}", subject.getOrganizationName(), e);
-                throw new RuntimeException("Błąd podczas usuwania przedmiotu z Gitea", e);
+                log.error("Błąd komunikacji z Gitea dla organizacji: {}", subject.getOrganizationName(), e);
+                throw new GiteaIntegrationException(e);
             }
         }
 
