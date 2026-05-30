@@ -11,6 +11,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
@@ -26,6 +27,8 @@ public class SubjectServiceChangeSubjectManagerTest {
     private TeacherRepository teacherRepository;
     @Mock
     private SubjectAssignmentRepository subjectAssignmentRepository;
+    @Mock
+    private SubjectRepository subjectRepository;
     @InjectMocks
     private SubjectService subjectService;
 
@@ -76,8 +79,13 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void POS01_ChangeSubjectManager_Successfully() {
-        when(teacherRepository.findActiveTeacherByLogin("new_manager")).thenReturn(Optional.of(newManagerTeacher));
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
+        when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
+                .thenReturn(Optional.of(currentOwnerAssignment));
+
+        when(teacherRepository.findActiveTeacherByLogin("new_manager")).thenReturn(Optional.of(newManagerTeacher));
+        when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("new_manager", subjectId))
+                .thenReturn(Optional.of(newOwnerAssignment));
 
         subjectService.changeSubjectManager(subjectId, "new_manager");
         verify(subjectAssignmentRepository, times(2)).saveAndFlush(any());
@@ -97,8 +105,15 @@ public class SubjectServiceChangeSubjectManagerTest {
         newManagerTeacherNotAssigned.setAccount(newManagerAccountNotAssigned);
         ReflectionTestUtils.setField(newManagerTeacherNotAssigned, "id", newManagerIdNotAssigned);
 
-        when(teacherRepository.findActiveTeacherByLogin(newManagerLoginNotAssigned)).thenReturn(Optional.of(newManagerTeacherNotAssigned));
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
+        when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
+                .thenReturn(Optional.of(currentOwnerAssignment));
+
+        when(teacherRepository.findActiveTeacherByLogin(newManagerLoginNotAssigned)).thenReturn(Optional.of(newManagerTeacherNotAssigned));
+        when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newManagerLoginNotAssigned, subjectId))
+                .thenReturn(Optional.empty());
+
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
         subjectService.changeSubjectManager(subjectId, newManagerLoginNotAssigned);
         assertAll(
@@ -110,8 +125,10 @@ public class SubjectServiceChangeSubjectManagerTest {
     @Test
     public void NEG01_ChangeSubjectManager_WhenNewManagerNotFound() {
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
-        when(teacherRepository.findActiveTeacherByLogin("new_manager")).thenReturn(Optional.empty());
+        when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
+                .thenReturn(Optional.of(currentOwnerAssignment));
 
+        when(teacherRepository.findActiveTeacherByLogin("new_manager")).thenReturn(Optional.empty());
         assertAll(
                 () -> assertThrows(AccessLevelNotAssignedException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager")),
                 () -> assertEquals(TeacherSubjectRole.EDITOR, newOwnerAssignment.getSubjectRole()),

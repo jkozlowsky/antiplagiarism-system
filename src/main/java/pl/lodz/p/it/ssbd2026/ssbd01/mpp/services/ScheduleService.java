@@ -23,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -41,8 +42,8 @@ public class ScheduleService  {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<Schedule> getSchedules(UUID subjectId) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
-        List<SubjectAssignment> subjectAssignments = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
-        if (subjectAssignments.isEmpty()) {
+        Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
+        if (subjectAssignment.isEmpty()) {
             throw new NoPermissionForThisSubjectException();
         }
         return scheduleRepository.findAllBySubjectId(subjectId);

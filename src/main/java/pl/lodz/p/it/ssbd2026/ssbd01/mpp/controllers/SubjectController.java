@@ -93,7 +93,6 @@ public class SubjectController  {
     @Operation(summary = "Zmień kierownika przedmiotu", description = "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Kierownik przedmiotu został pomyślnie zmieniony"),
-            @ApiResponse(responseCode = "403", description = "Brak uprawnień (wymagana rola to Administrator)"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu lub wskazanego nauczyciela")
     })
     @PatchMapping("/{subjectId}/manager")

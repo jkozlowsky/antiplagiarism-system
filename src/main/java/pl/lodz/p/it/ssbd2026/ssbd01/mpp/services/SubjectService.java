@@ -291,22 +291,13 @@ public class SubjectService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public void changeSubjectManager(UUID subjectId, String newManagerLogin) {
         Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId).orElseThrow(SubjectNotFoundException::new);
-        SubjectAssignment oldOwnerAssignment = oldOwner.getSubjectAssignmentList()
-                .stream()
-                .filter(
-                        assignment -> assignment.getSubject().getId().equals(subjectId)
-                )
-                .findFirst().orElseThrow(SubjectNotFoundException::new);
+        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId).orElseThrow(SubjectNotFoundException::new);
         Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin).orElseThrow(AccessLevelNotAssignedException::new);
-        SubjectAssignment newOwnerAssignment = newOwner.getSubjectAssignmentList()
-                .stream()
-                .filter(
-                        assignment -> assignment.getSubject().getId().equals(subjectId)
-                )
-                .findFirst().orElseGet(
+        SubjectAssignment newOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newOwner.getAccount().getLogin(), subjectId)
+                .orElseGet(
                         () -> {
                             SubjectAssignment assignment = new SubjectAssignment();
-                            assignment.setSubject(oldOwnerAssignment.getSubject());
+                            assignment.setSubject(subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new));
                             assignment.setTeacher(newOwner);
                             return assignment;
                         }
