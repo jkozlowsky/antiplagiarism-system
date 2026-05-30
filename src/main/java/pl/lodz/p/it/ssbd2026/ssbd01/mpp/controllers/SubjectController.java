@@ -46,10 +46,10 @@ public class SubjectController  {
         return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{subjectId}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID id) {
-        return ResponseEntity.ok(subjectService.getSubjectDetails(id));
+    public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
+        return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (MPP.7)", description = "Tworzy nowy przedmiot i przypisuje do niego aktualnie zalogowanego prowadzącego.")

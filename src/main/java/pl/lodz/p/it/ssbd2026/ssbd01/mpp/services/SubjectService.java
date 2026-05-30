@@ -67,43 +67,32 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public List<SubjectDTO> getAllSubjects() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        String login = authentication.getName();
-        var authorities = authentication.getAuthorities();
+        String currentUsername = authentication.getName();
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
-        boolean isAdmin = hasRole(authorities, AccountConsts.ROLE_ADMIN);
-        boolean isTeacher = hasRole(authorities, AccountConsts.ROLE_TEACHER);
-        boolean isStudent = hasRole(authorities, AccountConsts.ROLE_STUDENT);
+        List<Subject> allSubjects = subjectRepository.findAll();
 
-        List<SubjectDTO> result = new ArrayList<>();
-
-        if (isAdmin) {
-            List<Subject> subjects = subjectRepository.findAll();
-            for (Subject subject : subjects) {
-                result.add(subjectMapper.toSubjectDTO(subject, true, true, true, null, null));
-            }
-        } else if (isTeacher) {
-            List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
-            for (SubjectAssignment assignment : assignments) {
-                Subject subject = assignment.getSubject();
-                TeacherSubjectRole role = assignment.getSubjectRole();
-                boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
-                boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
-                result.add(subjectMapper.toSubjectDTO(subject, canEdit, canManageTeachers, true, null, null));
-            }
-        } else if (isStudent) {
-            List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
-            for (Subject subject : subjects) {
-                result.add(subjectMapper.toSubjectDTO(subject, false, false, false, null, null));
-            }
-        } else {
-            throw new SubjectAccessDeniedException();
+        if (!isAdmin) {
+            allSubjects = allSubjects.stream()
+                    .filter(s -> s.getSubjectAssignmentList().stream()
+                            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername)))
+                    .collect(Collectors.toList());
         }
 
-        return result;
+        return allSubjects.stream()
+                .map(subject -> {
+                    boolean isOwner = subject.getSubjectAssignmentList().stream()
+                            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+                    boolean isEditor = subject.getSubjectAssignmentList().stream()
+                            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.EDITOR);
+
+                    return subjectMapper.toSubjectDTO(subject, isAdmin || isOwner || isEditor, isAdmin || isOwner, true, null, null);
+                })
+                .collect(Collectors.toList());
     }
 
     @MethodCallLogged
@@ -210,9 +199,11 @@ public class SubjectService {
         }
         else if (subjectDto.manualRules() != null) {
             RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equals(subjectDto.manualRules().raportLevelName()))
+                    .filter(rl -> rl.getName().equalsIgnoreCase(subjectDto.manualRules().raportLevelName()))
                     .findFirst()
-                    .orElseThrow(RaportLevelDictNotFoundException::new);
+                    .orElseGet(() -> raportLevelRepository.findAll().stream()
+                            .findFirst()
+                            .orElseThrow(RaportLevelDictNotFoundException::new));
 
             preset.setRaportLevel(raportLevel);
             preset.setStudentTicketCount(subjectDto.manualRules().studentTicketCount());
@@ -220,11 +211,12 @@ public class SubjectService {
             preset.setEnableNormalization(subjectDto.manualRules().enableNormalization());
         }
         else {
-            // Wymuszenie wartości domyślnych, gdy brak podanych
             RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equals("FULL"))
+                    .filter(rl -> rl.getName().equalsIgnoreCase("FULL"))
                     .findFirst()
-                    .orElseThrow(RaportLevelDictNotFoundException::new);
+                    .orElseGet(() -> raportLevelRepository.findAll().stream()
+                            .findFirst()
+                            .orElseThrow(RaportLevelDictNotFoundException::new));
 
             preset.setRaportLevel(raportLevel);
             preset.setStudentTicketCount(10);
@@ -238,7 +230,6 @@ public class SubjectService {
 
         subject.setRulePreset(preset);
 
-        // Kaskada samoistnie zapisze RulePreset
         subjectRepository.saveAndFlush(subject);
 
         SubjectAssignment assignment = new SubjectAssignment();
@@ -257,7 +248,6 @@ public class SubjectService {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
-        // WALIDACJA HASHA
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -275,16 +265,15 @@ public class SubjectService {
             throw new SubjectAccessDeniedException();
         }
 
-        // Zapisywanie z DTO będącego rekordem
         subject.setName(dto.name());
         subject.setSubjectDescription(dto.subjectDescription());
         subject.setGiteaURL(dto.giteaURL());
 
         if (dto.rules() != null) {
             RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equals(dto.rules().raportLevelName()))
+                    .filter(rl -> rl.getName().equalsIgnoreCase(dto.rules().raportLevelName()))
                     .findFirst()
-                    .orElseThrow(RaportLevelDictNotFoundException::new);
+                    .orElseGet(() -> raportLevelRepository.findAll().stream().findFirst().orElseThrow(RaportLevelDictNotFoundException::new));
 
             RulePreset preset = subject.getRulePreset();
             if (preset == null) {
@@ -303,9 +292,13 @@ public class SubjectService {
         if (isAdmin || isOwner) {
             List<SubjectAssignment> currentAssignments = subject.getSubjectAssignmentList();
 
-            currentAssignments.removeIf(assignment ->
-                    dto.teachers().stream().noneMatch(t -> t.login().equals(assignment.getTeacher().getAccount().getLogin()))
-            );
+            List<SubjectAssignment> assignmentsToRemove = currentAssignments.stream()
+                    .filter(assignment -> dto.teachers().stream()
+                            .noneMatch(t -> t.login().equals(assignment.getTeacher().getAccount().getLogin())))
+                    .toList();
+
+            currentAssignments.removeAll(assignmentsToRemove);
+            subjectAssignmentRepository.deleteAll(assignmentsToRemove);
 
             for (TeacherAssignmentDTO teacherDto : dto.teachers()) {
                 Optional<SubjectAssignment> existing = currentAssignments.stream()
