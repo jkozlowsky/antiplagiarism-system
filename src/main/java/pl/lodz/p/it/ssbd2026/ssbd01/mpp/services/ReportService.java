@@ -266,7 +266,7 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
-    public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String tag, String login) {
+    public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) {
         Repository repository = giteaRepositoryRepository.findById(repositoryId)
                 .orElseThrow(RepositoryNotFoundException::new);
 
@@ -283,25 +283,22 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
-        int usedTickets = 0;
-
-        try {
-            usedTickets = Integer.parseInt(repository.getTicketCount());
-        } catch (NumberFormatException e) {
-            log.error("Ticket count is not an integer", e);
-        }
+        int usedTickets = repository.getTicketCount();
 
         if (usedTickets >= preset.getStudentTicketCount()) {
             throw new NoTicketsLeftException();
         }
 
-        repository.setTicketCount(String.valueOf(usedTickets + 1));
+        repository.setTicketCount(usedTickets + 1);
         giteaRepositoryRepository.saveAndFlush(repository);
 
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
-            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + tag + "/" + repo.name());
+            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
+
+            String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
+
             GitService.cloneTag(repo.clone_url(), tag, targetDir);
         });
 
@@ -311,13 +308,13 @@ public class ReportService {
 
         Report report = new Report();
         report.setSubject(subject);
-        report.setTag(tag);
-        report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + tag + "/" + timestamp + ".jplag");
+        report.setTag(studentTag);
+        report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
         report.setRepositoryList(repositoryList);
 
         JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                 subject.getOrganizationName(),
-                tag,
+                studentTag,
                 preset.getMinimumTokensMatch(),
                 preset.getEnableNormalization(),
                 report.getPathToReport()

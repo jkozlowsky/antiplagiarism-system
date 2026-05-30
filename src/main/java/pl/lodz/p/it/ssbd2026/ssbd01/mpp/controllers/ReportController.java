@@ -139,8 +139,9 @@ public class ReportController {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public StudentReportDetailsDTO generateStudentReport(
             @PathVariable UUID repositoryId,
-            @RequestParam String tag,
+            @RequestParam String studentTag,
+            @RequestParam String taskTag,
             Principal principal) {
-        return reportService.generateStudentReport(repositoryId, tag, principal.getName());
+        return reportService.generateStudentReport(repositoryId, studentTag, taskTag, principal.getName());
     }
 }

@@ -42,11 +42,6 @@ public class RepositoryController {
         return repositoryService.getUserAccounts(subjectName);
     }
 
-    @PostMapping("/{repositoryId}/check")
-    public void checkOwnCode(@PathVariable UUID repositoryId, @RequestParam String tag) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
     @GetMapping("/my-repositories")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     @Operation(summary = "Pobierz repozytoria studenta - funkcja pomocnicza do MPP.20 na frontend")

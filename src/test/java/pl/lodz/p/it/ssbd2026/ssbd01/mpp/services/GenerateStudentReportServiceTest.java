@@ -82,7 +82,7 @@ public class GenerateStudentReportServiceTest {
         repository = new Repository();
         ReflectionTestUtils.setField(repository, "id", repositoryId);
         repository.setRepositoryName("repo64");
-        repository.setTicketCount("1");
+        repository.setTicketCount(1);
         repository.setSubject(subject);
         repository.setStudentList(List.of(student));
     }
@@ -90,7 +90,9 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify, if generating a student report works.")
     void POS01_GenerateStudentReport() {
-        String tag = "64";
+        String studentTag = "64";
+        String taskTag = "task64";
+
         GiteaRepoDTO validRepo = new GiteaRepoDTO("test-repo", "url1", false);
 
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
@@ -114,10 +116,10 @@ public class GenerateStudentReportServiceTest {
 
             mockedParser.when(() -> JplagReportParser.readJplagArchive(anyString())).thenReturn(List.of());
 
-            StudentReportDetailsDTO result = reportService.generateStudentReport(repositoryId, tag, studentLogin);
+            StudentReportDetailsDTO result = reportService.generateStudentReport(repositoryId, studentTag, taskTag, studentLogin);
 
             assertNotNull(result);
-            assertEquals("2", repository.getTicketCount());
+            assertEquals(2, repository.getTicketCount());
             verify(giteaRepositoryRepository).saveAndFlush(repository);
             verify(reportsRepository).saveAndFlush(any(Report.class));
         }
@@ -126,10 +128,10 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify, if student cannot check code when not tickets are remaining.")
     void NEG01_GenerateStudentReport() {
-        repository.setTicketCount("3");
+        repository.setTicketCount(3);
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
-        assertThrows(NoTicketsLeftException.class, () -> reportService.generateStudentReport(repositoryId, "64", studentLogin));
+        assertThrows(NoTicketsLeftException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
 
     @Test
@@ -138,7 +140,7 @@ public class GenerateStudentReportServiceTest {
         rulePreset.getRaportLevel().setName("NOTHING");
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
-        assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", studentLogin));
+        assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
 
     @Test
@@ -146,7 +148,7 @@ public class GenerateStudentReportServiceTest {
     void NEG03_GenerateStudentReport() {
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
-        assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "ias67"));
+        assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", "ias67"));
     }
 
     @Test
@@ -154,6 +156,6 @@ public class GenerateStudentReportServiceTest {
     void NEG04_GenerateStudentReport() {
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.empty());
 
-        assertThrows(RepositoryNotFoundException.class, () -> reportService.generateStudentReport(repositoryId, "64", studentLogin));
+        assertThrows(RepositoryNotFoundException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
 }

@@ -64,13 +64,7 @@ public class RepositoryService {
                 .findByStudentList_Account_Login(login)
                 .stream()
                 .map(repo -> {
-                    int used = 0;
-
-                    try {
-                        used = Integer.parseInt(repo.getTicketCount());
-                    } catch (NumberFormatException ignored) {
-                        throw new IllegalArgumentException();
-                    }
+                    int used = repo.getTicketCount();
 
                     int max = repo.getSubject().getRulePreset() != null ? repo.getSubject().getRulePreset().getStudentTicketCount() : 0;
 
