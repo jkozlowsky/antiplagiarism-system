@@ -71,12 +71,12 @@ public class ScheduleServiceCreateScheduleTest {
         testSchedule.setTag(scheduleDTO.tag());
 
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, TEST_TEACHER_LOGIN))
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
                 .thenReturn(true);
         when(scheduleMapper.toSchedule(Mockito.any(ScheduleDTO.class))).thenReturn(testSchedule);
         when(scheduleRepository.saveAndFlush(Mockito.any(Schedule.class))).thenReturn(testSchedule);
 
-        Schedule result = scheduleService.createSchedule(mockSubjectId, scheduleDTO);
+        Schedule result = scheduleService.createSchedule(mockSubjectId, scheduleMapper.toSchedule(scheduleDTO));
 
         assertAll(
                 () -> assertNotNull(result),
@@ -90,27 +90,29 @@ public class ScheduleServiceCreateScheduleTest {
     @Test
     public void NEG01_CreateSchedule_WhenSubjectNotFound() {
         UUID invalidSubjectId = UUID.randomUUID();
-        ScheduleDTO scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1");
-
         when(subjectRepository.findById(invalidSubjectId)).thenReturn(Optional.empty());
 
         assertThrows(SubjectNotFoundException.class,
-                () -> scheduleService.createSchedule(invalidSubjectId, scheduleDTO));
+                () -> scheduleService.createSchedule(invalidSubjectId, scheduleMapper.toSchedule(scheduleDTO)));
 
         verify(subjectRepository, times(1)).findById(invalidSubjectId);
         verify(scheduleRepository, never()).saveAndFlush(Mockito.any(Schedule.class));
         verify(subjectAssignmentRepository, never())
-                .existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(Mockito.any(), Mockito.any());
+                .hasEditPermissions(Mockito.any(), Mockito.any());
     }
 
     @Test
     public void NEG02_CreateSchedule_NoPermissionToEditSubject() {
+        Schedule testSchedule = new Schedule();
+        testSchedule.setScheduleDateTime(scheduleDTO.scheduleDateTime());
+        testSchedule.setTag(scheduleDTO.tag());
+
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(mockSubject, TEST_TEACHER_LOGIN))
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
                 .thenReturn(false);
 
         assertThrows(NoPermissionForThisSubjectException.class,
-                () -> scheduleService.createSchedule(mockSubjectId, scheduleDTO));
+                () -> scheduleService.createSchedule(mockSubjectId, testSchedule));
 
         verify(scheduleMapper, never()).toSchedule(any(ScheduleDTO.class));
         verify(scheduleRepository, never()).saveAndFlush(any());

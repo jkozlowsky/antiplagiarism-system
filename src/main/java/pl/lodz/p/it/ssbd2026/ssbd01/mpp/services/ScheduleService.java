@@ -57,13 +57,12 @@ public class ScheduleService  {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Schedule createSchedule(UUID subjectId, ScheduleDTO scheduleDto) {
+    public Schedule createSchedule(UUID subjectId, Schedule schedule) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
-        if (!subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, teacherLogin)) {
+        if (!subjectAssignmentRepository.hasEditPermissions(subject, teacherLogin)) {
             throw new NoPermissionForThisSubjectException();
         }
-        Schedule schedule = scheduleMapper.toSchedule(scheduleDto);
         schedule.setRulePreset(subject.getRulePreset());
         return scheduleRepository.saveAndFlush(schedule);
     }

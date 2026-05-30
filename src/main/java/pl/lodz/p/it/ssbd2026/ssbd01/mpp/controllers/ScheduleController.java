@@ -48,13 +48,10 @@ public class ScheduleController  {
     @Operation(summary = "Utwórz harmonogram wykonywania analizy porównawczej w ramach przedmiotu", description = "Zwraca ScheduleDTO z utworzonego obiektu")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Poprawnie utworzono obiekt"),
-            @ApiResponse(responseCode = "400", description = "Podano nieprawidłowe dane wejściowe"),
-            @ApiResponse(responseCode = "401", description = "Brak wymaganych poświadczeń"),
-            @ApiResponse(responseCode = "403", description = "Brak dostępu do edycji w przedmiocie lub brak roli TEACHER"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
     })
     public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto) {
-        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleDto));
+        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto)));
     }
 
 

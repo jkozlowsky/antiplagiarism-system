@@ -41,9 +41,6 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
     @Autowired
     private JwtAuthService jwtAuthService;
     @Autowired
-    @Qualifier("adminTransactionManager")
-    private PlatformTransactionManager transactionManager;
-    @Autowired
     private AccountTestRepository accountTestRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -61,25 +58,18 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
 
         String otherToken = jwtAuthService.generateToken("mkarbowańczyk", List.of(AccountConsts.ROLE_TEACHER), false);
         teacherWithoutEditHeaders = new Headers(new Header("Authorization", "Bearer " + otherToken));
-        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
-        txTemplate.execute(_ -> {
-            SubjectAssignment assignment = subjectAssignmentTestRepository.findByTeacherAccountLogin(TEST_TEACHER_LOGIN).getFirst();
-            subjectId = assignment.getSubject().getId();
-            return null;
-        });
+
+        SubjectAssignment assignment = subjectAssignmentTestRepository.findByTeacherAccountLogin(TEST_TEACHER_LOGIN).getFirst();
+        subjectId = assignment.getSubject().getId();
     }
 
     @AfterEach
     public void tearDownCreateScheduleTest() {
-        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
-        txTemplate.execute(_ -> {
-            scheduleTestRepository.deleteAll(
-                    scheduleTestRepository.findAll().stream()
-                            .filter(s -> "zad1".equals(s.getTag()))
-                            .toList()
-            );
-            return null;
-        });
+        scheduleTestRepository.deleteAll(
+                scheduleTestRepository.findAll().stream()
+                        .filter(s -> "zad1".equals(s.getTag()))
+                        .toList()
+        );
     }
 
     @Test
