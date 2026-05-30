@@ -17,6 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +46,7 @@ public class ScheduleServiceGetScheduleTest {
     @Test
     public void POS01_shouldReturnSchedulesWhenTeacherIsAssignedToSubject() {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
-                .thenReturn(List.of(new SubjectAssignment()));
+                .thenReturn(Optional.of(new SubjectAssignment()));
         when(scheduleRepository.findAllBySubjectId(subjectId)).thenReturn(List.of(new Schedule()));
 
         List<Schedule> schedules = scheduleService.getSchedules(subjectId);
@@ -60,7 +61,7 @@ public class ScheduleServiceGetScheduleTest {
     @Test
     public void POS02_ShouldReturnEmptyListWhenNoSchedules() {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
-                .thenReturn(List.of(new SubjectAssignment()));
+                .thenReturn(Optional.of(new SubjectAssignment()));
         when(scheduleRepository.findAllBySubjectId(subjectId)).thenReturn(List.of());
 
         List<Schedule> schedules = scheduleService.getSchedules(subjectId);
@@ -75,7 +76,7 @@ public class ScheduleServiceGetScheduleTest {
     @Test
     public void NEG01_ShouldThrowExceptionWhenTeacherIsNotAssignedToAnySubject() {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
-                .thenReturn(List.of());
+                .thenReturn(Optional.empty());
 
         assertAll(
                 () -> assertThrows(NoPermissionForThisSubjectException.class,

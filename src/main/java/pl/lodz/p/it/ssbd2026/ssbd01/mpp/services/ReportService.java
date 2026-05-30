@@ -60,9 +60,12 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Report generateReportOnDemand(UUID subjectId, String tag) {
+    public Report generateReportOnDemand(UUID subjectId, String tag, String login) {
 
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+        if(!subjectRepository.isTeacherAssignedToSubject(subjectId, login)){
+            throw new SubjectAccessDeniedException();
+        }
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {

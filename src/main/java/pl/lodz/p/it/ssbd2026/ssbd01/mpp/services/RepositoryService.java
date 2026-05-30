@@ -30,10 +30,12 @@ public class RepositoryService {
 
     private final GiteaRepositoryRepository giteaRepositoryRepository;
 
-    public void getRepositories(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public List<Repository> getRepositories(UUID subjectId) {
+        return giteaRepositoryRepository.findBySubjectId(subjectId);
     }
 
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {
         List<Repository> repos = giteaRepositoryRepository.findBySubject_Name(subjectName);
         List<SubjectStudentStatsDTO> results = new ArrayList<>();

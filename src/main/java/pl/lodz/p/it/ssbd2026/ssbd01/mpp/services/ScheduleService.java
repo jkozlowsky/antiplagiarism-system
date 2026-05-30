@@ -23,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -41,8 +42,8 @@ public class ScheduleService  {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<Schedule> getSchedules(UUID subjectId) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
-        List<SubjectAssignment> subjectAssignments = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
-        if (subjectAssignments.isEmpty()) {
+        Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
+        if (subjectAssignment.isEmpty()) {
             throw new NoPermissionForThisSubjectException();
         }
         return scheduleRepository.findAllBySubjectId(subjectId);
@@ -59,7 +60,7 @@ public class ScheduleService  {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
 
         Subject subject = schedule.getRulePreset().getSubject();
-        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin);
+        boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();
@@ -78,7 +79,7 @@ public class ScheduleService  {
                 .orElseThrow(ScheduleNotFoundException::new);
 
         Subject subject = schedule.getRulePreset().getSubject();
-        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin);
+        boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();

@@ -33,12 +33,12 @@ class SubjectControllerIT extends BaseTestSetup {
         teacherToken = jwtAuthService.generateToken("jkowalski", List.of("TEACHER"), false);
         studentToken = jwtAuthService.generateToken("anowak", List.of("STUDENT"), false);
 
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true);
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
 
         validDto = new SubjectDTO(
                 null, null, "Inżynieria Oprogramowania", "elo zelo", "2026",
                 "Opis przedmiotu", "https://gitea.example.com/io",
-                null, null, null, null, null, null, rules
+                null, null, null, null, null, null, rules, true, true, true
         );
     }
 
@@ -59,7 +59,7 @@ class SubjectControllerIT extends BaseTestSetup {
         SubjectDTO invalidDto = new SubjectDTO(
                 null, null, "", "", "",
                 "Opis", "invalid_url",
-                null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, true, true, true
         );
 
         given()

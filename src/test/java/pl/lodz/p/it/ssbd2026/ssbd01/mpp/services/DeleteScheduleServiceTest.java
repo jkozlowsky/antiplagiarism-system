@@ -47,7 +47,7 @@ public class DeleteScheduleServiceTest {
         schedule.setRulePreset(rulePreset);
 
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin))
+        when(subjectAssignmentRepository.hasEditPermissions(subject, userLogin))
                 .thenReturn(true);
 
         scheduleService.deleteSchedule(scheduleId, userLogin);
@@ -86,7 +86,7 @@ public class DeleteScheduleServiceTest {
         schedule.setRulePreset(rulePreset);
 
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-        when(subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin))
+        when(subjectAssignmentRepository.hasEditPermissions(subject, userLogin))
                 .thenReturn(false);
 
         NoPermissionToEditScheduleException exception = assertThrows(

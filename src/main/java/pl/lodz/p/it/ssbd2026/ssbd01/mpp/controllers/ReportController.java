@@ -40,15 +40,14 @@ public class ReportController {
     })
     @PostMapping("/demand/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public ReportDTO generateReportOnDemand(@PathVariable UUID subjectId, @RequestParam String tag) {
-        return reportMapper.toDto(reportService.generateReportOnDemand(subjectId, tag));
+    public ReportDTO generateReportOnDemand(@PathVariable UUID subjectId, @RequestParam String tag, Principal principal) {
+        return reportMapper.toDto(reportService.generateReportOnDemand(subjectId, tag, principal.getName()));
     }
 
     @Operation(summary = "Pobierz raporty", description = "Pobierz listę raportów dla podanego przedmiotu")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Zwrócono listę raportów"),
     })
-
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<ReportDTO> getAllReportsForSubject(@PathVariable UUID subjectId, @ParameterObject Pageable pageable) {

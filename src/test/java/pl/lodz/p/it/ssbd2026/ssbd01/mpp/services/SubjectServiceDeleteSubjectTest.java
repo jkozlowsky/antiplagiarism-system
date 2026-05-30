@@ -60,7 +60,7 @@ public class SubjectServiceDeleteSubjectTest {
 
         assignment = new SubjectAssignment();
         assignment.setTeacher(teacher);
-        assignment.setHasEditPermissions(true);
+        assignment.setSubjectRole(TeacherSubjectRole.OWNER);
 
         subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
@@ -85,7 +85,7 @@ public class SubjectServiceDeleteSubjectTest {
         verify(subjectRepository, times(1)).flush();
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
 
-        verify(giteaService, times(1)).deleteGiteaOrganization(subject.getName());
+        verify(giteaService, times(1)).deleteGiteaOrganization(subject.getOrganizationName());
     }
 
     @Test
@@ -131,7 +131,7 @@ public class SubjectServiceDeleteSubjectTest {
     @Test
     @DisplayName("NEG03: Powinien rzucić wyjątek SubjectAccessDeniedException, gdy użytkownik nie ma uprawnień")
     void NEG03_deleteSubject_ShouldThrowWhenAccessDenied() {
-        assignment.setHasEditPermissions(false);
+        assignment.setSubjectRole(TeacherSubjectRole.EDITOR);
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
