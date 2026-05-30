@@ -12,7 +12,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNoAccessException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
@@ -23,15 +22,10 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
 import java.util.List;
@@ -59,7 +53,18 @@ public class RuleService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public List<RulePresetDTO> getRulePresetsTemplates() {
         return ruleRepository.findAllByIsPreset(true).stream()
-                .map(ruleMapper::toRuleDTO)
+                .map(preset -> {
+                    RulePresetDTO dto = ruleMapper.toRuleDTO(preset);
+                    return new RulePresetDTO(
+                            dto.id(),
+                            dto.raportLevelName(),
+                            dto.studentTicketCount(),
+                            dto.minimumTokensMatch(),
+                            dto.enableNormalization(),
+                            dto.version(),
+                            versionHashService.hashObjectVersion(preset.getId(), preset.getVersion())
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

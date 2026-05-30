@@ -71,6 +71,17 @@ public record SubjectDTO(
         UUID templateId,
 
         @Schema(description = "Ręczne definicje reguł, jeśli nie wybrano szablonu")
-        RulePresetDTO manualRules
+        RulePresetDTO manualRules,
 
+        @Schema(description = "Flaga określająca uprawnienia do edycji", example = "true", accessMode = Schema.AccessMode.READ_ONLY)
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canEdit,
+
+        @Schema(description = "Flaga określająca uprawnienia do zarządzania nauczycielami", example = "true", accessMode = Schema.AccessMode.READ_ONLY)
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canManageTeachers,
+
+        @Schema(description = "Flaga określająca uprawnienia do przeglądania statystyk", example = "true", accessMode = Schema.AccessMode.READ_ONLY)
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Boolean canViewStats
 ) {}

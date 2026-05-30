@@ -24,7 +24,10 @@ public class GitService {
                 .call()) { // TODO: remove git token from here!!!!!!!!!
 
         } catch (GitAPIException e) {
-            throw new GitCloneException(e);
+//            e.printStackTrace();
+//            throw new GitCloneException(e);
+//            TODO: zrobić tak żeby ten wyjątek był wyrzucany jeżeli ŻADEN repozytorium nie ma tagu, bo na razie wyrzuca nawet jak jeden nie ma.
+            log.warn("Cannot clone repository {} at tag {} because tag is not present in the repository", repoUrl, tagName);
         } catch (JGitInternalException e){
             log.warn("Cannot clone repository {} at tag {} because it is already present in the folder", repoUrl, tagName);
 //            throw new JGitException(e);

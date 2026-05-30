@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.util.UUID;
 public interface GiteaRepositoryRepository extends AbstractRepository<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> {
     List<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> getAllBySubjectId(UUID subjectId);
 
+    @EntityGraph(attributePaths = {"studentList", "studentList.account"})
     List<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> findBySubjectId(UUID subjectId);
 
     List<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> findBySubject_Name(String subjectName);

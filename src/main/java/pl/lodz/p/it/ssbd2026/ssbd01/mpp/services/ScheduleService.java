@@ -74,7 +74,7 @@ public class ScheduleService  {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
 
         Subject subject = schedule.getRulePreset().getSubject();
-        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin);
+        boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();
@@ -93,7 +93,7 @@ public class ScheduleService  {
                 .orElseThrow(ScheduleNotFoundException::new);
 
         Subject subject = schedule.getRulePreset().getSubject();
-        boolean hasPermission = subjectAssignmentRepository.existsBySubjectAndTeacherAccountLoginAndHasEditPermissionsTrue(subject, userLogin);
+        boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();
