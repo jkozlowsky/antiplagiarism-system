@@ -297,7 +297,6 @@ public class SubjectService {
                         assignment -> assignment.getSubject().getId().equals(subjectId)
                 )
                 .findFirst().orElseThrow(SubjectNotFoundException::new);
-        oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
         Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin).orElseThrow(AccessLevelNotAssignedException::new);
         SubjectAssignment newOwnerAssignment = newOwner.getSubjectAssignmentList()
                 .stream()
@@ -312,6 +311,7 @@ public class SubjectService {
                             return assignment;
                         }
                 );
+        oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
         newOwnerAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
 
         subjectAssignmentRepository.saveAndFlush(oldOwnerAssignment);
