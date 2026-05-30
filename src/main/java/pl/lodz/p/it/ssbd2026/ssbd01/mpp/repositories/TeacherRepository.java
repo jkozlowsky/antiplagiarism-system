@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,4 +17,7 @@ public interface TeacherRepository extends AbstractRepository<Teacher> {
 
     @Query("SELECT t FROM Teacher t WHERE t.account.login = :login AND t.active = true")
     Optional<Teacher> findActiveTeacherByLogin(@Param("login") String login);
+
+    List<Teacher> findByAccountLoginContainingIgnoreCaseOrAccountEmailContainingIgnoreCase(String login, String email);
+
 }

@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
@@ -38,6 +40,12 @@ public class SubjectController  {
         return ResponseEntity.ok(subjectService.getAllSubjects());
     }
 
+    @GetMapping("/{subjectId}/users")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<List<TeacherAssignmentDTO>> getSubjectUsers(@PathVariable UUID subjectId) {
+        return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID id) {
@@ -60,8 +68,13 @@ public class SubjectController  {
     }
 
     @PutMapping("/{subjectId}")
-    public void updateSubject(@PathVariable UUID subjectId, @RequestBody Object subjectDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<Void> updateSubject( @PathVariable UUID subjectId,
+                                               @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
+                                               @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto)
+    {
+        subjectService.updateSubject(subjectId, dto, ifMatch);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.")
