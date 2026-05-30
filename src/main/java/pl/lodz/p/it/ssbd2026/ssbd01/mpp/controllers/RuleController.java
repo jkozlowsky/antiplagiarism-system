@@ -65,15 +65,17 @@ public class RuleController {
             @ApiResponse(responseCode = "400", description = "Niepoprawne dane wejściowe", content = @Content(mediaType = "text/plain")),
             @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
             @ApiResponse(responseCode = "403", description = "Brak uprawnień", content = @Content(mediaType = "text/plain")),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono reguły o podanym ID lub wskazany poziom raportu nie istnieje", content = @Content(mediaType = "text/plain"))
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono reguły o podanym ID lub wskazany poziom raportu nie istnieje", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "409", description = "Dane zostały zmodyfikowane przez innego użytkownika", content = @Content(mediaType = "text/plain"))
     })
     @PutMapping("/{ruleId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void updateRulePreset(
             @PathVariable UUID ruleId,
+            @RequestHeader("If-Match") String ifMatch,
             @Valid @RequestBody UpdateRulePresetDTO ruleDto) {
 
-        ruleService.updateRulePreset(ruleId, ruleDto);
+        ruleService.updateRulePreset(ruleId, ruleDto, ifMatch);
     }
 
     @Operation(summary = "Usuwanie globalnego szablonu reguł (MPP.13)")
