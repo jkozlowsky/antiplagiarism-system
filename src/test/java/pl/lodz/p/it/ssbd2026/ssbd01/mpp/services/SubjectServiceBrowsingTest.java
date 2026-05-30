@@ -207,7 +207,7 @@ class SubjectServiceBrowsingTest {
         mockSecurityContext("test_teacher", "TEACHER");
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("test_teacher", subjectId))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(Optional.empty());
 
         assertThrows(SubjectAccessDeniedException.class, () ->
                 subjectService.getSubjectDetails(subjectId)

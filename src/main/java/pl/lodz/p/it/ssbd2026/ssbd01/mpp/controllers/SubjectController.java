@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
@@ -89,8 +90,15 @@ public class SubjectController  {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @Operation(summary = "Zmień kierownika przedmiotu", description = "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Kierownik przedmiotu został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu lub wskazanego nauczyciela")
+    })
     @PatchMapping("/{subjectId}/manager")
-    public void changeSubjectManager(@PathVariable UUID subjectId, @RequestBody UUID newManagerId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public void changeSubjectManager(@PathVariable UUID subjectId, @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
+        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin());
     }
 }

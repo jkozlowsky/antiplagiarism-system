@@ -18,6 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
@@ -285,7 +286,26 @@ public class SubjectService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public void changeSubjectManager(UUID subjectId, UUID newManagerId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public void changeSubjectManager(UUID subjectId, String newManagerLogin) {
+        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId).orElseThrow(SubjectNotFoundException::new);
+        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId).orElseThrow(SubjectNotFoundException::new);
+        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin).orElseThrow(AccessLevelNotAssignedException::new);
+        SubjectAssignment newOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newOwner.getAccount().getLogin(), subjectId)
+                .orElseGet(
+                        () -> {
+                            SubjectAssignment assignment = new SubjectAssignment();
+                            assignment.setSubject(subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new));
+                            assignment.setTeacher(newOwner);
+                            return assignment;
+                        }
+                );
+        oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
+        newOwnerAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
+
+        subjectAssignmentRepository.saveAndFlush(oldOwnerAssignment);
+        subjectAssignmentRepository.saveAndFlush(newOwnerAssignment);
     }
 }

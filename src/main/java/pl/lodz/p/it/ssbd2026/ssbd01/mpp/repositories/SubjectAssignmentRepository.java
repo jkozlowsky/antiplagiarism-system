@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.TeacherSubjectRole;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -22,11 +22,12 @@ public interface SubjectAssignmentRepository extends AbstractRepository<SubjectA
     boolean hasEditPermissions(@Param("subject") Subject subject, @Param("login") String login);
 
     @Query(value = "select sa from SubjectAssignment sa where sa.teacher.account.login = :teacherAccountLogin and sa.subject.id = :subjectId")
-    List<SubjectAssignment> findByTeacherLoginAndSubjectId(
+    Optional<SubjectAssignment> findByTeacherLoginAndSubjectId(
             @Param("teacherAccountLogin") String teacherAccountLogin,
             @Param("subjectId") UUID subjectId
     );
 
     @Query("SELECT sa FROM SubjectAssignment sa WHERE sa.teacher.account.login = :login")
     List<SubjectAssignment> findAllByTeacherLogin(@Param("login") String login);
+
 }
