@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectManualDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectTemplateDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
@@ -53,20 +55,37 @@ public class SubjectController  {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
     }
 
-    @Operation(summary = "Utwórz nowy przedmiot (MPP.7)", description = "Tworzy nowy przedmiot i przypisuje do niego aktualnie zalogowanego prowadzącego.")
+
+    @Operation(summary = "Utwórz nowy przedmiot (konfiguracja ręczna) (MPP.7)", description = "Tworzy nowy przedmiot z ręczną konfiguracją reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Przedmiot został poprawnie utworzony"),
             @ApiResponse(responseCode = "400", description = "Błąd walidacji danych wejściowych", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "403", description = "Brak odpowiednich uprawnień", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "409", description = "Użytkownik nie posiada aktywnego poziomu dostępu Nauczyciel", content = @Content(mediaType = "application/json"))
     })
-    @PostMapping
+    @PostMapping("/manual")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createSubject(@Validated(OnCreate.class) @RequestBody SubjectDTO subjectDto, Principal principal) {
+    public void createSubjectManual(@Validated(OnCreate.class) @RequestBody CreateSubjectManualDTO dto, Principal principal) {
         String userLogin = principal.getName();
-        subjectService.createSubject(subjectDto, userLogin);
+        subjectService.createSubjectManual(dto, userLogin);
     }
+
+    @Operation(summary = "Utwórz nowy przedmiot (szablon) (MPP.7)", description = "Tworzy nowy przedmiot wykorzystując szablon reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Przedmiot został poprawnie utworzony"),
+            @ApiResponse(responseCode = "400", description = "Błąd walidacji danych wejściowych", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "403", description = "Brak odpowiednich uprawnień", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "Użytkownik nie posiada aktywnego poziomu dostępu Nauczyciel", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/template")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createSubjectFromTemplate(@Validated(OnCreate.class) @RequestBody CreateSubjectTemplateDTO dto, Principal principal) {
+        String userLogin = principal.getName();
+        subjectService.createSubjectFromTemplate(dto, userLogin);
+    }
+
 
     @PutMapping("/{subjectId}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")

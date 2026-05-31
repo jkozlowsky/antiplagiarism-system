@@ -15,30 +15,25 @@ import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 
-import java.util.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -176,87 +171,38 @@ public class SubjectService {
         return authorities.stream().anyMatch(auth -> auth.getAuthority().equals(roleName));
     }
 
-    @MethodCallLogged
-    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createSubject(SubjectDTO subjectDto, String creatorLogin) {
 
-        Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
-                .orElseThrow(AccessLevelNotAssignedException::new);
+    private RaportLevelDict fetchRaportLevel(String name) {
+        return raportLevelRepository.findByName(name)
+                .orElseGet(() -> raportLevelRepository.findAll().stream()
+                        .findFirst()
+                        .orElseThrow(RaportLevelDictNotFoundException::new));
+    }
 
+    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url) {
         Subject subject = new Subject();
-        subject.setName(subjectDto.name());
-        subject.setOrganizationName(subjectDto.organizationName());
-        subject.setEdition(subjectDto.edition());
-        subject.setSubjectDescription(subjectDto.subjectDescription());
-        subject.setGiteaURL(subjectDto.giteaURL());
+        subject.setName(name);
+        subject.setOrganizationName(orgName);
+        subject.setEdition(edition);
+        subject.setSubjectDescription(desc);
+        subject.setGiteaURL(url);
         subject.setArchived(false);
-
-        RulePreset preset = new RulePreset();
-
-        if (subjectDto.templateId() != null) {
-            RulePreset template = ruleRepository.findById(subjectDto.templateId())
-                    .orElseThrow(RulePresetTemplateNotFoundException::new);
-
-            RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equalsIgnoreCase(subjectDto.manualRules().raportLevelName()))
-                    .findFirst()
-                    .orElseGet(() -> raportLevelRepository.findAll().stream()
-                            .findFirst()
-                            .orElseThrow(RaportLevelDictNotFoundException::new));
-
-            preset.setRaportLevel(raportLevel);
-            preset.setStudentTicketCount(template.getStudentTicketCount());
-            preset.setMinimumTokensMatch(template.getMinimumTokensMatch());
-            preset.setEnableNormalization(template.getEnableNormalization());
-        }
-        else if (subjectDto.manualRules() != null) {
-            RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equalsIgnoreCase(subjectDto.manualRules().raportLevelName()))
-                    .findFirst()
-                    .orElseGet(() -> raportLevelRepository.findAll().stream()
-                            .findFirst()
-                            .orElseThrow(RaportLevelDictNotFoundException::new));
-
-            preset.setRaportLevel(raportLevel);
-            preset.setStudentTicketCount(subjectDto.manualRules().studentTicketCount());
-            preset.setMinimumTokensMatch(subjectDto.manualRules().minimumTokensMatch());
-            preset.setEnableNormalization(subjectDto.manualRules().enableNormalization());
-        }
-        else {
-            RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equalsIgnoreCase("FULL"))
-                    .findFirst()
-                    .orElseGet(() -> raportLevelRepository.findAll().stream()
-                            .findFirst()
-                            .orElseThrow(RaportLevelDictNotFoundException::new));
-
-            preset.setRaportLevel(raportLevel);
-            preset.setStudentTicketCount(10);
-            preset.setMinimumTokensMatch(0);
-            preset.setEnableNormalization(false);
-        }
-
-        preset.setIsPreset(false);
-        preset.setSubject(subject);
-        subject.setRulePreset(preset);
-
         subject.setSubjectAssignmentList(new ArrayList<>());
+        return subject;
+    }
 
+    private void assignTeachers(Subject subject, Teacher creator, String creatorLogin, List<TeacherAssignmentDTO> teachersDto) {
         SubjectAssignment creatorAssignment = new SubjectAssignment();
         creatorAssignment.setSubject(subject);
-        creatorAssignment.setTeacher(teacher);
+        creatorAssignment.setTeacher(creator);
         creatorAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
         subject.getSubjectAssignmentList().add(creatorAssignment);
 
-        if (subjectDto.teachers() != null) {
-            for (TeacherAssignmentDTO tDto : subjectDto.teachers()) {
+        if (teachersDto != null) {
+            for (TeacherAssignmentDTO tDto : teachersDto) {
                 if (tDto.login().equals(creatorLogin)) continue;
-
                 Teacher additionalTeacher = teacherRepository.findActiveTeacherByLogin(tDto.login())
                         .orElseThrow(AccessLevelNotAssignedException::new);
-
                 SubjectAssignment newAssignment = new SubjectAssignment();
                 newAssignment.setSubject(subject);
                 newAssignment.setTeacher(additionalTeacher);
@@ -264,9 +210,58 @@ public class SubjectService {
                 subject.getSubjectAssignmentList().add(newAssignment);
             }
         }
+    }
 
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin) {
+        Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
+        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+
+        RulePreset preset = new RulePreset();
+        preset.setRaportLevel(fetchRaportLevel(dto.manualRules().raportLevelName()));
+        preset.setStudentTicketCount(dto.manualRules().studentTicketCount());
+        preset.setMinimumTokensMatch(dto.manualRules().minimumTokensMatch());
+        preset.setEnableNormalization(dto.manualRules().enableNormalization());
+        preset.setIsPreset(false);
+        preset.setSubject(subject);
+        subject.setRulePreset(preset);
+
+        assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         subjectRepository.saveAndFlush(subject);
     }
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin) {
+        Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
+        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+
+        RulePreset template = ruleRepository.findById(dto.templateId())
+                .orElseThrow(RulePresetTemplateNotFoundException::new);
+
+        RulePreset preset = new RulePreset();
+        preset.setRaportLevel(fetchRaportLevel(dto.raportLevelName()));
+        preset.setStudentTicketCount(template.getStudentTicketCount());
+        preset.setMinimumTokensMatch(template.getMinimumTokensMatch());
+        preset.setEnableNormalization(template.getEnableNormalization());
+        preset.setIsPreset(false);
+        preset.setSubject(subject);
+        subject.setRulePreset(preset);
+
+        assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+        subjectRepository.saveAndFlush(subject);
+    }
+
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
@@ -298,19 +293,8 @@ public class SubjectService {
         subject.setGiteaURL(dto.giteaURL());
 
         if (dto.rules() != null) {
-            RaportLevelDict raportLevel = raportLevelRepository.findAll().stream()
-                    .filter(rl -> rl.getName().equalsIgnoreCase(dto.rules().raportLevelName()))
-                    .findFirst()
-                    .orElseGet(() -> raportLevelRepository.findAll().stream().findFirst().orElseThrow(RaportLevelDictNotFoundException::new));
-
             RulePreset preset = subject.getRulePreset();
-            if (preset == null) {
-                preset = new RulePreset();
-                preset.setSubject(subject);
-                subject.setRulePreset(preset);
-            }
-
-            preset.setRaportLevel(raportLevel);
+            preset.setRaportLevel(fetchRaportLevel(dto.rules().raportLevelName()));
             preset.setStudentTicketCount(dto.rules().studentTicketCount());
             preset.setMinimumTokensMatch(dto.rules().minimumTokensMatch());
             preset.setEnableNormalization(dto.rules().enableNormalization());

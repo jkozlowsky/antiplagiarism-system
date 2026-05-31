@@ -6,15 +6,13 @@ import jakarta.validation.constraints.Size;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.SubjectConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnUpdate;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.validators.ValidSubjectCreation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
+
 import java.util.List;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@ValidSubjectCreation(groups = OnCreate.class)
 public record SubjectDTO(
 
         @Null(groups = {OnCreate.class, OnUpdate.class})
