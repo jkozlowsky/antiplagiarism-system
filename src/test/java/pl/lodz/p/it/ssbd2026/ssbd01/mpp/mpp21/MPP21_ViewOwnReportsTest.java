@@ -172,7 +172,7 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
 
             Repository repo = new Repository();
             repo.setRepositoryName("Repo_" + studentLogin);
-            repo.setTicketCount("5");
+            repo.setTicketCount(5);
             repo.setStudentList(List.of(student));
             repositoryTestRepository.save(repo);
 

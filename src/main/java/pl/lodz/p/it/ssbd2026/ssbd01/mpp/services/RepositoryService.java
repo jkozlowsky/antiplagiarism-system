@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentRepositoryDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.SubjectStudentStatsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
@@ -57,7 +58,24 @@ public class RepositoryService {
         return results;
     }
 
-    public void checkOwnCode(UUID repositoryId, String tag) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public List<StudentRepositoryDTO> getStudentRepositories(String login) {
+        return giteaRepositoryRepository
+                .findByStudentList_Account_Login(login)
+                .stream()
+                .map(repo -> {
+                    int used = repo.getTicketCount();
+
+                    int max = repo.getSubject().getRulePreset() != null ? repo.getSubject().getRulePreset().getStudentTicketCount() : 0;
+
+                    return new StudentRepositoryDTO(
+                            repo.getId(),
+                            repo.getRepositoryName(),
+                            repo.getSubject().getName(),
+                            used,
+                            max
+                    );
+                })
+                .toList();
     }
 }

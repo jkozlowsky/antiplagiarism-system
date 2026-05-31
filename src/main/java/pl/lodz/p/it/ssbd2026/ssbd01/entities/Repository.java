@@ -24,7 +24,7 @@ public class Repository extends AbstractEntity {
     private String repositoryName;
 
     @Column(name = "ticket_count", nullable = false)
-    private String ticketCount;
+    private int ticketCount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
