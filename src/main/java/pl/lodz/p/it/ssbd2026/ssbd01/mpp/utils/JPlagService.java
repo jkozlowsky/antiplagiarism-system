@@ -7,6 +7,7 @@ import de.jplag.java.JavaLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JplagScanException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
@@ -26,7 +27,6 @@ public class JPlagService {
             String reportPath
     ) {
         JavaLanguage language = new JavaLanguage();
-        language.getOptions();
 
         Set<File> submissionDirectories = Set.of(
                 new File("repos/submissions/" + organizationName + "/" + tag + "/"));
@@ -45,11 +45,8 @@ public class JPlagService {
             throw new ReportFileException(e);
         } catch (ExitException e) {
             log.error("JPlag Exit Reason: {}", e.getMessage());
-            if (e.getCause() != null) {
-                log.error("Caused by: {}", e.getCause().getMessage());
-            }
+            log.error("JPlag Exit Reason: {}", reportPath);
             throw new JplagScanException(e);
-//            throw new JplagScanException(e);
         }
 
     }
