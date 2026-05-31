@@ -10,11 +10,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Teacher;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -38,8 +36,6 @@ class SubjectServiceTest {
     @Mock
     private RuleRepository ruleRepository;
 
-
-
     @InjectMocks
     private SubjectService subjectService;
 
@@ -53,7 +49,7 @@ class SubjectServiceTest {
         validDto = new SubjectDTO(
                 null, null, "SSBD", "elo zelo", "2026", "64 osoby IAS",
                 "https://gitea.example.com/ssbd", null, null, null, null, null,
-                null, rules, true, true, true
+                null, rules, true, true, true, null
         );
     }
 
@@ -62,13 +58,14 @@ class SubjectServiceTest {
         Teacher teacher = new Teacher();
         when(teacherRepository.findActiveTeacherByLogin(TEACHER_LOGIN)).thenReturn(Optional.of(teacher));
 
-        when(raportLevelRepository.findAll()).thenReturn(java.util.List.of(new RaportLevelDict()));
+        RaportLevelDict mockDict = new RaportLevelDict();
+        mockDict.setName("PEŁNY_WGLĄD");
+        when(raportLevelRepository.findAll()).thenReturn(java.util.List.of(mockDict));
 
         subjectService.createSubject(validDto, TEACHER_LOGIN);
 
         assertAll(
-                () -> verify(subjectRepository, times(1)).saveAndFlush(any(Subject.class)),
-                () -> verify(subjectAssignmentRepository, times(1)).saveAndFlush(any(SubjectAssignment.class))
+                () -> verify(subjectRepository, times(1)).saveAndFlush(any(Subject.class))
         );
     }
 

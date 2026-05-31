@@ -21,6 +21,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
 
@@ -36,6 +37,8 @@ class SubjectServiceUpdateTest {
     @Mock private VersionHashService versionHashService;
     @Mock private TeacherRepository teacherRepository;
     @Mock private RaportLevelRepository raportLevelRepository;
+
+    @Mock private SubjectAssignmentRepository subjectAssignmentRepository;
 
     @InjectMocks
     private SubjectService subjectService;
