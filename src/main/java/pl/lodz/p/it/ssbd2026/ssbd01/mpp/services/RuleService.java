@@ -91,13 +91,19 @@ public class RuleService {
         ruleRepository.save(newPreset);
     }
 
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    public void updateRulePreset(UUID ruleId, UpdateRulePresetDTO ruleDto) {
+    public void updateRulePreset(UUID ruleId, UpdateRulePresetDTO ruleDto, String versionHash) {
         RulePreset rulePreset = ruleRepository.findById(ruleId)
                 .orElseThrow(RulePresetNotFoundException::new);
 
-        RaportLevelDict raportLevel = raportLevelRepository.findByName(ruleDto.raportLevelName())
+        if (!versionHash.equals(versionHashService.hashObjectVersion(ruleId, rulePreset.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(ruleDto.raportLevelName())
                 .orElseThrow(RaportLevelDictNotFoundException::new);
 
         rulePreset.setStudentTicketCount(ruleDto.studentTicketCount());

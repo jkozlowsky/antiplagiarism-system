@@ -17,11 +17,13 @@ import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +47,9 @@ public class UpdateRulePresetTest extends BaseTestSetup {
     @Autowired
     private PlatformTransactionManager mppTransactionManager;
 
+    @Autowired
+    private VersionHashService versionHashService;
+
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     private Headers teacherHeaders;
@@ -52,6 +57,7 @@ public class UpdateRulePresetTest extends BaseTestSetup {
     private Headers unauthenticatedHeaders;
 
     private UUID testRuleId;
+    private Integer testRuleVersion;
     private final String targetRaportLevelName = "FULL_VIEW";
 
     @BeforeEach
@@ -77,23 +83,31 @@ public class UpdateRulePresetTest extends BaseTestSetup {
             rulePreset.setEnableNormalization(false);
             rulePreset.setIsPreset(true);
 
-            RulePreset savedRule = ruleRepository.save(rulePreset);
+            RulePreset savedRule = ruleRepository.saveAndFlush(rulePreset);
             testRuleId = savedRule.getId();
+            testRuleVersion = savedRule.getVersion();
 
             return null;
         });
+    }
+
+    private Headers getHeadersWithIfMatch(Headers baseHeaders, String hash) {
+        List<Header> headerList = new ArrayList<>(baseHeaders.asList());
+        headerList.add(new Header("If-Match", hash));
+        return new Headers(headerList);
     }
 
     @Test
     @DisplayName("Powinno pomyślnie zaktualizować regułę przez nauczyciela")
     public void shouldUpdateRulePresetSuccessfully() throws Exception {
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, 20, 50, true);
+        String validHash = versionHashService.hashObjectVersion(testRuleId, testRuleVersion);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 200,
                 "/api/rules/" + testRuleId,
-                teacherHeaders
+                getHeadersWithIfMatch(teacherHeaders, validHash)
         );
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(mppTransactionManager);
@@ -108,15 +122,30 @@ public class UpdateRulePresetTest extends BaseTestSetup {
     }
 
     @Test
+    @DisplayName("Powinno zwrócić błąd 409 przy próbie aktualizacji z nieprawidłowym hashem (If-Match)")
+    public void shouldReturn409WhenVersionHashMismatch() throws Exception {
+        UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, 20, 50, true);
+        String invalidHash = "invalid-hash-123";
+
+        requestFunctions.sendPutRequest(
+                objectMapper.writeValueAsString(dto),
+                409,
+                "/api/rules/" + testRuleId,
+                getHeadersWithIfMatch(teacherHeaders, invalidHash)
+        );
+    }
+
+    @Test
     @DisplayName("Powinno zwrócić błąd 400 z powodu walidacji danych (ujemne bilety)")
     public void shouldFailToUpdateWithInvalidData() throws Exception {
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, -5, 50, true);
+        String validHash = versionHashService.hashObjectVersion(testRuleId, testRuleVersion);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 400,
                 "/api/rules/" + testRuleId,
-                teacherHeaders
+                getHeadersWithIfMatch(teacherHeaders, validHash)
         );
     }
 
@@ -126,12 +155,13 @@ public class UpdateRulePresetTest extends BaseTestSetup {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, 20, 50, true);
+        String validHash = versionHashService.hashObjectVersion(testRuleId, testRuleVersion);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 403,
                 "/api/rules/" + testRuleId,
-                studentHeaders
+                getHeadersWithIfMatch(studentHeaders, validHash)
         );
     }
 
@@ -141,12 +171,13 @@ public class UpdateRulePresetTest extends BaseTestSetup {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, 20, 50, true);
+        String validHash = versionHashService.hashObjectVersion(testRuleId, testRuleVersion);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 401,
                 "/api/rules/" + testRuleId,
-                unauthenticatedHeaders
+                getHeadersWithIfMatch(unauthenticatedHeaders, validHash)
         );
     }
 
@@ -155,12 +186,13 @@ public class UpdateRulePresetTest extends BaseTestSetup {
     public void shouldReturn404WhenRuleDoesNotExist() throws Exception {
         UUID randomId = UUID.randomUUID();
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO(targetRaportLevelName, 20, 50, true);
+        String dummyHash = versionHashService.hashObjectVersion(randomId, 0);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 404,
                 "/api/rules/" + randomId,
-                teacherHeaders
+                getHeadersWithIfMatch(teacherHeaders, dummyHash)
         );
     }
 
@@ -168,12 +200,13 @@ public class UpdateRulePresetTest extends BaseTestSetup {
     @DisplayName("Powinno zwrócić błąd 404, jeśli podany raport_level nie istnieje w słowniku")
     public void shouldReturn404WhenRaportLevelDictDoesNotExist() throws Exception {
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO("NON_EXISTENT_LEVEL", 20, 50, true);
+        String validHash = versionHashService.hashObjectVersion(testRuleId, testRuleVersion);
 
         requestFunctions.sendPutRequest(
                 objectMapper.writeValueAsString(dto),
                 404,
                 "/api/rules/" + testRuleId,
-                teacherHeaders
+                getHeadersWithIfMatch(teacherHeaders, validHash)
         );
     }
 }
