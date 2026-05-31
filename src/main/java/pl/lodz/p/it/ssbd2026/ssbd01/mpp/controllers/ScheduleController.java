@@ -50,8 +50,8 @@ public class ScheduleController  {
             @ApiResponse(responseCode = "201", description = "Poprawnie utworzono obiekt"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
     })
-    public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto) {
-        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto)));
+    public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto, Principal principal) {
+        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName()));
     }
 
 

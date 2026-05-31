@@ -22,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,6 +48,7 @@ public class ScheduleServiceCreateScheduleTest {
     private UUID mockSubjectId = UUID.randomUUID();
     private ScheduleDTO scheduleDTO;
     private static final String TEST_TEACHER_LOGIN = "test_teacher";
+    private final Principal principal = Mockito.mock(Principal.class);
 
     @BeforeEach
     public void setUp() {
@@ -56,12 +58,6 @@ public class ScheduleServiceCreateScheduleTest {
         mockRulePreset.setSubject(mockSubject);
         mockSubject.setRulePreset(mockRulePreset);
         scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1");
-
-        Authentication auth = mock(Authentication.class);
-        when(auth.getName()).thenReturn(TEST_TEACHER_LOGIN);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(auth);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
@@ -70,13 +66,14 @@ public class ScheduleServiceCreateScheduleTest {
         testSchedule.setScheduleDateTime(scheduleDTO.scheduleDateTime());
         testSchedule.setTag(scheduleDTO.tag());
 
+        when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
         when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
                 .thenReturn(true);
         when(scheduleMapper.toSchedule(Mockito.any(ScheduleDTO.class))).thenReturn(testSchedule);
         when(scheduleRepository.saveAndFlush(Mockito.any(Schedule.class))).thenReturn(testSchedule);
 
-        Schedule result = scheduleService.createSchedule(mockSubjectId, scheduleMapper.toSchedule(scheduleDTO));
+        Schedule result = scheduleService.createSchedule(mockSubjectId, scheduleMapper.toSchedule(scheduleDTO), principal.getName());
 
         assertAll(
                 () -> assertNotNull(result),
@@ -91,9 +88,10 @@ public class ScheduleServiceCreateScheduleTest {
     public void NEG01_CreateSchedule_WhenSubjectNotFound() {
         UUID invalidSubjectId = UUID.randomUUID();
         when(subjectRepository.findById(invalidSubjectId)).thenReturn(Optional.empty());
+        when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
 
         assertThrows(SubjectNotFoundException.class,
-                () -> scheduleService.createSchedule(invalidSubjectId, scheduleMapper.toSchedule(scheduleDTO)));
+                () -> scheduleService.createSchedule(invalidSubjectId, scheduleMapper.toSchedule(scheduleDTO), principal.getName()));
 
         verify(subjectRepository, times(1)).findById(invalidSubjectId);
         verify(scheduleRepository, never()).saveAndFlush(Mockito.any(Schedule.class));
@@ -107,12 +105,13 @@ public class ScheduleServiceCreateScheduleTest {
         testSchedule.setScheduleDateTime(scheduleDTO.scheduleDateTime());
         testSchedule.setTag(scheduleDTO.tag());
 
+        when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
         when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
                 .thenReturn(false);
 
         assertThrows(NoPermissionForThisSubjectException.class,
-                () -> scheduleService.createSchedule(mockSubjectId, testSchedule));
+                () -> scheduleService.createSchedule(mockSubjectId, testSchedule, principal.getName()));
 
         verify(scheduleMapper, never()).toSchedule(any(ScheduleDTO.class));
         verify(scheduleRepository, never()).saveAndFlush(any());
