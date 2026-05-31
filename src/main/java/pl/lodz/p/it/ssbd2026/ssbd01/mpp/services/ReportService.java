@@ -19,16 +19,18 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JplagReportParser;
 
@@ -189,7 +191,7 @@ public class ReportService {
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Page<Report> getAllReportsForTeacher (String login, Pageable pageable){
+    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
         return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
     }
 
@@ -242,7 +244,7 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public void deleteReport (UUID reportId){
+    public void deleteReport(UUID reportId) {
         Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
         Path filePath = Path.of(report.getPathToReport());
 
@@ -258,7 +260,80 @@ public class ReportService {
         reportsRepository.delete(report);
     }
 
-    public void generateReportBySchedule () {
+    public void generateReportBySchedule() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) {
+        Repository repository = giteaRepositoryRepository.findById(repositoryId)
+                .orElseThrow(RepositoryNotFoundException::new);
+
+        boolean isStudentInThisRepository = repository.getStudentList().stream()
+                .anyMatch(s -> s.getAccount().getLogin().equals(login));
+        if (!isStudentInThisRepository) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        Subject subject = repository.getSubject();
+        RulePreset preset = subject.getRulePreset();
+
+        if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        int usedTickets = repository.getTicketCount();
+
+        if (usedTickets >= preset.getStudentTicketCount()) {
+            throw new NoTicketsLeftException();
+        }
+
+        repository.setTicketCount(usedTickets + 1);
+        giteaRepositoryRepository.saveAndFlush(repository);
+
+        List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+
+        giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
+            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
+
+            String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
+
+            GitService.cloneTag(repo.clone_url(), tag, targetDir);
+        });
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+
+        List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
+
+        Report report = new Report();
+        report.setSubject(subject);
+        report.setTag(studentTag);
+        report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
+        report.setRepositoryList(repositoryList);
+
+        JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
+                subject.getOrganizationName(),
+                studentTag,
+                preset.getMinimumTokensMatch(),
+                preset.getEnableNormalization(),
+                report.getPathToReport()
+        );
+
+        List<JPlagComparison> comparisons = result.getAllComparisons();
+
+        Double avg = comparisons.stream()
+                .mapToDouble(JPlagComparison::similarity)
+                .average()
+                .orElse(0.0);
+        report.setAverageSimilarity(avg);
+
+        reportsRepository.saveAndFlush(report);
+
+        Double aggValue = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+        subject.setAggregatedAverageSimilarity(aggValue);
+        subjectRepository.saveAndFlush(subject);
+
+        return getStudentReportDetails(report.getId(), login);
     }
 }

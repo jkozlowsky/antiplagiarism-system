@@ -43,8 +43,15 @@ public class ScheduleController  {
 
     
     @PostMapping("/subject/{subjectId}")
-    public void createSchedule(@PathVariable UUID subjectId, @RequestBody Object scheduleDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Operation(summary = "Utwórz harmonogram wykonywania analizy porównawczej w ramach przedmiotu", description = "Zwraca ScheduleDTO z utworzonego obiektu")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Poprawnie utworzono obiekt"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+    })
+    public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto, Principal principal) {
+        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName()));
     }
 
 

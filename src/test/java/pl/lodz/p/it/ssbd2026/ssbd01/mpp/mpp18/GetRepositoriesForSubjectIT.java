@@ -57,7 +57,7 @@ public class GetRepositoriesForSubjectIT extends BaseTestSetup {
         Repository repository = new Repository();
         repository.setRepositoryName("name");
         repository.setSubject(subject);
-        repository.setTicketCount("0");
+        repository.setTicketCount(0);
 
         repository.getStudentList().addAll(students);
 
