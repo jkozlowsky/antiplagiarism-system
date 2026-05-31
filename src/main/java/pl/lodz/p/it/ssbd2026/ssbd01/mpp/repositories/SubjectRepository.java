@@ -22,6 +22,12 @@ public interface SubjectRepository extends AbstractRepository<Subject> {
             @Param("studentLogin") String studentLogin
     );
 
+    @Query("SELECT COUNT(s) > 0 FROM Subject s JOIN s.subjectAssignmentList sa JOIN sa.teacher t WHERE s.id = :subjectId AND t.account.login = :teacherLogin")
+    boolean isTeacherAssignedToSubject(
+            @Param("subjectId") UUID subjectId,
+            @Param("teacherLogin") String teacherLogin
+    );
+
     @Query("SELECT DISTINCT s FROM Subject s JOIN s.repositoryList r JOIN r.studentList st WHERE st.account.login = :login")
     List<Subject> findAllByStudentLogin(@Param("login") String login);
 }

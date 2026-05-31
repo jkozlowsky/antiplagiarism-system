@@ -22,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.TeacherSubjectRole;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
@@ -48,11 +49,15 @@ class SubjectServiceBrowsingTest {
     @Mock
     private RuleMapper ruleMapper;
 
+    @Mock
+    private VersionHashService versionHashService;
+
     @InjectMocks
     private SubjectService subjectService;
 
     private UUID subjectId;
     private Subject subject;
+    private final String validHash = "mockedHash123";
 
     @BeforeEach
     void setUp() {
@@ -63,6 +68,7 @@ class SubjectServiceBrowsingTest {
 
         subject = new Subject();
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "id", subjectId);
+        org.springframework.test.util.ReflectionTestUtils.setField(subject, "version", 1);
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "createdBy", creator);
 
         subject.setName("Architektura Systemów Komputerowych");
@@ -92,12 +98,14 @@ class SubjectServiceBrowsingTest {
     void POS01_AdminShouldGetAllSubjectsWithAllPermissions() {
         mockSecurityContext("test_admin", "ADMIN");
         when(subjectRepository.findAll()).thenReturn(List.of(subject));
+        lenient().when(versionHashService.hashObjectVersion(any(), any())).thenReturn(validHash);
 
         SubjectDTO mockedDto = mock(SubjectDTO.class);
         when(mockedDto.canEdit()).thenReturn(true);
         when(mockedDto.canManageTeachers()).thenReturn(true);
         when(mockedDto.canViewStats()).thenReturn(true);
-        when(subjectMapper.toSubjectDTO(subject, true, true, true, null, null)).thenReturn(mockedDto);
+
+        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null)).thenReturn(mockedDto);
 
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
@@ -122,12 +130,14 @@ class SubjectServiceBrowsingTest {
 
         when(subjectAssignmentRepository.findAllByTeacherLogin("test_teacher"))
                 .thenReturn(List.of(assignment));
+        lenient().when(versionHashService.hashObjectVersion(any(), any())).thenReturn(validHash);
 
         SubjectDTO mockedDto = mock(SubjectDTO.class);
         when(mockedDto.canEdit()).thenReturn(true);
         when(mockedDto.canManageTeachers()).thenReturn(true);
         when(mockedDto.canViewStats()).thenReturn(true);
-        when(subjectMapper.toSubjectDTO(subject, true, true, true, null, null)).thenReturn(mockedDto);
+
+        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null)).thenReturn(mockedDto);
 
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
@@ -143,12 +153,14 @@ class SubjectServiceBrowsingTest {
     void POS03_StudentShouldGetSubjectsWithNoPermissions() {
         mockSecurityContext("test_student", "STUDENT");
         when(subjectRepository.findAllByStudentLogin("test_student")).thenReturn(List.of(subject));
+        lenient().when(versionHashService.hashObjectVersion(any(), any())).thenReturn(validHash);
 
         SubjectDTO mockedDto = mock(SubjectDTO.class);
         when(mockedDto.canEdit()).thenReturn(false);
         when(mockedDto.canManageTeachers()).thenReturn(false);
         when(mockedDto.canViewStats()).thenReturn(false);
-        when(subjectMapper.toSubjectDTO(subject, false, false, false, null, null)).thenReturn(mockedDto);
+
+        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, false, null, null)).thenReturn(mockedDto);
 
         List<SubjectDTO> result = subjectService.getAllSubjects();
 
@@ -165,11 +177,13 @@ class SubjectServiceBrowsingTest {
         mockSecurityContext("test_student", "STUDENT");
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(subjectRepository.isStudentAssignedToSubject(subjectId, "test_student")).thenReturn(true);
+        when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn(validHash);
 
         SubjectDTO mockedDto = mock(SubjectDTO.class);
         when(mockedDto.name()).thenReturn("Architektura Systemów Komputerowych");
         when(mockedDto.canEdit()).thenReturn(false);
-        when(subjectMapper.toSubjectDTO(subject, false, false, false, null, null)).thenReturn(mockedDto);
+
+        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, false, null, null)).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 
@@ -207,7 +221,7 @@ class SubjectServiceBrowsingTest {
         mockSecurityContext("test_teacher", "TEACHER");
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("test_teacher", subjectId))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(Optional.empty());
 
         assertThrows(SubjectAccessDeniedException.class, () ->
                 subjectService.getSubjectDetails(subjectId)

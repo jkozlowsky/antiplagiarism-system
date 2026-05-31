@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface SubjectMapper {
 
     @Mapping(target = "id", source = "subject.id")
-    @Mapping(target = "versionHash", expression = "java(subject.getVersion() != null ? String.valueOf(subject.getVersion()) : null)")
+    @Mapping(target = "versionHash", source = "versionHash")
     @Mapping(target = "createdBy", source = "subject.createdBy.login")
     @Mapping(target = "modifiedBy", source = "subject.modifiedBy.login")
     @Mapping(target = "canEdit", source = "canEdit")
@@ -21,6 +21,7 @@ public interface SubjectMapper {
     @Mapping(target = "templateId", source = "templateId")
     @Mapping(target = "manualRules", source = "manualRules")
     SubjectDTO toSubjectDTO(Subject subject,
+                            String versionHash,
                             boolean canEdit,
                             boolean canManageTeachers,
                             boolean canViewStats,

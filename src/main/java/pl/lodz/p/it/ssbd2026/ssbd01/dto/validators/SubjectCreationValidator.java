@@ -5,17 +5,20 @@ import jakarta.validation.ConstraintValidatorContext;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 
 public class SubjectCreationValidator implements ConstraintValidator<ValidSubjectCreation, SubjectDTO> {
+
     @Override
     public boolean isValid(SubjectDTO dto, ConstraintValidatorContext context) {
-        if (dto == null) {
+        if (dto.templateId() != null) {
             return true;
         }
 
-        if (dto.templateId() != null) {
-            return dto.manualRules() == null;
+        if (dto.manualRules() != null) {
+            return dto.manualRules().raportLevelName() != null
+                    && dto.manualRules().studentTicketCount() >= 0
+                    && dto.manualRules().minimumTokensMatch() >= 0
+                    && dto.manualRules().enableNormalization() != null;
         }
-        else {
-            return dto.manualRules() != null;
-        }
+
+        return false;
     }
 }

@@ -85,7 +85,7 @@ public class SubjectServiceDeleteSubjectTest {
         verify(subjectRepository, times(1)).flush();
         verify(postCommitTransactionManager, times(1)).register(any(Runnable.class));
 
-        verify(giteaService, times(1)).deleteGiteaOrganization(subject.getName());
+        verify(giteaService, times(1)).deleteGiteaOrganization(subject.getOrganizationName());
     }
 
     @Test
