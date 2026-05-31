@@ -38,11 +38,8 @@ class TeacherServiceTest {
         account.setEmail("j.szewczyk@p.lodz.pl");
         activeTeacher.setAccount(account);
 
-        Teacher inactiveTeacher = new Teacher();
-        inactiveTeacher.setActive(false);
-
-        when(teacherRepository.findByAccountLoginContainingIgnoreCaseOrAccountEmailContainingIgnoreCase(query, query))
-                .thenReturn(List.of(activeTeacher, inactiveTeacher));
+        when(teacherRepository.findActiveTeachersByQuery(query))
+                .thenReturn(List.of(activeTeacher));
 
         List<TeacherSearchDTO> result = teacherService.searchTeachers(query);
 
