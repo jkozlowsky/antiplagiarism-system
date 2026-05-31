@@ -14,6 +14,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Set;
 
 @Slf4j
@@ -28,8 +29,22 @@ public class JPlagService {
     ) {
         JavaLanguage language = new JavaLanguage();
 
-        Set<File> submissionDirectories = Set.of(
-                new File("repos/submissions/" + organizationName + "/" + tag + "/"));
+        File absoluteSubmissionDir = new File("repos/submissions/" + organizationName + "/" + tag + "/").getAbsoluteFile();
+
+        Set<File> submissionDirectories = Set.of(absoluteSubmissionDir);
+        log.info("dupa");
+        submissionDirectories.forEach(s -> {
+            log.info(s.getPath());
+        });
+        try {
+            long fileCount = java.nio.file.Files.walk(absoluteSubmissionDir.toPath())
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .count();
+            log.info("Java NIO found {} .java files before JPlag scan.", fileCount);
+        } catch (IOException e) {
+            log.error("Java NIO failed to walk the directory!", e);
+        }
+
         JPlagOptions options = new JPlagOptions(language, submissionDirectories, Set.of())
                 .withMinimumTokenMatch(minimumTokensMatch)
                 .withNormalize(normalize);
