@@ -32,27 +32,21 @@ public class JPlagService {
         File absoluteSubmissionDir = new File("repos/submissions/" + organizationName + "/" + tag + "/").getAbsoluteFile();
 
         Set<File> submissionDirectories = Set.of(absoluteSubmissionDir);
-        log.info("dupa");
-        submissionDirectories.forEach(s -> {
-            log.info(s.getPath());
-        });
-        File teamADir = new File(absoluteSubmissionDir, "Team_A");
-        log.info("Legacy IO check on Team_A: {}",
-                teamADir.listFiles() != null ? teamADir.listFiles().length : "NULL");
-        try {
-            long fileCount = java.nio.file.Files.walk(absoluteSubmissionDir.toPath())
-                    .filter(path -> path.toString().endsWith(".java"))
-                    .count();
-            log.info("Java NIO found {} .java files before JPlag scan.", fileCount);
-        } catch (IOException e) {
-            log.error("Java NIO failed to walk the directory!", e);
-        }
+
+
+//        JPlagOptions options = new JPlagOptions(language, submissionDirectories, Set.of())
+//                .withMinimumTokenMatch(minimumTokensMatch)
+//                .withNormalize(normalize);
 
         JPlagOptions options = new JPlagOptions(language, submissionDirectories, Set.of())
                 .withMinimumTokenMatch(minimumTokensMatch)
-                .withNormalize(normalize);
+                .withNormalize(normalize)
+                // THIS IS THE CRITICAL LINE:
+                .withSubdirectoryName("src/main/java");
 
         try {
+
+
             JPlagResult result = JPlag.run(options);
             ReportObjectFactory reportObjectFactory = new ReportObjectFactory(
                     new File(reportPath)
@@ -63,7 +57,7 @@ public class JPlagService {
             throw new ReportFileException(e);
         } catch (ExitException e) {
             log.error("JPlag Exit Reason: {}", e.getMessage());
-            log.error("JPlag Exit Reason: {}", reportPath);
+            log.error("JPlag Exit Reason: {}", absoluteSubmissionDir.getPath());
             throw new JplagScanException(e);
         }
 
