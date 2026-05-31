@@ -36,6 +36,9 @@ public class JPlagService {
         submissionDirectories.forEach(s -> {
             log.info(s.getPath());
         });
+        File teamADir = new File(absoluteSubmissionDir, "Team_A");
+        log.info("Legacy IO check on Team_A: {}",
+                teamADir.listFiles() != null ? teamADir.listFiles().length : "NULL");
         try {
             long fileCount = java.nio.file.Files.walk(absoluteSubmissionDir.toPath())
                     .filter(path -> path.toString().endsWith(".java"))
