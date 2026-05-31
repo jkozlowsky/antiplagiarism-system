@@ -24,4 +24,6 @@ public interface TeacherRepository extends AbstractRepository<Teacher> {
 
     List<Teacher> findByAccountLoginContainingIgnoreCaseOrAccountEmailContainingIgnoreCase(String login, String email);
 
+    @Query("SELECT t FROM Teacher t WHERE t.active = true AND (LOWER(t.account.login) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(t.account.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+    List<Teacher> findActiveTeachersByQuery(@Param("query") String query);
 }

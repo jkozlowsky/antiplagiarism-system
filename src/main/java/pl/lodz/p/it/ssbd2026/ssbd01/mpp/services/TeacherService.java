@@ -5,17 +5,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherSearchDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@MethodCallLogged
 @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
 public class TeacherService {
 
@@ -29,9 +26,8 @@ public class TeacherService {
             return List.of();
         }
 
-        return teacherRepository.findByAccountLoginContainingIgnoreCaseOrAccountEmailContainingIgnoreCase(query, query)
+        return teacherRepository.findActiveTeachersByQuery(query)
                 .stream()
-                .filter(t -> Boolean.TRUE.equals(t.getActive()))
                 .map(t -> new TeacherSearchDTO(
                         t.getAccount().getLogin(),
                         t.getAccount().getName(),
