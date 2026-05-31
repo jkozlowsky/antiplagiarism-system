@@ -38,7 +38,7 @@ class SubjectControllerIT extends BaseTestSetup {
         validDto = new SubjectDTO(
                 null, null, "Inżynieria Oprogramowania", "elo zelo", "2026",
                 "Opis przedmiotu", "https://gitea.example.com/io",
-                null, null, null, null, null, null, rules, true, true, true
+                null, null, null, null, null, null, rules, true, true, true, null
         );
     }
 
@@ -59,7 +59,7 @@ class SubjectControllerIT extends BaseTestSetup {
         SubjectDTO invalidDto = new SubjectDTO(
                 null, null, "", "", "",
                 "Opis", "invalid_url",
-                null, null, null, null, null, null, null, true, true, true
+                null, null, null, null, null, null, null, true, true, true, null
         );
 
         given()
