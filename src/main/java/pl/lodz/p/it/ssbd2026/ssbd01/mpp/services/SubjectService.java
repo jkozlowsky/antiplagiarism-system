@@ -61,32 +61,42 @@ public class SubjectService {
     private void internalSyncWithGitea(Subject subject) {
         List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
-        List<String> existingRepoNames = subject.getRepositoryList().stream()
-                .map(Repository::getRepositoryName)
-                .toList();
-
         for (GiteaRepoDTO giteaRepo : giteaRepos) {
-            if (!existingRepoNames.contains(giteaRepo.name())) {
-                Repository newRepo = new Repository();
-                newRepo.setRepositoryName(giteaRepo.name());
-                newRepo.setSubject(subject);
-                newRepo.setStudentList(new ArrayList<>());
+            Repository repository = subject.getRepositoryList().stream()
+                    .filter(r -> r.getRepositoryName().equals(giteaRepo.name()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (repository == null) {
+                repository = new Repository();
+                repository.setRepositoryName(giteaRepo.name());
+                repository.setSubject(subject);
+                repository.setStudentList(new ArrayList<>());
 
                 int tickets = subject.getRulePreset() != null
                         ? subject.getRulePreset().getStudentTicketCount()
                         : 0;
-                newRepo.setTicketCount(tickets);
+                repository.setTicketCount(tickets);
 
-                List<GiteaUserDTO> collaborators = giteaService.getRepoCollaborators(subject.getOrganizationName(), giteaRepo.name());
+                subject.getRepositoryList().add(repository);
+            }
 
-                for (GiteaUserDTO collaborator : collaborators) {
-                    Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(
-                            collaborator.email(), collaborator.login());
+            List<GiteaUserDTO> collaborators = giteaService.getRepoCollaborators(subject.getOrganizationName(), giteaRepo.name());
 
-                    studentOpt.ifPresent(student -> newRepo.getStudentList().add(student));
+            repository.getStudentList().clear();
+
+            for (GiteaUserDTO collaborator : collaborators) {
+                String email = collaborator.email() != null ? collaborator.email() : "";
+                String login = collaborator.login() != null ? collaborator.login() : "";
+
+                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(email, login);
+
+                if (studentOpt.isPresent()) {
+                    Student student = studentOpt.get();
+                    if (!repository.getStudentList().contains(student)) {
+                        repository.getStudentList().add(student);
+                    }
                 }
-
-                subject.getRepositoryList().add(newRepo);
             }
         }
     }
