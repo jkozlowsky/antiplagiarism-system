@@ -32,9 +32,17 @@ import java.util.UUID;
 public class SubjectController  {
     private final SubjectService subjectService;
 
+    @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Pomyślnie zsynchronizowano przedmioty z platformą Gitea"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "500", description = "Błąd komunikacji z zewnętrznym API Gitea")
+    })
     @PostMapping("/{subjectId}/sync")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public void syncSubjectWithGitea(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        subjectService.syncSubjectWithGitea(subjectId);
     }
 
     @Operation(summary = "Pobierz listę przedmiotów", description = "Zwraca listę wszystkich przedmiotów, do których zalogowany użytkownik ma dostęp.")

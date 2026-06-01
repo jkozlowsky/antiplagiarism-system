@@ -52,12 +52,68 @@ public class SubjectService {
     private final TeacherRepository teacherRepository;
     private final RaportLevelRepository raportLevelRepository;
     private final RuleRepository ruleRepository;
+    private final StudentRepository studentRepository;
+
 
     private final SubjectMapper subjectMapper;
     private final RuleMapper ruleMapper;
 
+    private void internalSyncWithGitea(Subject subject) {
+        List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+
+        List<String> existingRepoNames = subject.getRepositoryList().stream()
+                .map(Repository::getRepositoryName)
+                .toList();
+
+        for (GiteaRepoDTO giteaRepo : giteaRepos) {
+            if (!existingRepoNames.contains(giteaRepo.name())) {
+                Repository newRepo = new Repository();
+                newRepo.setRepositoryName(giteaRepo.name());
+                newRepo.setSubject(subject);
+                newRepo.setStudentList(new ArrayList<>());
+
+                int tickets = subject.getRulePreset() != null
+                        ? subject.getRulePreset().getStudentTicketCount()
+                        : 0;
+                newRepo.setTicketCount(tickets);
+
+                List<GiteaUserDTO> collaborators = giteaService.getRepoCollaborators(subject.getOrganizationName(), giteaRepo.name());
+
+                for (GiteaUserDTO collaborator : collaborators) {
+                    Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(
+                            collaborator.email(), collaborator.login());
+
+                    studentOpt.ifPresent(student -> newRepo.getStudentList().add(student));
+                }
+
+                subject.getRepositoryList().add(newRepo);
+            }
+        }
+    }
+
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void syncSubjectWithGitea(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
+
+        boolean isOwnerOrEditor = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) &&
+                        (a.getSubjectRole() == TeacherSubjectRole.OWNER || a.getSubjectRole() == TeacherSubjectRole.EDITOR));
+
+        if (!isAdmin && !isOwnerOrEditor) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        internalSyncWithGitea(subject);
+        subjectRepository.saveAndFlush(subject);
     }
 
     @MethodCallLogged
@@ -233,6 +289,7 @@ public class SubjectService {
         subject.setRulePreset(preset);
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+        internalSyncWithGitea(subject);
         subjectRepository.saveAndFlush(subject);
     }
 
@@ -259,6 +316,7 @@ public class SubjectService {
         subject.setRulePreset(preset);
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+        internalSyncWithGitea(subject);
         subjectRepository.saveAndFlush(subject);
     }
 

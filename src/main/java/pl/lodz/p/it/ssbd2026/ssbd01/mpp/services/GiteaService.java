@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaUserDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class GiteaService {
 
     /**
      * Usuwa organizację (przedmiot) z serwera Gitea.
+     *
      * @param organizationName Nazwa organizacji/przedmiotu w Gitea
      */
     public void deleteGiteaOrganization(String organizationName) {
@@ -43,6 +46,22 @@ public class GiteaService {
         } catch (RestClientException e) {
             log.error("Błąd podczas usuwania organizacji {} z serwera Gitea", organizationName, e);
             throw new RuntimeException("Nie udało się usunąć przedmiotu z zewnętrznego serwera Gitea", e);
+        }
+    }
+
+
+    public List<GiteaUserDTO> getRepoCollaborators(String orgName, String repoName) {
+        String url = "api/v1/repos/" + orgName + "/" + repoName + "/collaborators";
+        try {
+            return giteaClient
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<GiteaUserDTO>>() {
+                    });
+        } catch (RestClientException e) {
+            log.error("Błąd podczas pobierania współpracowników dla repozytoriów: {}/{}", orgName, repoName, e);
+            throw new GiteaIntegrationException(e);
         }
     }
 }
