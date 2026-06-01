@@ -7,12 +7,14 @@ import de.jplag.java.JavaLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JplagScanException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Set;
 
 @Slf4j
@@ -26,14 +28,14 @@ public class JPlagService {
             String reportPath
     ) {
         JavaLanguage language = new JavaLanguage();
-        language.getOptions();
 
-        Set<File> submissionDirectories = Set.of(
-                new File("repos/submissions/" + organizationName + "/" + tag + "/"));
+        File absoluteSubmissionDir = new File("repos/submissions/" + organizationName + "/" + tag + "/").getAbsoluteFile();
+
+        Set<File> submissionDirectories = Set.of(absoluteSubmissionDir);
+
         JPlagOptions options = new JPlagOptions(language, submissionDirectories, Set.of())
                 .withMinimumTokenMatch(minimumTokensMatch)
                 .withNormalize(normalize);
-
         try {
             JPlagResult result = JPlag.run(options);
             ReportObjectFactory reportObjectFactory = new ReportObjectFactory(
@@ -45,11 +47,8 @@ public class JPlagService {
             throw new ReportFileException(e);
         } catch (ExitException e) {
             log.error("JPlag Exit Reason: {}", e.getMessage());
-            if (e.getCause() != null) {
-                log.error("Caused by: {}", e.getCause().getMessage());
-            }
+            log.error("JPlag Exit Reason: {}", absoluteSubmissionDir.getPath());
             throw new JplagScanException(e);
-//            throw new JplagScanException(e);
         }
 
     }
