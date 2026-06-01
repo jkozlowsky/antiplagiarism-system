@@ -5,8 +5,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JGitException;
 
 import java.io.File;
 
