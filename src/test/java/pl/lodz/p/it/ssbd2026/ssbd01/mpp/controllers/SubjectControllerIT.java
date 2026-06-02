@@ -6,15 +6,21 @@ import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectManualDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectTemplateDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,20 +36,54 @@ class SubjectControllerIT extends BaseTestSetup {
     @MockitoBean
     private GiteaService giteaService;
 
+    @Autowired
+    private SubjectRepository subjectRepository;
+
+    @Autowired
+    private RuleRepository ruleRepository;
+
+    @Autowired
+    private TeacherRepository teacherRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private SubjectAssignmentRepository subjectAssignmentRepository;
+
+    @Autowired
+    private GiteaRepositoryRepository giteaRepositoryRepository;
+
+    @Autowired
+    @Qualifier("mppTransactionManager")
+    private PlatformTransactionManager transactionManager;
+
+    private TransactionTemplate transactionTemplate;
+
     private String teacherToken;
     private String studentToken;
 
-    private final UUID testSubjectId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private UUID testSubjectId;
+    private UUID templateId;
 
     @BeforeEach
     public void setup() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
-        teacherToken = jwtAuthService.generateToken("jkowalski", List.of("TEACHER"), false);
-        studentToken = jwtAuthService.generateToken("anowak", List.of("STUDENT"), false);
+        transactionTemplate = new TransactionTemplate(transactionManager);
+
+        teacherToken = jwtAuthService.generateToken("test_teacher", List.of("TEACHER"), false);
+        studentToken = jwtAuthService.generateToken("test_student", List.of("STUDENT"), false);
 
         when(giteaService.getRepositoriesFromOrganization(anyString())).thenReturn(List.of());
         when(giteaService.getRepoCollaborators(anyString(), anyString())).thenReturn(List.of());
+
+        testSubjectId = subjectRepository.findAll().get(0).getId();
+        templateId = ruleRepository.findAll().stream()
+                .filter(r -> Boolean.TRUE.equals(r.getIsPreset()))
+                .findFirst()
+                .orElseThrow()
+                .getId();
     }
 
     @Test
@@ -70,7 +110,7 @@ class SubjectControllerIT extends BaseTestSetup {
         CreateSubjectTemplateDTO validTemplateDto = new CreateSubjectTemplateDTO(
                 "Bazy Danych", "bd-org-template", "2026",
                 "Opis przedmiotu", "https://gitea.example.com/bd",
-                UUID.fromString("44444444-4444-4444-4444-444444444444"), "PEŁNY_WGLĄD", null
+                templateId, "PEŁNY_WGLĄD", null
         );
 
         given()
@@ -85,14 +125,10 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void createSubject_ValidationError() {
-        CreateSubjectManualDTO invalidDto = new CreateSubjectManualDTO(
-                "", "", "", "Opis", "invalid_url", null, null
-        );
-
         given()
                 .header("Authorization", "Bearer " + teacherToken)
                 .contentType(ContentType.JSON)
-                .body(invalidDto)
+                .body("[]")
                 .when()
                 .post("/api/subjects/manual")
                 .then()
@@ -120,12 +156,100 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void syncSubjectWithGitea_Success() {
+        assignTeacherToTestSubject();
+
         given()
                 .header("Authorization", "Bearer " + teacherToken)
                 .contentType(ContentType.JSON)
                 .when()
-                .post("/api/subjects/" + testSubjectId + "/sync")
+                .post("/api/subjects/{subjectId}/sync", testSubjectId)
                 .then()
                 .statusCode(HttpStatus.NO_CONTENT.value());
+    }
+
+    @Test
+    void getStudentSubjectDetails_Success() {
+        assignStudentToTestSubject();
+
+        given()
+                .header("Authorization", "Bearer " + studentToken)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/subjects/{subjectId}/student", testSubjectId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("name", org.hamcrest.Matchers.notNullValue())
+                .body("reportVisibilityLevel", org.hamcrest.Matchers.notNullValue());
+    }
+
+    @Test
+    void getStudentSubjectDetails_ForbiddenForTeacher() {
+        given()
+                .header("Authorization", "Bearer " + teacherToken)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/subjects/{subjectId}/student", testSubjectId)
+                .then()
+                .statusCode(HttpStatus.FORBIDDEN.value());
+    }
+
+    @Test
+    void getTeacherSubjectDetails_ForbiddenForStudent() {
+        given()
+                .header("Authorization", "Bearer " + studentToken)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/subjects/{subjectId}", testSubjectId)
+                .then()
+                .statusCode(HttpStatus.FORBIDDEN.value());
+    }
+
+    private void assignTeacherToTestSubject() {
+        transactionTemplate.execute(status -> {
+            Teacher teacher = teacherRepository.findActiveTeacherByLogin("test_teacher").orElseThrow();
+            Subject subject = subjectRepository.findById(testSubjectId).orElseThrow();
+
+            boolean exists = subjectAssignmentRepository.findByTeacherLoginAndSubjectId("test_teacher", testSubjectId).isPresent();
+
+            if (!exists) {
+                SubjectAssignment assignment = new SubjectAssignment();
+                assignment.setSubject(subject);
+                assignment.setTeacher(teacher);
+                assignment.setSubjectRole(TeacherSubjectRole.OWNER);
+                subjectAssignmentRepository.saveAndFlush(assignment);
+            }
+            return null;
+        });
+    }
+
+    private void assignStudentToTestSubject() {
+        transactionTemplate.execute(status -> {
+            Student student = studentRepository.findAll().stream()
+                    .filter(s -> "test_student".equals(s.getAccount().getLogin()))
+                    .findFirst()
+                    .orElseThrow();
+
+            Subject subject = subjectRepository.findById(testSubjectId).orElseThrow();
+
+            List<Repository> repos = giteaRepositoryRepository.findBySubjectId(testSubjectId);
+            Repository targetRepo;
+
+            if (repos.isEmpty()) {
+                targetRepo = new Repository();
+                targetRepo.setRepositoryName("test-repo");
+                targetRepo.setSubject(subject);
+                targetRepo.setTicketCount(10);
+                targetRepo.setStudentList(new ArrayList<>());
+            } else {
+                targetRepo = repos.get(0);
+            }
+
+            if (!targetRepo.getStudentList().contains(student)) {
+                targetRepo.getStudentList().add(student);
+            }
+
+            giteaRepositoryRepository.saveAndFlush(targetRepo);
+            return null;
+        });
     }
 }

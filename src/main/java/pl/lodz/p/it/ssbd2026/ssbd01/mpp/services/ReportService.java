@@ -119,7 +119,15 @@ public class ReportService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public List<Report> getStudentOwnReports(String login) {
-        return reportsRepository.findVisibleReportsForStudent(login);
+        List<Report> reports = reportsRepository.findVisibleReportsForStudent(login);
+
+        return reports.stream().filter(report -> {
+            if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
+                return false;
+            }
+            String level = report.getSubject().getRulePreset().getRaportLevel().getName();
+            return !level.equals("UKRYTE") && !level.equals("HIDDEN") && !level.equals("NOTHING");
+        }).toList();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
@@ -136,9 +144,13 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
+        if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
+            throw new SubjectAccessDeniedException();
+        }
+
         String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
 
-        if (raportLevel.equals("NOTHING")) {
+        if (raportLevel.equals("UKRYTE") || raportLevel.equals("HIDDEN") || raportLevel.equals("NOTHING")) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -154,15 +166,12 @@ public class ReportService {
                 .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
                 .map(c -> {
                     String anonymizedMatchedWith = "Repozytorium Innego Studenta";
-
                     Double maxSim = null, avgSim = null, longest = null;
 
-                    if (raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
-                        maxSim = c.similarities().max();
-                    } else if (raportLevel.equals("ONLY_PERCENTAGES")) {
+                    if (raportLevel.equals("TYLKO_WYNIK") || raportLevel.equals("SCORE") || raportLevel.equals("ONLY_PERCENTAGES") || raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
-                    } else if (raportLevel.equals("FULL_VIEW")) {
+                    } else {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
                         longest = c.similarities().longestMatch();
@@ -201,7 +210,6 @@ public class ReportService {
         Report report = reportsRepository.findById(reportId)
                 .orElseThrow(ReportNotFoundException::new);
 
-        // poki co tak robie rozroznienie na prowadzacego i dodatkowego
         boolean isCreator = report.getSubject().getCreatedBy().getLogin().equals(login);
         boolean isAssigned = report.getSubject().getSubjectAssignmentList().stream()
                 .anyMatch(sa -> sa.getTeacher().getAccount().getLogin().equals(login));
@@ -217,7 +225,6 @@ public class ReportService {
             throw new ReportFileException(e);
         }
 
-        // mapowanie wynikow
         List<TeacherComparisonDTO> mappedComparisons = allComparisons.stream()
                 .map(c -> new TeacherComparisonDTO(
                         c.firstSubmission(),
@@ -279,7 +286,7 @@ public class ReportService {
         Subject subject = repository.getSubject();
         RulePreset preset = subject.getRulePreset();
 
-        if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
+        if (preset == null || "UKRYTE".equals(preset.getRaportLevel().getName()) || "HIDDEN".equals(preset.getRaportLevel().getName()) || "NOTHING".equals(preset.getRaportLevel().getName())) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -296,9 +303,7 @@ public class ReportService {
 
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
             File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
-
             String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
-
             GitService.cloneTag(repo.clone_url(), tag, targetDir);
         });
 

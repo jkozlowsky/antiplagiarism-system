@@ -11,11 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectManualDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectTemplateDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -71,10 +67,17 @@ public class SubjectController  {
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
     })
+
     @GetMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
+    }
+
+    @GetMapping("/{subjectId}/student")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public ResponseEntity<StudentSubjectDetailsDTO> getStudentSubjectDetails(@PathVariable UUID subjectId) {
+        return ResponseEntity.ok(subjectService.getStudentSubjectDetails(subjectId));
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (konfiguracja ręczna) (MPP.7)", description = "Tworzy nowy przedmiot z ręczną konfiguracją reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
