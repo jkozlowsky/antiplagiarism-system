@@ -168,7 +168,9 @@ public class ReportService {
                     String anonymizedMatchedWith = "Repozytorium Innego Studenta";
                     Double maxSim = null, avgSim = null, longest = null;
 
-                    if (raportLevel.equals("TYLKO_WYNIK") || raportLevel.equals("SCORE") || raportLevel.equals("ONLY_PERCENTAGES") || raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
+                    if (raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
+                        maxSim = c.similarities().max();
+                    } else if (raportLevel.equals("TYLKO_WYNIK") || raportLevel.equals("SCORE") || raportLevel.equals("ONLY_PERCENTAGES")) {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
                     } else {
