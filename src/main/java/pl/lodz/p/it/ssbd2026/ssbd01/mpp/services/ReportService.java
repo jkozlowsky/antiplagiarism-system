@@ -126,7 +126,7 @@ public class ReportService {
                 return false;
             }
             String level = report.getSubject().getRulePreset().getRaportLevel().getName();
-            return !level.equals("UKRYTE");
+            return !level.equals("HIDDEN");
         }).toList();
     }
 
@@ -150,7 +150,7 @@ public class ReportService {
 
         String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
 
-        if (raportLevel.equals("UKRYTE")) {
+        if (raportLevel.equals("HIDDEN")) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -170,7 +170,7 @@ public class ReportService {
 
                     if (raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
                         maxSim = c.similarities().max();
-                    } else if (raportLevel.equals("TYLKO_WYNIK")) {
+                    } else if (raportLevel.equals("SCORE_ONLY")) {
                         maxSim = c.similarities().max();
                         avgSim = c.similarities().avg();
                     } else {
@@ -288,7 +288,7 @@ public class ReportService {
         Subject subject = repository.getSubject();
         RulePreset preset = subject.getRulePreset();
 
-        if (preset == null || "UKRYTE".equals(preset.getRaportLevel().getName())) {
+        if (preset == null || "HIDDEN".equals(preset.getRaportLevel().getName())) {
             throw new SubjectAccessDeniedException();
         }
 
