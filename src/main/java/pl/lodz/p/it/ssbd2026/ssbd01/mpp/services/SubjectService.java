@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RepositoryMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
@@ -52,12 +53,79 @@ public class SubjectService {
     private final TeacherRepository teacherRepository;
     private final RaportLevelRepository raportLevelRepository;
     private final RuleRepository ruleRepository;
+    private final StudentRepository studentRepository;
+    private final RepositoryMapper repositoryMapper;
+
 
     private final SubjectMapper subjectMapper;
     private final RuleMapper ruleMapper;
 
+    private void internalSyncWithGitea(Subject subject) {
+        List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+
+        for (GiteaRepoDTO giteaRepo : giteaRepos) {
+            Repository repository = subject.getRepositoryList().stream()
+                    .filter(r -> r.getRepositoryName().equals(giteaRepo.name()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (repository == null) {
+                repository = new Repository();
+                repository.setRepositoryName(giteaRepo.name());
+                repository.setSubject(subject);
+                repository.setStudentList(new ArrayList<>());
+
+                int tickets = subject.getRulePreset() != null
+                        ? subject.getRulePreset().getStudentTicketCount()
+                        : 0;
+                repository.setTicketCount(tickets);
+
+                subject.getRepositoryList().add(repository);
+            }
+
+            List<GiteaUserDTO> collaborators = giteaService.getRepoCollaborators(subject.getOrganizationName(), giteaRepo.name());
+
+            repository.getStudentList().clear();
+
+            for (GiteaUserDTO collaborator : collaborators) {
+                String email = collaborator.email() != null ? collaborator.email() : "";
+                String login = collaborator.login() != null ? collaborator.login() : "";
+
+                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(email, login);
+
+                if (studentOpt.isPresent()) {
+                    Student student = studentOpt.get();
+                    if (!repository.getStudentList().contains(student)) {
+                        repository.getStudentList().add(student);
+                    }
+                }
+            }
+        }
+    }
+
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void syncSubjectWithGitea(UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
+
+        boolean isOwnerOrEditor = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) &&
+                        (a.getSubjectRole() == TeacherSubjectRole.OWNER || a.getSubjectRole() == TeacherSubjectRole.EDITOR));
+
+        if (!isAdmin && !isOwnerOrEditor) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        internalSyncWithGitea(subject);
+        subjectRepository.saveAndFlush(subject);
     }
 
     @MethodCallLogged
@@ -104,7 +172,7 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public SubjectDTO getSubjectDetails(UUID subjectId) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -114,56 +182,80 @@ public class SubjectService {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
-        boolean canEdit = false;
-        boolean canManageTeachers = false;
-        boolean canViewStats = false;
+        UUID templateId = null;
+        RulePresetDTO manualRules = null;
+        RulePreset preset = subject.getRulePreset();
+
+        if (preset != null) {
+            if (preset.getIsPreset()) {
+                templateId = preset.getId();
+            } else {
+                manualRules = ruleMapper.toRuleDTO(preset);
+            }
+        }
+
+        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
 
         if (hasRole(authorities, AccountConsts.ROLE_ADMIN)) {
-            canEdit = true;
-            canManageTeachers = true;
-            canViewStats = true;
-        } else if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
+            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules);
+        }
+
+        if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
             TeacherSubjectRole role = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(login, subjectId)
                     .stream()
                     .findFirst()
                     .map(SubjectAssignment::getSubjectRole)
                     .orElseThrow(SubjectAccessDeniedException::new);
 
-            canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
-            canManageTeachers = (role == TeacherSubjectRole.OWNER);
-            canViewStats = true;
-        } else if (hasRole(authorities, AccountConsts.ROLE_STUDENT)) {
-            if (!subjectRepository.isStudentAssignedToSubject(subjectId, login)) {
-                throw new SubjectAccessDeniedException();
-            }
-        } else {
+            return subjectMapper.toSubjectDTO(
+                    subject,
+                    hash,
+                    role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR,
+                    role == TeacherSubjectRole.OWNER,
+                    true,
+                    templateId,
+                    manualRules
+            );
+        }
+
+        throw new SubjectAccessDeniedException();
+    }
+
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public StudentSubjectDetailsDTO getStudentSubjectDetails(UUID subjectId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        if (!subjectRepository.isStudentAssignedToSubject(subjectId, login)) {
             throw new SubjectAccessDeniedException();
         }
 
-        UUID templateId = null;
-        RulePresetDTO manualRules = null;
+        Repository studentRepo = subject.getRepositoryList().stream()
+                .filter(repo -> repo.getStudentList().stream()
+                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
+                .findFirst()
+                .orElse(null);
 
-        if (canViewStats) {
-            RulePreset preset = subject.getRulePreset();
-            if (preset != null) {
-                if (Boolean.TRUE.equals(preset.getIsPreset())) {
-                    templateId = preset.getId();
-                } else {
-                    manualRules = ruleMapper.toRuleDTO(preset);
-                }
-            }
+        String visibilityLevel = "HIDDEN";
+        if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
+            visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }
 
-        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-
-        return subjectMapper.toSubjectDTO(
-                subject,
-                hash,
-                canEdit,
-                canManageTeachers,
-                canViewStats,
-                templateId,
-                manualRules
+        return new StudentSubjectDetailsDTO(
+                subject.getId(),
+                subject.getName(),
+                subject.getOrganizationName(),
+                subject.getEdition(),
+                subject.getSubjectDescription(),
+                subject.getGiteaURL(),
+                studentRepo != null ? repositoryMapper.toDto(studentRepo) : null,
+                visibilityLevel
         );
     }
 
@@ -233,6 +325,7 @@ public class SubjectService {
         subject.setRulePreset(preset);
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+        internalSyncWithGitea(subject);
         subjectRepository.saveAndFlush(subject);
     }
 
@@ -259,6 +352,7 @@ public class SubjectService {
         subject.setRulePreset(preset);
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+        internalSyncWithGitea(subject);
         subjectRepository.saveAndFlush(subject);
     }
 

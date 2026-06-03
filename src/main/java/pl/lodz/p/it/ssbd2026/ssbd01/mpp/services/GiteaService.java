@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaUserDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
 
 import java.util.List;
 
@@ -18,17 +21,38 @@ public class GiteaService {
     private final RestClient giteaClient;
 
     public List<GiteaRepoDTO> getRepositoriesFromOrganization(String orgName) {
-        String url = "api/v1/orgs/" + orgName + "/repos" + "?limit=1000";
-        return giteaClient
-                .get()
-                .uri(url)
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<GiteaRepoDTO>>() {
-                });
+        String url = "api/v1/orgs/" + orgName + "/repos?limit=1000";
+        try {
+            return giteaClient
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<GiteaRepoDTO>>() {});
+        } catch (HttpClientErrorException.NotFound e) {
+            return List.of();
+        } catch (RestClientException e) {
+            throw new GiteaIntegrationException(e);
+        }
+    }
+
+    public List<GiteaUserDTO> getRepoCollaborators(String orgName, String repoName) {
+        String url = "api/v1/repos/" + orgName + "/" + repoName + "/collaborators";
+        try {
+            return giteaClient
+                    .get()
+                    .uri(url)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<GiteaUserDTO>>() {});
+        } catch (HttpClientErrorException.NotFound e) {
+            return List.of();
+        } catch (RestClientException e) {
+            throw new GiteaIntegrationException(e);
+        }
     }
 
     /**
      * Usuwa organizację (przedmiot) z serwera Gitea.
+     *
      * @param organizationName Nazwa organizacji/przedmiotu w Gitea
      */
     public void deleteGiteaOrganization(String organizationName) {
@@ -37,12 +61,10 @@ public class GiteaService {
                     .uri("/api/v1/orgs/{org}", organizationName)
                     .retrieve()
                     .toBodilessEntity();
-
-            log.info("Organizacja {} została pomyślnie usunięta z serwera Gitea.", organizationName);
-
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Organizacja {} nie istnieje na serwerze Gitea, pomijanie usuwania.", organizationName);
         } catch (RestClientException e) {
-            log.error("Błąd podczas usuwania organizacji {} z serwera Gitea", organizationName, e);
-            throw new RuntimeException("Nie udało się usunąć przedmiotu z zewnętrznego serwera Gitea", e);
+            throw new GiteaIntegrationException(e);
         }
     }
 }
