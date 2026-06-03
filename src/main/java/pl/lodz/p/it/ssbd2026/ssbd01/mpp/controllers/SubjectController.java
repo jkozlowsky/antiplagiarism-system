@@ -67,13 +67,21 @@ public class SubjectController  {
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
     })
-
     @GetMapping("/{subjectId}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
     }
 
+    @Operation(
+            summary = "Pobierz szczegóły przedmiotu dla studenta",
+            description = "Zwraca dane wybranego przedmiotu odfiltrowane dla zalogowanego studenta. Odpowiedź zawiera wyłącznie przypisane studentowi repozytorium (jeśli istnieje) oraz określony przez prowadzącego poziom widoczności raportów."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
+            @ApiResponse(responseCode = "403", description = "Brak dostępu - student nie jest przypisany do tego przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono wskazanego przedmiotu")
+    })
     @GetMapping("/{subjectId}/student")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public ResponseEntity<StudentSubjectDetailsDTO> getStudentSubjectDetails(@PathVariable UUID subjectId) {

@@ -187,7 +187,7 @@ public class SubjectService {
         RulePreset preset = subject.getRulePreset();
 
         if (preset != null) {
-            if (Boolean.TRUE.equals(preset.getIsPreset())) {
+            if (preset.getIsPreset()) {
                 templateId = preset.getId();
             } else {
                 manualRules = ruleMapper.toRuleDTO(preset);
