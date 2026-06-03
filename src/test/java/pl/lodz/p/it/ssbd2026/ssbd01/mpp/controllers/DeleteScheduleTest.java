@@ -15,6 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
@@ -45,34 +46,30 @@ public class DeleteScheduleTest extends BaseTestSetup {
     private AccountRepository accountRepository;
 
     @Autowired
-    RuleRepository ruleRepository;
+    private RuleRepository ruleRepository;
 
     @Autowired
-    SubjectRepository subjectRepository;
+    private SubjectRepository subjectRepository;
+
+    @Autowired
+    private VersionHashService versionHashService;
 
     @Autowired
     private PlatformTransactionManager mppTransactionManager;
 
-    private Headers teacherWithPermissionHeaders;
-    private Headers teacherWithoutPermissionHeaders;
-    private Headers studentHeaders;
-    private Headers unauthenticatedHeaders;
+    private String teacherPermToken;
+    private String teacherNoPermToken;
+    private String studentToken;
 
     private UUID authorizedScheduleId;
-    private UUID unauthorizedScheduleId;
 
     private final CommonFunctions commonFunctions = new CommonFunctions();
 
     @BeforeEach
     public void setupDataAndAuth() {
-        String teacherPermToken = jwtAuthService.generateToken("teacher_perm", List.of(AccountConsts.ROLE_TEACHER), false);
-        String teacherNoPermToken = jwtAuthService.generateToken("teacher_noperm", List.of(AccountConsts.ROLE_TEACHER), false);
-        String studentToken = jwtAuthService.generateToken("student", List.of(AccountConsts.ROLE_STUDENT), false);
-
-        teacherWithPermissionHeaders = new Headers(new Header("Authorization", "Bearer " + teacherPermToken));
-        teacherWithoutPermissionHeaders = new Headers(new Header("Authorization", "Bearer " + teacherNoPermToken));
-        studentHeaders = new Headers(new Header("Authorization", "Bearer " + studentToken));
-        unauthenticatedHeaders = new Headers();
+        teacherPermToken = jwtAuthService.generateToken("teacher_perm", List.of(AccountConsts.ROLE_TEACHER), false);
+        teacherNoPermToken = jwtAuthService.generateToken("teacher_noperm", List.of(AccountConsts.ROLE_TEACHER), false);
+        studentToken = jwtAuthService.generateToken("student", List.of(AccountConsts.ROLE_STUDENT), false);
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(mppTransactionManager);
         transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -112,13 +109,24 @@ public class DeleteScheduleTest extends BaseTestSetup {
         });
     }
 
+    private String getValidVersionHash(UUID scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new IllegalStateException("Nie znaleziono harmonogramu do wygenerowania hasha"));
+        return versionHashService.hashObjectVersion(scheduleId, schedule.getVersion());
+    }
+
     @Test
     @DisplayName("Powinno zwrócić błąd, gdy nauczyciel nie posiada przypisanych praw edycji")
     public void shouldReturn403WhenTeacherHasNoEditPermissions() {
+        Headers headers = new Headers(
+                new Header("Authorization", "Bearer " + teacherNoPermToken),
+                new Header("If-Match", getValidVersionHash(authorizedScheduleId))
+        );
+
         requestFunctions.sendDeleteRequest(
                 403,
                 "/api/schedules/" + authorizedScheduleId,
-                teacherWithoutPermissionHeaders
+                headers
         );
     }
 
@@ -127,10 +135,15 @@ public class DeleteScheduleTest extends BaseTestSetup {
     public void shouldReturn403WhenUserIsStudent() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
+        Headers headers = new Headers(
+                new Header("Authorization", "Bearer " + studentToken),
+                new Header("If-Match", "dummy-hash")
+        );
+
         requestFunctions.sendDeleteRequest(
                 403,
                 "/api/schedules/" + authorizedScheduleId,
-                studentHeaders
+                headers
         );
     }
 
@@ -139,10 +152,14 @@ public class DeleteScheduleTest extends BaseTestSetup {
     public void shouldReturn401WhenNoTokenProvided() {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
+        Headers headers = new Headers(
+                new Header("If-Match", "dummy-hash")
+        );
+
         requestFunctions.sendDeleteRequest(
                 401,
                 "/api/schedules/" + authorizedScheduleId,
-                unauthenticatedHeaders
+                headers
         );
     }
 
@@ -151,10 +168,44 @@ public class DeleteScheduleTest extends BaseTestSetup {
     public void shouldReturn404WhenScheduleDoesNotExist() {
         UUID randomId = UUID.randomUUID();
 
+        Headers headers = new Headers(
+                new Header("Authorization", "Bearer " + teacherPermToken),
+                new Header("If-Match", "dummy-hash")
+        );
+
         requestFunctions.sendDeleteRequest(
                 404,
                 "/api/schedules/" + randomId,
-                teacherWithPermissionHeaders
+                headers
+        );
+    }
+
+    @Test
+    @DisplayName("Powinno zwrócić błąd 409, gdy nagłówek wersji nie zgadza się ze stanem w bazie")
+    public void shouldReturn409WhenVersionMismatch() {
+        Headers headers = new Headers(
+                new Header("Authorization", "Bearer " + teacherPermToken),
+                new Header("If-Match", "invalid-version-hash")
+        );
+
+        requestFunctions.sendDeleteRequest(
+                409,
+                "/api/schedules/" + authorizedScheduleId,
+                headers
+        );
+    }
+
+    @Test
+    @DisplayName("Powinno zwrócić błąd 400, gdy zapytanie nie zawiera nagłówka If-Match")
+    public void shouldReturn400WhenIfMatchHeaderIsMissing() {
+        Headers headers = new Headers(
+                new Header("Authorization", "Bearer " + teacherPermToken)
+        );
+
+        requestFunctions.sendDeleteRequest(
+                400,
+                "/api/schedules/" + authorizedScheduleId,
+                headers
         );
     }
 }
