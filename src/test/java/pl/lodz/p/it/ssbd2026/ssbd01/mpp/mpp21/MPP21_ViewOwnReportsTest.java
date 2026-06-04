@@ -94,8 +94,8 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
 
     @BeforeEach
     public void setupData() throws Exception {
-                ((io.restassured.specification.FilterableRequestSpecification) RestAssured.requestSpecification)
-                        .removeHeader("Authorization");
+        ((io.restassured.specification.FilterableRequestSpecification) RestAssured.requestSpecification)
+                .removeHeader("Authorization");
 
         studentLogin = "student_" + commonFunctions.generateRandomStringOfLength(5);
         studentToken = jwtAuthService.generateToken(studentLogin, List.of(AccountConsts.ROLE_STUDENT), false);
@@ -111,7 +111,7 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             if (languageDict == null) {
                 languageDict = new LanguageDict();
                 ReflectionTestUtils.setField(languageDict, "name", "PL");
-                languageDict = languageDictTestRepository.save(languageDict);
+                languageDict = languageDictTestRepository.saveAndFlush(languageDict);
             }
 
             Account account = new Account();
@@ -123,7 +123,7 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             account.setLanguageVersion(languageDict);
             ReflectionTestUtils.setField(account, "isBlocked", false);
             ReflectionTestUtils.setField(account, "isVerified", true);
-            accountTestRepository.save(account);
+            accountTestRepository.saveAndFlush(account);
 
             AccessLevelDict studentLevelDict = accessLevelDictTestRepository.findAll().iterator().hasNext()
                     ? accessLevelDictTestRepository.findAll().iterator().next()
@@ -131,20 +131,20 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             if (studentLevelDict == null) {
                 studentLevelDict = new AccessLevelDict();
                 ReflectionTestUtils.setField(studentLevelDict, "name", AccountConsts.ROLE_STUDENT);
-                studentLevelDict = accessLevelDictTestRepository.save(studentLevelDict);
+                studentLevelDict = accessLevelDictTestRepository.saveAndFlush(studentLevelDict);
             }
 
             Student student = new Student();
             student.setAccount(account);
             ReflectionTestUtils.setField(student, "accessLevelDict", studentLevelDict);
             student.setActive(true);
-            accessLevelTestRepository.save(student);
+            accessLevelTestRepository.saveAndFlush(student);
 
-            RaportLevelDict raportLevel = raportLevelTestRepository.findByName("FULL_VIEW")
+            ReportLevelDict raportLevel = raportLevelTestRepository.findByName("FULL_VIEW")
                     .orElseGet(() -> {
-                        RaportLevelDict dict = new RaportLevelDict();
+                        ReportLevelDict dict = new ReportLevelDict();
                         ReflectionTestUtils.setField(dict, "name", "FULL_VIEW");
-                        return raportLevelTestRepository.save(dict);
+                        return raportLevelTestRepository.saveAndFlush(dict);
                     });
 
             Subject subject = new Subject();
@@ -153,7 +153,8 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             subject.setEdition("2026/2027");
             subject.setGiteaURL("http://localhost:3000/test/repo");
             subject.setArchived(false);
-            subject = subjectTestRepository.save(subject);
+            ReflectionTestUtils.setField(subject, "createdBy", account);
+            subject = subjectTestRepository.saveAndFlush(subject);
 
             RulePreset rulePreset = new RulePreset();
             rulePreset.setRaportLevel(raportLevel);
@@ -161,20 +162,19 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             rulePreset.setMinimumTokensMatch(10);
             rulePreset.setEnableNormalization(true);
             rulePreset.setIsPreset(true);
-
-
             ReflectionTestUtils.setField(rulePreset, "subject", subject);
-
-            rulePreset = rulePresetTestRepository.save(rulePreset);
+            rulePreset = rulePresetTestRepository.saveAndFlush(rulePreset);
 
             subject.setRulePreset(rulePreset);
-            subjectTestRepository.save(subject);
+            subjectTestRepository.saveAndFlush(subject);
 
             Repository repo = new Repository();
             repo.setRepositoryName("Repo_" + studentLogin);
             repo.setTicketCount(5);
             repo.setStudentList(List.of(student));
-            repositoryTestRepository.save(repo);
+            repo.setSubject(subject);
+            ReflectionTestUtils.setField(repo, "createdBy", account);
+            repositoryTestRepository.saveAndFlush(repo);
 
             Report report = new Report();
             report.setSubject(subject);
@@ -182,7 +182,8 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             report.setPathToReport(dummyReportFile.getAbsolutePath());
             report.setTag("v1");
             report.setAverageSimilarity(45.5);
-            reportTestRepository.save(report);
+            ReflectionTestUtils.setField(report, "createdBy", account);
+            reportTestRepository.saveAndFlush(report);
 
             reportId = report.getId();
         });

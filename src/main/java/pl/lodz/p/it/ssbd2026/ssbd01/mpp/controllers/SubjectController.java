@@ -11,11 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectManualDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectTemplateDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -32,9 +28,17 @@ import java.util.UUID;
 public class SubjectController  {
     private final SubjectService subjectService;
 
+    @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Pomyślnie zsynchronizowano przedmioty z platformą Gitea"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "500", description = "Błąd komunikacji z zewnętrznym API Gitea")
+    })
     @PostMapping("/{subjectId}/sync")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public void syncSubjectWithGitea(@PathVariable UUID subjectId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        subjectService.syncSubjectWithGitea(subjectId);
     }
 
     @Operation(summary = "Pobierz listę przedmiotów", description = "Zwraca listę wszystkich przedmiotów, do których zalogowany użytkownik ma dostęp.")
@@ -64,9 +68,24 @@ public class SubjectController  {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
     })
     @GetMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
+    }
+
+    @Operation(
+            summary = "Pobierz szczegóły przedmiotu dla studenta",
+            description = "Zwraca dane wybranego przedmiotu odfiltrowane dla zalogowanego studenta. Odpowiedź zawiera wyłącznie przypisane studentowi repozytorium (jeśli istnieje) oraz określony przez prowadzącego poziom widoczności raportów."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
+            @ApiResponse(responseCode = "403", description = "Brak dostępu - student nie jest przypisany do tego przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono wskazanego przedmiotu")
+    })
+    @GetMapping("/{subjectId}/student")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public ResponseEntity<StudentSubjectDetailsDTO> getStudentSubjectDetails(@PathVariable UUID subjectId) {
+        return ResponseEntity.ok(subjectService.getStudentSubjectDetails(subjectId));
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (konfiguracja ręczna) (MPP.7)", description = "Tworzy nowy przedmiot z ręczną konfiguracją reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
