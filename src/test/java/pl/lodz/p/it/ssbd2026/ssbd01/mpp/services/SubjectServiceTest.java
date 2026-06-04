@@ -75,7 +75,7 @@ class SubjectServiceTest {
         Teacher teacher = new Teacher();
         when(teacherRepository.findActiveTeacherByLogin(TEACHER_LOGIN)).thenReturn(Optional.of(teacher));
 
-        RaportLevelDict mockDict = new RaportLevelDict();
+        ReportLevelDict mockDict = new ReportLevelDict();
         mockDict.setName("PEŁNY_WGLĄD");
         when(raportLevelRepository.findByName(anyString())).thenReturn(Optional.of(mockDict));
 

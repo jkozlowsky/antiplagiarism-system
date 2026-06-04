@@ -21,7 +21,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelDictRepository;
@@ -80,7 +80,7 @@ public class RuleService {
             throw new RulePresetInvalidPartametersException();
         }
 
-        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName())
+        ReportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName())
                 .orElseThrow(RaportLevelDictNotFoundException::new);
 
         newPreset.setRaportLevel(raportLevel);
@@ -103,7 +103,7 @@ public class RuleService {
             throw new ConcurrentUpdateException();
         }
 
-        RaportLevelDict raportLevel = raportLevelDictRepository.findByName(ruleDto.raportLevelName())
+        ReportLevelDict raportLevel = raportLevelDictRepository.findByName(ruleDto.raportLevelName())
                 .orElseThrow(RaportLevelDictNotFoundException::new);
 
         rulePreset.setStudentTicketCount(ruleDto.studentTicketCount());

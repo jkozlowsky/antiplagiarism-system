@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RaportLevelRepository;
@@ -73,7 +73,7 @@ public class UpdateRulePresetTest extends BaseTestSetup {
         transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         transactionTemplate.execute(status -> {
-            RaportLevelDict existingLevel = raportLevelRepository.findByName(targetRaportLevelName)
+            ReportLevelDict existingLevel = raportLevelRepository.findByName(targetRaportLevelName)
                     .orElseThrow(() -> new IllegalStateException("Brak domyślnego poziomu raportu FULL_VIEW w słowniku bazy testowej!"));
 
             RulePreset rulePreset = new RulePreset();

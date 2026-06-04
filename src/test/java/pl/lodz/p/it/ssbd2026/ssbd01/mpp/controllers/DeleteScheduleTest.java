@@ -75,7 +75,7 @@ public class DeleteScheduleTest extends BaseTestSetup {
         transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         transactionTemplate.execute(status -> {
-            RaportLevelDict existingLevel = raportLevelRepository.findByName("FULL_VIEW")
+            ReportLevelDict existingLevel = raportLevelRepository.findByName("FULL_VIEW")
                     .orElseThrow(() -> new IllegalStateException("Brak poziomu FULL_VIEW w bazie testowej"));
 
             Subject subjectWithPerm = new Subject();

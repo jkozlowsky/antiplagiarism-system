@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
@@ -51,7 +51,7 @@ public class UpdateRulePresetServiceTest {
         existingRule.setMinimumTokensMatch(10);
         existingRule.setEnableNormalization(false);
 
-        RaportLevelDict newRaportLevel = new RaportLevelDict();
+        ReportLevelDict newRaportLevel = new ReportLevelDict();
         newRaportLevel.setName("NEW_LEVEL");
 
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO("NEW_LEVEL", 15, 20, true);

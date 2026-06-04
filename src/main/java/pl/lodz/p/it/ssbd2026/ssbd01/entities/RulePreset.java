@@ -3,7 +3,6 @@ package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AbstractEntity;
 
 import java.util.List;
 
@@ -19,8 +18,8 @@ import java.util.List;
 public class RulePreset extends AbstractEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "raport_level_id", nullable = false)
-    private RaportLevelDict raportLevel;
+    @JoinColumn(name = "report_level_id", nullable = false)
+    private ReportLevelDict raportLevel;
 
     @Column(name = "student_ticket_count", nullable = false)
     private Integer studentTicketCount;
