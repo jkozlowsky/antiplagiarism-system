@@ -9,15 +9,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
@@ -29,6 +27,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
@@ -57,6 +56,7 @@ public class ReportService {
     private final JPlagService jPlagService;
     private final GiteaRepositoryRepository giteaRepositoryRepository;
     private final ReportsRepository reportsRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -260,8 +260,50 @@ public class ReportService {
         reportsRepository.delete(report);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     public void generateReportBySchedule() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute();
+        for (Schedule schedule : schedules) {
+            RulePreset settings = schedule.getRulePreset();
+            Subject subject = settings.getSubject();
+            String giteaTag = schedule.getTag();
+
+            List<GiteaRepoDTO> giteaRepoList = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+            giteaRepoList.stream().filter(repo -> !repo.template()).forEach(repo -> {
+                File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
+                GitService.cloneTag(repo.clone_url(), giteaTag, targetDir);
+            });
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+            List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
+
+            Report report = new Report();
+            report.setSubject(subject);
+            report.setTag(giteaTag);
+            report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + giteaTag + "/" + timestamp + ".jplag");
+            report.setRepositoryList(repositoryList);
+
+            JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
+                    subject.getOrganizationName(),
+                    giteaTag,
+                    settings.getMinimumTokensMatch(),
+                    settings.getEnableNormalization(),
+                    report.getPathToReport()
+            );
+
+            Double avg = result.getAllComparisons().stream()
+                    .mapToDouble(JPlagComparison::similarity)
+                    .average()
+                    .orElse(0.0);
+            report.setAverageSimilarity(avg);
+
+            reportsRepository.saveAndFlush(report);
+
+            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+            subject.setAggregatedAverageSimilarity(newSubjectAggregate);
+            subjectRepository.saveAndFlush(subject);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
