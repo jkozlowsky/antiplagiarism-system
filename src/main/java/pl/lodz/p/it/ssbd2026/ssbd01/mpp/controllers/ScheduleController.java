@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,7 @@ public class ScheduleController  {
         return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
     }
 
-    
+
     @PostMapping("/subject/{subjectId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -76,11 +77,12 @@ public class ScheduleController  {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Harmonogram został pomyślnie usunięty"),
             @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia", content = @Content(mediaType = "text/plain")),
-            @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia harmonogramu (np. rola studenta lub brak przypisania z prawem edycji)", content = @Content(mediaType = "text/plain")),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono harmonogramu", content = @Content(mediaType = "text/plain"))
+            @ApiResponse(responseCode = "403", description = "Brak uprawnień do usunięcia harmonogramu", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono harmonogramu", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "409", description = "Błąd wersji", content = @Content(mediaType = "text/plain"))
     })
-    public ResponseEntity<Void> deleteSchedule(@PathVariable UUID scheduleId, Principal principal) {
-        scheduleService.deleteSchedule(scheduleId, principal.getName());
+    public ResponseEntity<Void> deleteSchedule(@PathVariable UUID scheduleId, @RequestHeader("If-Match") String ifMatch, Principal principal) {
+        scheduleService.deleteSchedule(scheduleId, principal.getName(), ifMatch);
         return ResponseEntity.noContent().build();
     }
 }

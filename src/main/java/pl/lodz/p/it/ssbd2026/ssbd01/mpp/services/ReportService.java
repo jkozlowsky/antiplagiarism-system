@@ -26,7 +26,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
@@ -82,7 +81,6 @@ public class ReportService {
         report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + tag + "/" + timestamp + ".jplag");
         report.setRepositoryList(repositoryList);
 
-
         RulePreset options = subject.getRulePreset();
 
         JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
@@ -122,6 +120,13 @@ public class ReportService {
         List<Report> reports = reportsRepository.findVisibleReportsForStudent(login);
 
         return reports.stream()
+                .filter(report -> {
+                    if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
+                        return false;
+                    }
+                    String level = report.getSubject().getRulePreset().getRaportLevel().getName();
+                    return !level.equals("HIDDEN");
+                })
                 .map(r -> new ReportDTO(
                         r.getId(),
                         r.getTag(),
@@ -147,9 +152,13 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
+        if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
+            throw new SubjectAccessDeniedException();
+        }
+
         String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
 
-        if (raportLevel.equals("NOTHING")) {
+        if (raportLevel.equals("HIDDEN")) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -282,7 +291,7 @@ public class ReportService {
         Subject subject = repository.getSubject();
         RulePreset preset = subject.getRulePreset();
 
-        if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
+        if (preset == null || "HIDDEN".equals(preset.getRaportLevel().getName())) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -299,9 +308,7 @@ public class ReportService {
 
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
             File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
-
             String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
-
             GitService.cloneTag(repo.clone_url(), tag, targetDir);
         });
 

@@ -117,9 +117,9 @@ public class ReportServiceTest {
     }
 
     @Test
-    @DisplayName("Rzucenie wyjątku gdy poziom to NOTHING")
+    @DisplayName("Rzucenie wyjątku gdy poziom to HIDDEN")
     void getStudentReportDetails_ThrowsAccessDenied_WhenLevelIsNothing() {
-        testReport.getSubject().getRulePreset().getRaportLevel().setName("NOTHING");
+        testReport.getSubject().getRulePreset().getRaportLevel().setName("HIDDEN");
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
         assertThrows(SubjectAccessDeniedException.class, () -> {
