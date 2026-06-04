@@ -64,7 +64,7 @@ public class GenerateStudentReportServiceTest {
         Student student = new Student();
         student.setAccount(account);
 
-        RaportLevelDict levelDict = new RaportLevelDict();
+        ReportLevelDict levelDict = new ReportLevelDict();
         levelDict.setName("FULL_VIEW");
 
         rulePreset = new RulePreset();

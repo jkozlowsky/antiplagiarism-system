@@ -16,8 +16,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.mpp21.MPP21_ViewOwnReportsTest;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.Similarities;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JplagReportParser;
 
@@ -54,7 +52,7 @@ public class ReportServiceTest {
         repo.setRepositoryName("Repo_jkowalski");
         repo.setStudentList(List.of(student));
 
-        RaportLevelDict levelDict = new RaportLevelDict();
+        ReportLevelDict levelDict = new ReportLevelDict();
         levelDict.setName("FULL_VIEW");
 
         RulePreset preset = new RulePreset();

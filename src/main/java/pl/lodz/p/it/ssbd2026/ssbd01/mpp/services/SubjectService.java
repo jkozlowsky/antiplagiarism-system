@@ -264,7 +264,7 @@ public class SubjectService {
     }
 
 
-    private RaportLevelDict fetchRaportLevel(String name) {
+    private ReportLevelDict fetchRaportLevel(String name) {
         return raportLevelRepository.findByName(name)
                 .orElseGet(() -> raportLevelRepository.findAll().stream()
                         .findFirst()

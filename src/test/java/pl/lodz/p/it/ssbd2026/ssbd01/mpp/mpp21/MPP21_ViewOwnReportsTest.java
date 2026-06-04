@@ -140,9 +140,9 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             student.setActive(true);
             accessLevelTestRepository.saveAndFlush(student);
 
-            RaportLevelDict raportLevel = raportLevelTestRepository.findByName("FULL_VIEW")
+            ReportLevelDict raportLevel = raportLevelTestRepository.findByName("FULL_VIEW")
                     .orElseGet(() -> {
-                        RaportLevelDict dict = new RaportLevelDict();
+                        ReportLevelDict dict = new ReportLevelDict();
                         ReflectionTestUtils.setField(dict, "name", "FULL_VIEW");
                         return raportLevelTestRepository.saveAndFlush(dict);
                     });
