@@ -74,9 +74,7 @@ public class ReportController {
     @GetMapping("/my-reports")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public List<ReportDTO> getMyReports(Principal principal) {
-        return reportService.getStudentOwnReports(principal.getName()).stream()
-                .map(reportMapper::toDto)
-                .toList();
+        return reportService.getStudentOwnReports(principal.getName());
     }
 
     @Operation(summary = "Szczegóły mojego raportu", description = "Pobiera wynik analizy antyplagiatowej dla wybranego raportu wyselekcjonowanej specjalnie dla studenta. Inne dane są zanonimizowane.")
@@ -88,8 +86,7 @@ public class ReportController {
     })
     @GetMapping("/my-reports/{reportId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
-    public StudentReportDetailsDTO getMyReportDetails(
-            @PathVariable UUID reportId, Principal principal) {
+    public StudentReportDetailsDTO getMyReportDetails(@PathVariable UUID reportId, Principal principal) {
         return reportService.getStudentReportDetails(reportId, principal.getName());
     }
 
@@ -104,7 +101,7 @@ public class ReportController {
     @GetMapping("/{reportId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public TeacherReportDetailsDTO getReportDetails(@PathVariable UUID reportId, Principal principal) {
-        return reportService.getReportDetails(reportId, principal.getName());
+        return reportService.getTeacherReportDetails(reportId, principal.getName());
     }
 
     @Operation(summary = "Usuń raport", description = "Usuwa raporty z bazy oraz pliki z maszyny")

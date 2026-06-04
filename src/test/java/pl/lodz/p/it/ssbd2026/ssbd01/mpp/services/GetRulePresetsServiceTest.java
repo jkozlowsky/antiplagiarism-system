@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.RuleRepository;
@@ -39,7 +39,7 @@ public class GetRulePresetsServiceTest {
     @Test
     @DisplayName("Powinno pomyślnie pobrać listę szablonów")
     public void shouldGetRulePresetsTemplatesSuccessfully() {
-        RaportLevelDict raportLevel = new RaportLevelDict();
+        ReportLevelDict raportLevel = new ReportLevelDict();
         raportLevel.setName("FULL_VIEW");
 
         RulePreset template = new RulePreset();

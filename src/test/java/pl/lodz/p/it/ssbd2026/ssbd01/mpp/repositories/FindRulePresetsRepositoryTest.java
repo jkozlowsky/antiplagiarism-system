@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 
@@ -25,8 +25,8 @@ public class FindRulePresetsRepositoryTest extends BaseTestSetup {
 
     @BeforeEach
     public void setup() {
-        RaportLevelDict raportLevel = entityManager.createQuery(
-                        "SELECT r FROM RaportLevelDict r WHERE r.name = 'FULL_VIEW'", RaportLevelDict.class)
+        ReportLevelDict raportLevel = entityManager.createQuery(
+                        "SELECT r FROM ReportLevelDict r WHERE r.name = 'FULL_VIEW'", ReportLevelDict.class)
                 .setMaxResults(1)
                 .getSingleResult();
 

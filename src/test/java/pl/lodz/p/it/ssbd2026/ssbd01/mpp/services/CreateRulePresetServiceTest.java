@@ -8,7 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RaportLevelDict;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.ReportLevelDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetInvalidPartametersException;
@@ -37,7 +37,7 @@ public class CreateRulePresetServiceTest {
     @DisplayName("Powinno pomyślnie utworzyć predefiniowany szablon reguł ze standardowymi wartościami")
     public void shouldCreateRulePresetTemplateSuccessfully() {
         CreateRulePresetDTO dto = new CreateRulePresetDTO(10, "FULL_VIEW", 15, false);
-        RaportLevelDict raportLevel = new RaportLevelDict();
+        ReportLevelDict raportLevel = new ReportLevelDict();
 
         when(raportLevelDictRepository.findByName("FULL_VIEW")).thenReturn(Optional.of(raportLevel));
 
@@ -59,7 +59,7 @@ public class CreateRulePresetServiceTest {
     @DisplayName("Powinno pomyślnie utworzyć szablon z prawidłowymi wartościami brzegowymi (0 ticketów, 1 token)")
     public void shouldCreateRulePresetTemplateWithBoundaryValuesSuccessfully() {
         CreateRulePresetDTO dto = new CreateRulePresetDTO(0, "RESTRICTED_VIEW", 1, true);
-        RaportLevelDict raportLevel = new RaportLevelDict();
+        ReportLevelDict raportLevel = new ReportLevelDict();
 
         when(raportLevelDictRepository.findByName("RESTRICTED_VIEW")).thenReturn(Optional.of(raportLevel));
 

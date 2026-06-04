@@ -8,16 +8,15 @@ import java.util.UUID;
 
 /**
  * dictionary table that can contain one of these values:
- * FULL_VIEW,
  * ONLY_PERCENTAGES,
  * ONLY_HIGHEST_PERCENT,
  * NOTHING
  **/
 @Entity
-@Table(name = "raport_level_dict")
+@Table(name = "report_level_dict")
 @Getter
 @Setter
-public class RaportLevelDict{
+public class ReportLevelDict {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
