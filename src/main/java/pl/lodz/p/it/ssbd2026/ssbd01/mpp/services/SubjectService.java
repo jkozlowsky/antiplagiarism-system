@@ -129,16 +129,12 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    public List<SubjectDTO> getAllSubjects() {
+    public List<SubjectDTO> getTeacherSubjects() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String login = authentication.getName();
-        var authorities = authentication.getAuthorities();
-
-        boolean isAdmin = hasRole(authorities, AccountConsts.ROLE_ADMIN);
-        boolean isTeacher = hasRole(authorities, AccountConsts.ROLE_TEACHER);
-        boolean isStudent = hasRole(authorities, AccountConsts.ROLE_STUDENT);
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         List<SubjectDTO> result = new ArrayList<>();
 
@@ -148,7 +144,7 @@ public class SubjectService {
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
                 result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null));
             }
-        } else if (isTeacher) {
+        } else {
             List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
             for (SubjectAssignment assignment : assignments) {
                 Subject subject = assignment.getSubject();
@@ -158,14 +154,24 @@ public class SubjectService {
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
                 result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null));
             }
-        } else if (isStudent) {
-            List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
-            for (Subject subject : subjects) {
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
-            }
-        } else {
-            throw new SubjectAccessDeniedException();
+        }
+
+        return result;
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getStudentSubjects() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+
+        List<SubjectDTO> result = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
+
+        for (Subject subject : subjects) {
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
         }
 
         return result;
