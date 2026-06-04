@@ -118,8 +118,19 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
-    public List<Report> getStudentOwnReports(String login) {
-        return reportsRepository.findVisibleReportsForStudent(login);
+    public List<ReportDTO> getStudentOwnReports(String login) {
+        List<Report> reports = reportsRepository.findVisibleReportsForStudent(login);
+
+        return reports.stream()
+                .map(r -> new ReportDTO(
+                        r.getId(),
+                        r.getTag(),
+                        r.getAverageSimilarity(),
+                        r.getCreatedAt(),
+                        r.getSubject().getCreatedBy().getLogin(),
+                        r.getSubject().getName()
+                ))
+                .toList();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
@@ -148,36 +159,41 @@ public class ReportService {
                 .map(Repository::getRepositoryName)
                 .toList();
 
-        List<TopComparison> allComparisons = JplagReportParser.readJplagArchive(report.getPathToReport());
+        List<TeacherComparisonDTO> allComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
 
         List<FilteredComparisonDTO> filteredMatches = allComparisons.stream()
                 .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
                 .map(c -> {
                     String anonymizedMatchedWith = "Repozytorium Innego Studenta";
-
                     Double maxSim = null, avgSim = null, longest = null;
+                    String studentFile = null, studentCode = null;
+                    List<Integer> matchedLines = null;
 
-                    if (raportLevel.equals("ONLY_HIGHEST_PERCENT")) {
-                        maxSim = c.similarities().max();
-                    } else if (raportLevel.equals("ONLY_PERCENTAGES")) {
-                        maxSim = c.similarities().max();
-                        avgSim = c.similarities().avg();
-                    } else if (raportLevel.equals("FULL_VIEW")) {
-                        maxSim = c.similarities().max();
-                        avgSim = c.similarities().avg();
-                        longest = c.similarities().longestMatch();
+                    boolean isFirst = studentRepoNames.contains(c.firstSubmission());
+
+                    if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
+                        maxSim = c.maxSimilarity();
+                    } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
+                        maxSim = c.maxSimilarity();
+                        avgSim = c.averageSimilarity();
+                    } else if ("FULL_VIEW".equals(raportLevel)) {
+                        maxSim = c.maxSimilarity();
+                        avgSim = c.averageSimilarity();
+                        longest = c.longestMatch();
+                        studentFile = isFirst ? c.fileA() : c.fileB();
+                        studentCode = isFirst ? c.codeA() : c.codeB();
+                        matchedLines = isFirst ? c.matchedLinesA() : c.matchedLinesB();
                     }
 
-                    return new FilteredComparisonDTO(anonymizedMatchedWith, maxSim, avgSim, longest);
+                    return new FilteredComparisonDTO(anonymizedMatchedWith, maxSim, avgSim, longest, studentFile, studentCode, matchedLines);
                 })
-                .sorted((c1, c2) -> {
-                    double sim1 = c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0;
-                    double sim2 = c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0;
-                    return Double.compare(sim2, sim1);
-                })
+                .sorted((c1, c2) -> Double.compare(
+                        c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0,
+                        c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0
+                ))
                 .toList();
 
-        if (raportLevel.equals("ONLY_HIGHEST_PERCENT") && !filteredMatches.isEmpty()) {
+        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !filteredMatches.isEmpty()) {
             filteredMatches = List.of(filteredMatches.get(0));
         }
 
@@ -197,11 +213,11 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public TeacherReportDetailsDTO getReportDetails(UUID reportId, String login) {
+    public TeacherReportDetailsDTO getTeacherReportDetails(UUID reportId, String login) {
+
         Report report = reportsRepository.findById(reportId)
                 .orElseThrow(ReportNotFoundException::new);
 
-        // poki co tak robie rozroznienie na prowadzacego i dodatkowego
         boolean isCreator = report.getSubject().getCreatedBy().getLogin().equals(login);
         boolean isAssigned = report.getSubject().getSubjectAssignmentList().stream()
                 .anyMatch(sa -> sa.getTeacher().getAccount().getLogin().equals(login));
@@ -210,22 +226,9 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
-        List<TopComparison> allComparisons;
-        try {
-            allComparisons = JplagReportParser.readJplagArchive(report.getPathToReport());
-        } catch (ReportFileException e) {
-            throw new ReportFileException(e);
-        }
+        List<TeacherComparisonDTO> parsedComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
 
-        // mapowanie wynikow
-        List<TeacherComparisonDTO> mappedComparisons = allComparisons.stream()
-                .map(c -> new TeacherComparisonDTO(
-                        c.firstSubmission(),
-                        c.secondSubmission(),
-                        c.similarities().max(),
-                        c.similarities().avg(),
-                        c.similarities().longestMatch()
-                ))
+        List<TeacherComparisonDTO> sortedComparisons = parsedComparisons.stream()
                 .sorted((c1, c2) -> Double.compare(
                         c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0,
                         c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0
@@ -238,7 +241,7 @@ public class ReportService {
                 report.getSubject().getName(),
                 report.getCreatedAt(),
                 report.getAverageSimilarity(),
-                mappedComparisons
+                sortedComparisons
         );
     }
 

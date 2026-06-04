@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.FilteredComparisonDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherComparisonDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
@@ -128,7 +129,7 @@ public class ReportServiceTest {
 
     @Test
     @DisplayName("Pobranie szczegółów raportu przez Głównego Prowadzącego - Sukces")
-    void getReportDetails_Success_MainTeacher() {
+    void getTeacherReportDetails_Success_MainTeacher() {
         String teacherLogin = "main_teacher";
 
         Account creatorAccount = new Account();
@@ -137,15 +138,14 @@ public class ReportServiceTest {
 
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
-        List<TopComparison> mockComparisons = List.of(
-                new TopComparison("repo1", "repo2", new Similarities(50.0, 70.0, 100.0, 80.0))
+        List<TeacherComparisonDTO> mockComparisons = List.of(
+                new TeacherComparisonDTO("repo1", "repo2", 70.0, 50.0, 100.0, null, null, null, null, List.of(), List.of(), List.of())
         );
 
         try (var mockedParser = mockStatic(JplagReportParser.class)) {
-            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
-                    .thenReturn(mockComparisons);
+            mockedParser.when(() -> JplagReportParser.parseFullTeacherReport(anyString())).thenReturn(mockComparisons);
 
-            TeacherReportDetailsDTO result = reportService.getReportDetails(testReport.getId(), teacherLogin);
+            TeacherReportDetailsDTO result = reportService.getTeacherReportDetails(testReport.getId(), teacherLogin);
 
             assertNotNull(result);
             assertEquals(1, result.comparisons().size());
@@ -156,7 +156,7 @@ public class ReportServiceTest {
 
     @Test
     @DisplayName("Pobranie szczegółów raportu przez Prowadzącego dodatkowego - Sukces")
-    void getReportDetails_Success_AssignedTeacher() {
+    void getTeacherReportDetails_Success_AssignedTeacher() {
         String teacherLogin = "assigned_teacher";
 
         Account creatorAccount = new Account();
@@ -174,15 +174,14 @@ public class ReportServiceTest {
 
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
-        List<TopComparison> mockComparisons = List.of(
-                new TopComparison("repo3", "repo4", new Similarities(20.0, 30.0, 50.0, 20.0))
+        List<TeacherComparisonDTO> mockComparisons = List.of(
+                new TeacherComparisonDTO("repo3", "repo4", 30.0, 20.0, 50.0, null, null, null, null, List.of(), List.of(), List.of())
         );
 
         try (var mockedParser = mockStatic(JplagReportParser.class)) {
-            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
-                    .thenReturn(mockComparisons);
+            mockedParser.when(() -> JplagReportParser.parseFullTeacherReport(anyString())).thenReturn(mockComparisons);
 
-            TeacherReportDetailsDTO result = reportService.getReportDetails(testReport.getId(), teacherLogin);
+            TeacherReportDetailsDTO result = reportService.getTeacherReportDetails(testReport.getId(), teacherLogin);
 
             assertNotNull(result);
             assertEquals(1, result.comparisons().size());
@@ -192,7 +191,7 @@ public class ReportServiceTest {
 
     @Test
     @DisplayName("Pobranie szczegółów raportu przez nieprzypisanego nauczyciela - Wyjątek 403")
-    void getReportDetails_ThrowsAccessDenied_WhenNotAssignedTeacher() {
+    void getTeacherReportDetails_ThrowsAccessDenied_WhenNotAssignedTeacher() {
         String teacherLogin = "unauthorized_teacher";
 
         Account creatorAccount = new Account();
@@ -204,13 +203,13 @@ public class ReportServiceTest {
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
         assertThrows(SubjectAccessDeniedException.class, () -> {
-            reportService.getReportDetails(testReport.getId(), teacherLogin);
+            reportService.getTeacherReportDetails(testReport.getId(), teacherLogin);
         });
     }
 
     @Test
     @DisplayName("Przepływ 3a: Plik raportu nie istnieje/jest uszkodzony - Wyjątek 500")
-    void getReportDetails_ThrowsReportFileException_WhenFileCorrupted() {
+    void getTeacherReportDetails_ThrowsReportFileException_WhenFileCorrupted() {
         String teacherLogin = "main_teacher";
 
         Account creatorAccount = new Account();
@@ -220,11 +219,11 @@ public class ReportServiceTest {
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
         try (var mockedParser = mockStatic(JplagReportParser.class)) {
-            mockedParser.when(() -> JplagReportParser.readJplagArchive(testReport.getPathToReport()))
+            mockedParser.when(() -> JplagReportParser.parseFullTeacherReport(anyString()))
                     .thenThrow(new ReportFileException(new RuntimeException("Brak pliku")));
 
             assertThrows(ReportFileException.class, () -> {
-                reportService.getReportDetails(testReport.getId(), teacherLogin);
+                reportService.getTeacherReportDetails(testReport.getId(), teacherLogin);
             });
         }
     }

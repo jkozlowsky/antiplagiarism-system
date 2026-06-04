@@ -114,7 +114,7 @@ public class GenerateStudentReportServiceTest {
         try (MockedStatic<GitService> gitService = mockStatic(GitService.class);
              MockedStatic<JplagReportParser> mockedParser = mockStatic(JplagReportParser.class)) {
 
-            mockedParser.when(() -> JplagReportParser.readJplagArchive(anyString())).thenReturn(List.of());
+            mockedParser.when(() -> JplagReportParser.parseFullTeacherReport(anyString())).thenReturn(List.of());
 
             StudentReportDetailsDTO result = reportService.generateStudentReport(repositoryId, studentTag, taskTag, studentLogin);
 
