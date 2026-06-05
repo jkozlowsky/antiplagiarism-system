@@ -18,5 +18,9 @@ public record ScheduleDTO(
         LocalDateTime scheduleDateTime,
         @NotNull(groups = OnCreate.class)
         @NotBlank(groups = {OnCreate.class, OnUpdate.class})
-        String tag
+        String tag,
+        @NotNull(groups = OnCreate.class)
+        boolean isExecuted,
+        @NotNull(groups = OnCreate.class)
+        boolean hasFailed
 ) {}
