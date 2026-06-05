@@ -179,7 +179,10 @@ public class SubjectController  {
     @PatchMapping("/{subjectId}/manager")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public void changeSubjectManager(@PathVariable UUID subjectId, @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
-        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin());
+    public void changeSubjectManager(
+            @PathVariable UUID subjectId,
+            @RequestHeader("If-Match") String versionHash,
+            @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
+        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin(), versionHash);
     }
 }

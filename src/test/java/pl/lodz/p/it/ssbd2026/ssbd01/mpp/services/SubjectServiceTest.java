@@ -64,7 +64,6 @@ class SubjectServiceTest {
                 "elo_zelo_org",
                 "2026",
                 "64 osoby IAS",
-                "https://gitea.example.com/ssbd",
                 rules,
                 null
         );
@@ -131,7 +130,7 @@ class SubjectServiceTest {
         when(giteaService.getRepoCollaborators("test-org", "grupa-01")).thenReturn(List.of(userDTO));
 
         Student student = new Student();
-        when(studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase("jkowalski@edu.pl", "jkowalski"))
+        when(studentRepository.findByAccountEmailIgnoreCase("jkowalski@edu.pl"))
                 .thenReturn(Optional.of(student));
 
         subjectService.syncSubjectWithGitea(subjectId);
@@ -158,7 +157,6 @@ class SubjectServiceTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
         assertThrows(SubjectAccessDeniedException.class, () ->
-                subjectService.syncSubjectWithGitea(subjectId)
-        );
+                subjectService.syncSubjectWithGitea(subjectId));
     }
 }

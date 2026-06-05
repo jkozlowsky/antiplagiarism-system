@@ -76,7 +76,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         UpdateSubjectDTO validDto = new UpdateSubjectDTO(
                 "Zaktualizowana Nazwa",
                 "Nowy opis",
-                "https://gitea.com/new-url",
+
                 List.of(new TeacherAssignmentDTO("test_teacher", TeacherSubjectRole.OWNER)),
                 null
         );
@@ -95,7 +95,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
     @Test
     @DisplayName("NEG01: Aktualizacja bez If-Match (ETag) powinna zwrócić 400 Bad Request")
     public void NEG01_ShouldReturnBadRequestWhenMissingIfMatchHeader() {
-        UpdateSubjectDTO validDto = new UpdateSubjectDTO("Test", "Desc", "URL", List.of(), null);
+        UpdateSubjectDTO validDto = new UpdateSubjectDTO("Test", "Desc",  List.of(), null);
 
         given()
                 .header("Authorization", "Bearer " + teacherToken)
@@ -113,7 +113,6 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         UpdateSubjectDTO invalidDto = new UpdateSubjectDTO(
                 "",
                 "Desc",
-                "URL",
                 List.of(new TeacherAssignmentDTO("test_teacher", TeacherSubjectRole.OWNER)),
                 null
         );
@@ -136,7 +135,6 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         UpdateSubjectDTO validDto = new UpdateSubjectDTO(
                 "Nazwa Admina",
                 "Opis",
-                "https://gitea.com/new-url",
                 List.of(new TeacherAssignmentDTO("test_teacher", TeacherSubjectRole.OWNER)),
                 null
         );

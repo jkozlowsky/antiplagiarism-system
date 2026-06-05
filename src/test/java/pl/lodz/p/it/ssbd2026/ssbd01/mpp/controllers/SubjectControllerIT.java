@@ -91,7 +91,7 @@ class SubjectControllerIT extends BaseTestSetup {
         RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org-manual", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/io",
+                "Opis przedmiotu",
                 rules, null
         );
 
@@ -109,7 +109,7 @@ class SubjectControllerIT extends BaseTestSetup {
     void createSubjectTemplate_Success() {
         CreateSubjectTemplateDTO validTemplateDto = new CreateSubjectTemplateDTO(
                 "Bazy Danych", "bd-org-template", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/bd",
+                "Opis przedmiotu",
                 templateId, "PEŁNY_WGLĄD", null
         );
 
@@ -140,7 +140,7 @@ class SubjectControllerIT extends BaseTestSetup {
         RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/io",
+                "Opis przedmiotu",
                 rules, null
         );
 
