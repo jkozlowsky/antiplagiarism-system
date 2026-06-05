@@ -21,7 +21,6 @@ public record ScheduleDTO(
         @NotBlank(groups = {OnCreate.class, OnUpdate.class})
         String tag,
 
-        @NotNull Integer version,
-
+        @NotBlank(groups = {OnCreate.class, OnUpdate.class})
         String versionHash
 ) {}

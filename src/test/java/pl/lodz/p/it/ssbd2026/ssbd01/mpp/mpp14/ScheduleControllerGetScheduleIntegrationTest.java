@@ -102,7 +102,6 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
                 () -> assertNotNull(schedules),
                 () -> assertNotEquals(0, schedules.size()),
                 () -> assertFalse(schedules.isEmpty()),
-                () -> assertNotNull(schedules.getFirst().version()),
                 () -> assertNotNull(schedules.getFirst().versionHash())
         );
     }

@@ -60,7 +60,6 @@ public class ScheduleService  {
                             dto.id(),
                             dto.scheduleDateTime(),
                             dto.tag(),
-                            schedule.getVersion(),
                             versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion())
                     );
                 })
@@ -86,7 +85,6 @@ public class ScheduleService  {
                 dto.id(),
                 dto.scheduleDateTime(),
                 dto.tag(),
-                savedSchedule.getVersion(),
                 versionHashService.hashObjectVersion(savedSchedule.getId(), savedSchedule.getVersion())
         );
     }

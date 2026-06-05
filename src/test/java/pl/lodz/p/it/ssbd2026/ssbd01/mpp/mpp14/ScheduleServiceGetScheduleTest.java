@@ -66,7 +66,8 @@ public class ScheduleServiceGetScheduleTest {
         schedule.setScheduleDateTime(LocalDateTime.now().plusDays(1));
         schedule.setTag("v1.0");
 
-        ScheduleDTO mappedDTO = new ScheduleDTO(schedule.getId(), schedule.getScheduleDateTime(), schedule.getTag(), schedule.getVersion(), null);
+        ScheduleDTO mappedDTO = new ScheduleDTO(schedule.getId(), schedule.getScheduleDateTime(), schedule.getTag(),
+                versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()));
         String expectedHash = "valid-hash-123";
 
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
@@ -80,7 +81,6 @@ public class ScheduleServiceGetScheduleTest {
         assertAll(
                 () -> assertNotNull(schedules),
                 () -> assertEquals(1, schedules.size()),
-                () -> assertEquals(1, schedules.getFirst().version()),
                 () -> assertEquals(expectedHash, schedules.getFirst().versionHash()),
                 () -> verify(scheduleRepository, times(1)).findAllBySubjectId(subjectId)
         );

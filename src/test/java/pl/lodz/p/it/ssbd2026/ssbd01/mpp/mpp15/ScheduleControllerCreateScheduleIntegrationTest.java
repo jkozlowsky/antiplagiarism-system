@@ -73,7 +73,7 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
     public void POS1_TeacherWithRequiredPermissions_ShouldCreateSchedule() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
-        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null, null);
+        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null);
 
         String response = requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(dto),
@@ -87,7 +87,6 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
                 () -> assertNotNull(createdSchedule),
                 () -> assertNotNull(createdSchedule.id()),
                 () -> assertEquals("zad1", createdSchedule.tag()),
-                () -> assertNotNull(createdSchedule.version()),
                 () -> assertNotNull(createdSchedule.versionHash())
         );
     }
@@ -95,7 +94,7 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
     @Test
     public void NEG01_TeacherWithoutRequiredPermissions_ShouldNotCreateSchedule() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
-        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null, null);
+        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null);
 
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(dto),
@@ -108,7 +107,7 @@ public class ScheduleControllerCreateScheduleIntegrationTest extends BaseTestSet
     @Test
     public void NEG02_Unauthenticated_ShouldNotCreateSchedule() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
-        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null, null);
+        ScheduleDTO dto = new ScheduleDTO(null, LocalDateTime.now().plusDays(5), "zad1", null);
 
         requestFunctions.sendPostRequest(
                 objectMapper.writeValueAsString(dto),
