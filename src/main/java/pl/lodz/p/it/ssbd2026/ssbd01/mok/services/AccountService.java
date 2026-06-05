@@ -585,4 +585,13 @@ public class AccountService {
         postCommitTransactionManager.register(() ->
                 emailService.sendAccountIsUnblockedInfo(account.getEmail(), account.getLogin(), account.getLanguageVersion().getLanguage()));
     }
+
+    @MethodCallLogged
+    @Retryable(retryFor = ConcurrentUpdateException.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+    public void changeAccountLanguage(String language, String login) {
+        Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
+        LanguageDict languageEnt = languageDictRepository.findByLanguage(language).orElseThrow(LanguageDictNotFoundException::new);
+        account.setLanguageVersion(languageEnt);
+    }
 }
