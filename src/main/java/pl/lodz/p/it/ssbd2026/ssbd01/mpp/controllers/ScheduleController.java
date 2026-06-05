@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
 @MethodCallLogged
+@ApiSecuredResponses
 public class ScheduleController  {
     private final ScheduleService scheduleService;
     private final ScheduleMapper scheduleMapper;

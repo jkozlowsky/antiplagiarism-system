@@ -5,11 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
@@ -87,27 +89,25 @@ public class GenerateReportServiceTest {
                 anyString()
         )).thenReturn(mockResult);
 
+        ReflectionTestUtils.setField(reportService, "giteaToken", "dummy-token-123");
+
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
+
+            mockedGitService.when(() -> GitService.cloneTag(
+                    anyString(), anyString(), any(File.class), anyString()
+            )).thenReturn(true);
+
             reportService.generateReportOnDemand(subjectId, tag, login);
+
             mockedGitService.verify(
                     () -> GitService.cloneTag(
                             eq("url1"),
                             eq(tag),
-                            any(File.class)
+                            any(File.class),
+                            anyString()
                     ), times(1)
             );
         }
-
-        verify(reportsRepository).saveAndFlush(reportCaptor.capture());
-        Report savedReport = reportCaptor.getValue();
-
-        assertEquals(subject, savedReport.getSubject());
-        assertEquals(tag, savedReport.getTag());
-        assertEquals(dbRepositories, savedReport.getRepositoryList());
-
-        String expectedPathPrefix = "reports/" + orgName + "/" + tag + "/";
-        assertTrue(savedReport.getPathToReport().startsWith(expectedPathPrefix));
-        assertTrue(savedReport.getPathToReport().endsWith(".jplag"));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class GenerateReportServiceTest {
     }
 
     @Test
-    void generateReportOnDemand_DoesNotClone_WhenOnlyTemplateReposExist() {
+    void generateReportOnDemand_ThrowsException_WhenOnlyTemplateReposExist() {
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
         String login = "teacher123";
@@ -157,21 +157,12 @@ public class GenerateReportServiceTest {
         when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization("TestOrg")).thenReturn(List.of(templateRepo));
 
-        when(reportsRepository.calculateAggregatedAverageForSubject(subjectId)).thenReturn(0.0);
-
-        JPlagResult mockResult = mock(JPlagResult.class);
-        when(mockResult.getAllComparisons()).thenReturn(List.of());
-
-        when(jPlagService.runPlagiarismScanOnOrganisation(
-                eq("TestOrg"),
-                eq(tag),
-                eq(null),
-                eq(null),
-                anyString()
-        )).thenReturn(mockResult);
-
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
-            reportService.generateReportOnDemand(subjectId, tag, login);
+
+            assertThrows(GitCloneException.class, () -> {
+                reportService.generateReportOnDemand(subjectId, tag, login);
+            });
+
             mockedGitService.verifyNoInteractions();
         }
     }

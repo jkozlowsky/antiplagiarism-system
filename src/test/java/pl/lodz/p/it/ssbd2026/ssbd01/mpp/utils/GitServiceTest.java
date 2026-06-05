@@ -47,7 +47,7 @@ class GitServiceTest {
 
             when(cloneCommand.call()).thenReturn(gitMock);
 
-            assertDoesNotThrow(() -> GitService.cloneTag(repoUrl, tagName, localPath));
+            assertDoesNotThrow(() -> GitService.cloneTag(repoUrl, tagName, localPath, ""));
 
             verify(cloneCommand).setURI(repoUrl);
             verify(cloneCommand).setDirectory(localPath);
@@ -74,7 +74,7 @@ class GitServiceTest {
             when(cloneCommand.call()).thenThrow(new InvalidRemoteException("Remote not found"));
 
             assertThrows(GitCloneException.class, () ->
-                    GitService.cloneTag(repoUrl, tagName, localPath)
+                    GitService.cloneTag(repoUrl, tagName, localPath, "")
             );
         }
     }

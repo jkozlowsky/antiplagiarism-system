@@ -181,6 +181,7 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             report.setRepositoryList(List.of(repo));
             report.setPathToReport(dummyReportFile.getAbsolutePath());
             report.setTag("v1");
+            report.setScannedRepositories(0L);
             report.setAverageSimilarity(45.5);
             ReflectionTestUtils.setField(report, "createdBy", account);
             reportTestRepository.saveAndFlush(report);

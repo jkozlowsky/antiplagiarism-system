@@ -96,8 +96,8 @@ public class ReportServiceGenerateByScheduleTest {
         try (MockedStatic<GitService> mockedGit = mockStatic(GitService.class)) {
             reportService.generateReportBySchedule();
 
-            mockedGit.verify(() -> GitService.cloneTag(eq("http://gitea/repo"), eq(TAG), any(File.class)), times(1));
-            mockedGit.verify(() -> GitService.cloneTag(eq("http://gitea/template"), any(), any(File.class)), never());
+            mockedGit.verify(() -> GitService.cloneTag(eq("http://gitea/repo"), eq(TAG), any(File.class), any()), times(1));
+            mockedGit.verify(() -> GitService.cloneTag(eq("http://gitea/template"), any(), any(File.class), any()), never());
         }
 
         verify(reportsRepository).saveAndFlush(reportCaptor.capture());

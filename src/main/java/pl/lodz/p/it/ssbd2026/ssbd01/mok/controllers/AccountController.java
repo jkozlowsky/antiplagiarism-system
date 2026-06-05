@@ -17,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiPublicResponses;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
@@ -35,6 +37,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @MethodCallLogged
 @Tag(name = "Konta", description = "Api służące do zarządzania kontami użytkowników")
+@ApiSecuredResponses
 public class AccountController {
 
     private final AccountService accountService;
@@ -408,6 +411,20 @@ public class AccountController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> unblockAccountViaToken(@RequestParam String token) {
         accountService.unblockAccountViaEmailToken(token);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Zmień język konta", description = "Umożliwia zmianę języka w encji konta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Język został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono użytkownika."))),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanej wersji językowej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono słownika językowego.")))
+    })
+    @PostMapping("/language")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Void> changeLanguage(@RequestParam String language, Principal principal) {
+        accountService.changeAccountLanguage(language, principal.getName());
         return ResponseEntity.noContent().build();
     }
 }

@@ -6,4 +6,7 @@ public class GitCloneException extends AppBaseException{
     public GitCloneException(Throwable cause) {
         super(HttpStatus.NOT_FOUND, "error.git.tag.notfound", cause);
     }
+    public GitCloneException() {
+        super(HttpStatus.NOT_FOUND, "error.git.tag.notfound");
+    }
 }

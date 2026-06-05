@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiPublicResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -27,7 +28,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AuthService;
 @RequiredArgsConstructor
 @MethodCallLogged
 @Tag(name = "Autoryzacja", description = "Punkty końcowe służące do logowania i odświeżania sesji. Nie wymagają tokenu JWT.")
-@SecurityRequirements()
+@ApiPublicResponses
 public class AuthController {
 
     private final AuthService authService;

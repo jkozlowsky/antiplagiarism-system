@@ -87,5 +87,10 @@ public record SubjectDTO(
 
 
         @Schema(description = "Lista przypisanych nauczycieli (używana przy tworzeniu przedmiotu)")
-        List<TeacherAssignmentDTO> teachers
+        List<TeacherAssignmentDTO> teachers,
+
+        @Schema(description = "Zaggregowane średnie podobieństwo", example = "8.4", accessMode = Schema.AccessMode.READ_ONLY)
+        @Null(groups = {OnCreate.class, OnUpdate.class})
+        Double aggregatedAverageSimilarity
+
 ) {}
