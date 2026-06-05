@@ -67,7 +67,7 @@ public class GetRulePresetsTest extends BaseTestSetup {
         );
 
         List<String> raportLevelNames = JsonPath.from(responseBody).getList("raportLevelName", String.class);
-        assertTrue(raportLevelNames.contains("FULL_VIEW"));
+        assertTrue(raportLevelNames.contains("ONLY_PERCENTAGES"));
     }
 
     @Test
