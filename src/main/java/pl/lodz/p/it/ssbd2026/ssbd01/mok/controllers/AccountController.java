@@ -115,7 +115,28 @@ public class AccountController {
     }
 
     @Operation(summary = "Pobierz wszystkie konta", description = "Pobiera stronicowaną listę wszystkich kont, opcjonalnie filtrowaną po frazie.")
-    @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę kont")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Poprawnie pobrano stronicowaną listę kont z hiperłączami"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta administratora wykonującego zapytanie.")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Błąd blokady optymistycznej",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Konto zostało zmodyfikowane w międzyczasie, spróbuj ponownie.")
+                    )
+            )
+    })
     @GetMapping
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
