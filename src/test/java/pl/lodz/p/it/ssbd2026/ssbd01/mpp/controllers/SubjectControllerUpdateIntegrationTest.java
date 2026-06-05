@@ -46,12 +46,14 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
     private PlatformTransactionManager transactionManager;
 
     private String adminToken;
+    private String teacherToken;
     private UUID testSubjectId;
     private String validETag;
 
     @BeforeAll
     public void setUp() {
         adminToken = jwtAuthService.generateToken("test_admin", List.of(AccountConsts.ROLE_ADMIN), false);
+        teacherToken = jwtAuthService.generateToken("test_teacher", List.of(AccountConsts.ROLE_TEACHER), false);
 
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
         txTemplate.execute(status -> {
@@ -80,7 +82,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         );
 
         given()
-                .header("Authorization", "Bearer " + adminToken)
+                .header("Authorization", "Bearer " + teacherToken)
                 .header("If-Match", validETag)
                 .contentType(ContentType.JSON)
                 .body(validDto)
@@ -96,7 +98,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         UpdateSubjectDTO validDto = new UpdateSubjectDTO("Test", "Desc", "URL", List.of(), null);
 
         given()
-                .header("Authorization", "Bearer " + adminToken)
+                .header("Authorization", "Bearer " + teacherToken)
                 .contentType(ContentType.JSON)
                 .body(validDto)
                 .when()
@@ -117,7 +119,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         );
 
         given()
-                .header("Authorization", "Bearer " + adminToken)
+                .header("Authorization", "Bearer " + teacherToken)
                 .header("If-Match", validETag)
                 .contentType(ContentType.JSON)
                 .body(invalidDto)
@@ -125,5 +127,28 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
                 .put("/api/subjects/" + testSubjectId)
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+
+    @Test
+    @DisplayName("NEG03: Admin nie powinien mieć uprawnień do edycji przedmiotu")
+    public void NEG03_AdminShouldNotBeAbleToUpdateSubject() {
+        UpdateSubjectDTO validDto = new UpdateSubjectDTO(
+                "Nazwa Admina",
+                "Opis",
+                "https://gitea.com/new-url",
+                List.of(new TeacherAssignmentDTO("test_teacher", TeacherSubjectRole.OWNER)),
+                null
+        );
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .header("If-Match", validETag)
+                .contentType(ContentType.JSON)
+                .body(validDto)
+                .when()
+                .put("/api/subjects/" + testSubjectId)
+                .then()
+                .statusCode(HttpStatus.FORBIDDEN.value());
     }
 }
