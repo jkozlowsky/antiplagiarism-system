@@ -41,7 +41,7 @@ public class ScheduleController  {
             @ApiResponse(responseCode = "403", description = "Użytkownik nie ma uprawnień do tego przedmiotu (nieodpowiednia rola lub brak przypisania do przedmiotu)")
     })
     public List<ScheduleDTO> getSchedules(@PathVariable UUID subjectId) {
-        return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
+        return scheduleService.getSchedules(subjectId);
     }
 
 
@@ -54,7 +54,7 @@ public class ScheduleController  {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
     })
     public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto, Principal principal) {
-        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName()));
+        return scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName());
     }
 
 

@@ -48,7 +48,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
     private SubjectAssignmentTestRepository subjectAssignmentTestRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule()); // Bez tego modułu Jackson się wywala, bo nie obsługuje LocalDateTime z "urzędu".
+            .registerModule(new JavaTimeModule());
     private Headers teacherHeaders;
     private Headers otherTeacherHeaders;
     private UUID subjectId;
@@ -101,7 +101,9 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
         assertAll(
                 () -> assertNotNull(schedules),
                 () -> assertNotEquals(0, schedules.size()),
-                () -> assertFalse(schedules.isEmpty())
+                () -> assertFalse(schedules.isEmpty()),
+                () -> assertNotNull(schedules.getFirst().version()),
+                () -> assertNotNull(schedules.getFirst().versionHash())
         );
     }
 
