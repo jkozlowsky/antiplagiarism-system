@@ -10,6 +10,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.TeacherRepository;
@@ -29,6 +30,9 @@ public class SubjectServiceChangeSubjectManagerTest {
     private SubjectAssignmentRepository subjectAssignmentRepository;
     @Mock
     private SubjectRepository subjectRepository;
+    @Mock
+    private VersionHashService versionHashService;
+
     @InjectMocks
     private SubjectService subjectService;
 
@@ -79,6 +83,9 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void POS01_ChangeSubjectManager_Successfully() {
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
+
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
                 .thenReturn(Optional.of(currentOwnerAssignment));
@@ -87,7 +94,7 @@ public class SubjectServiceChangeSubjectManagerTest {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("new_manager", subjectId))
                 .thenReturn(Optional.of(newOwnerAssignment));
 
-        subjectService.changeSubjectManager(subjectId, "new_manager");
+        subjectService.changeSubjectManager(subjectId, "new_manager", "hash123");
         verify(subjectAssignmentRepository, times(2)).saveAndFlush(any());
         assertAll(
                 () -> assertEquals(TeacherSubjectRole.OWNER, newOwnerAssignment.getSubjectRole()),
@@ -105,6 +112,9 @@ public class SubjectServiceChangeSubjectManagerTest {
         newManagerTeacherNotAssigned.setAccount(newManagerAccountNotAssigned);
         ReflectionTestUtils.setField(newManagerTeacherNotAssigned, "id", newManagerIdNotAssigned);
 
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
+
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
                 .thenReturn(Optional.of(currentOwnerAssignment));
@@ -113,9 +123,7 @@ public class SubjectServiceChangeSubjectManagerTest {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newManagerLoginNotAssigned, subjectId))
                 .thenReturn(Optional.empty());
 
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-
-        subjectService.changeSubjectManager(subjectId, newManagerLoginNotAssigned);
+        subjectService.changeSubjectManager(subjectId, newManagerLoginNotAssigned, "hash123");
         assertAll(
                 () -> assertEquals(TeacherSubjectRole.VIEWER, currentOwnerAssignment.getSubjectRole()),
                 () -> verify(subjectAssignmentRepository, times(2)).saveAndFlush(any())
@@ -124,13 +132,17 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void NEG01_ChangeSubjectManager_WhenNewManagerNotFound() {
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
+
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("current_manager", subjectId))
                 .thenReturn(Optional.of(currentOwnerAssignment));
 
         when(teacherRepository.findActiveTeacherByLogin("new_manager")).thenReturn(Optional.empty());
+
         assertAll(
-                () -> assertThrows(AccessLevelNotAssignedException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager")),
+                () -> assertThrows(AccessLevelNotAssignedException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager", "hash123")),
                 () -> assertEquals(TeacherSubjectRole.EDITOR, newOwnerAssignment.getSubjectRole()),
                 () -> assertEquals(TeacherSubjectRole.OWNER, currentOwnerAssignment.getSubjectRole()),
                 () -> verify(subjectAssignmentRepository, never()).saveAndFlush(any())
@@ -139,10 +151,10 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void NEG02_ChangeSubjectManager_WhenSubjectNotFound() {
-        when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.empty());
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.empty());
 
         assertAll(
-                () -> assertThrows(SubjectNotFoundException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager")),
+                () -> assertThrows(SubjectNotFoundException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager", "hash123")),
                 () -> assertEquals(TeacherSubjectRole.EDITOR, newOwnerAssignment.getSubjectRole()),
                 () -> assertEquals(TeacherSubjectRole.OWNER, currentOwnerAssignment.getSubjectRole()),
                 () -> verify(subjectAssignmentRepository, never()).saveAndFlush(any())

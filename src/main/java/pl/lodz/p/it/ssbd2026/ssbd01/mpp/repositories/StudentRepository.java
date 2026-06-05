@@ -14,6 +14,6 @@ import java.util.Optional;
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface StudentRepository extends AbstractRepository<Student> {
 
-    @Query("SELECT s FROM Student s WHERE LOWER(s.account.email) = LOWER(:email) OR LOWER(s.account.login) = LOWER(:login)")
-    Optional<Student> findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(@Param("email") String email, @Param("login") String login);
+    @Query("SELECT s FROM Student s WHERE LOWER(s.account.email) = LOWER(:email)")
+    Optional<Student> findByAccountEmailIgnoreCase(@Param("email") String email);
 }

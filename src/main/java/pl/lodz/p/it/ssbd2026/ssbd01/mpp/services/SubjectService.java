@@ -25,6 +25,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAssignmentNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
@@ -91,7 +92,7 @@ public class SubjectService {
                 String email = collaborator.email() != null ? collaborator.email() : "";
                 String login = collaborator.login() != null ? collaborator.login() : "";
 
-                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(email, login);
+                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCase(email);
 
                 if (studentOpt.isPresent()) {
                     Student student = studentOpt.get();
@@ -129,16 +130,12 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    public List<SubjectDTO> getAllSubjects() {
+    public List<SubjectDTO> getTeacherSubjects() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String login = authentication.getName();
-        var authorities = authentication.getAuthorities();
-
-        boolean isAdmin = hasRole(authorities, AccountConsts.ROLE_ADMIN);
-        boolean isTeacher = hasRole(authorities, AccountConsts.ROLE_TEACHER);
-        boolean isStudent = hasRole(authorities, AccountConsts.ROLE_STUDENT);
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         List<SubjectDTO> result = new ArrayList<>();
 
@@ -148,7 +145,7 @@ public class SubjectService {
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
                 result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null));
             }
-        } else if (isTeacher) {
+        } else {
             List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
             for (SubjectAssignment assignment : assignments) {
                 Subject subject = assignment.getSubject();
@@ -158,14 +155,24 @@ public class SubjectService {
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
                 result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null));
             }
-        } else if (isStudent) {
-            List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
-            for (Subject subject : subjects) {
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
-            }
-        } else {
-            throw new SubjectAccessDeniedException();
+        }
+
+        return result;
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getStudentSubjects() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+
+        List<SubjectDTO> result = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
+
+        for (Subject subject : subjects) {
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
         }
 
         return result;
@@ -313,7 +320,8 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+        String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), generatedGiteaUrl);
 
         RulePreset preset = new RulePreset();
         preset.setRaportLevel(fetchRaportLevel(dto.manualRules().raportLevelName()));
@@ -337,7 +345,8 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+        String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), generatedGiteaUrl);
 
         RulePreset template = ruleRepository.findById(dto.templateId())
                 .orElseThrow(RulePresetTemplateNotFoundException::new);
@@ -384,7 +393,6 @@ public class SubjectService {
 
         subject.setName(dto.name());
         subject.setSubjectDescription(dto.subjectDescription());
-        subject.setGiteaURL(dto.giteaURL());
 
         if (dto.rules() != null) {
             RulePreset preset = subject.getRulePreset();
@@ -494,19 +502,31 @@ public class SubjectService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public void changeSubjectManager(UUID subjectId, String newManagerLogin) {
-        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId).orElseThrow(SubjectNotFoundException::new);
-        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId).orElseThrow(SubjectNotFoundException::new);
-        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin).orElseThrow(AccessLevelNotAssignedException::new);
+    public void changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash) {
+
+        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+        if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+
+        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
         SubjectAssignment newOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newOwner.getAccount().getLogin(), subjectId)
                 .orElseGet(
                         () -> {
                             SubjectAssignment assignment = new SubjectAssignment();
-                            assignment.setSubject(subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new));
+                            assignment.setSubject(subject);
                             assignment.setTeacher(newOwner);
                             return assignment;
                         }
                 );
+
         oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
         newOwnerAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
 

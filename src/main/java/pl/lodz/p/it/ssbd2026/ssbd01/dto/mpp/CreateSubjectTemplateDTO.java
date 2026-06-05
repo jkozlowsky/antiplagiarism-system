@@ -11,7 +11,6 @@ public record CreateSubjectTemplateDTO(
         @NotBlank @Size(max = 32) String organizationName,
         @NotBlank @Size(max = 16) String edition,
         @Size(max = 255) String subjectDescription,
-        @NotBlank @Size(max = 255) String giteaURL,
         @NotNull UUID templateId,
         @NotBlank String raportLevelName,
         List<TeacherAssignmentDTO> teachers
