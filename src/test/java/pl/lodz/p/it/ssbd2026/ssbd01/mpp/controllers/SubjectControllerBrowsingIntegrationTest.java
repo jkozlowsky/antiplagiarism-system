@@ -110,7 +110,7 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @DisplayName("POS03: Student pobiera listę swoich przedmiotów")
     public void POS03_StudentShouldBeAbleToHitEndpoint() throws JsonProcessingException {
         String response = requestFunctions.sendGetRequest(
-                HttpStatus.OK.value(), "/api/subjects", studentHeaders);
+                HttpStatus.OK.value(), "/api/subjects/student/list", studentHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
         assertNotNull(subjects);

@@ -58,7 +58,7 @@ public class ScheduleServiceCreateScheduleTest {
         mockSubjectId = UUID.randomUUID();
         mockRulePreset.setSubject(mockSubject);
         mockSubject.setRulePreset(mockRulePreset);
-        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1", null);
+        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1", null, false, false);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class ScheduleServiceCreateScheduleTest {
         testSchedule.setRulePreset(mockRulePreset);
 
         ScheduleDTO mappedDTO = new ScheduleDTO(testSchedule.getId(), testSchedule.getScheduleDateTime(), testSchedule.getTag(),
-                versionHashService.hashObjectVersion(testSchedule.getId(), testSchedule.getVersion()));
+                versionHashService.hashObjectVersion(testSchedule.getId(), testSchedule.getVersion()), false, false);
         String expectedHash = "valid-hash-123";
 
         when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);

@@ -67,7 +67,7 @@ public class ScheduleServiceGetScheduleTest {
         schedule.setTag("v1.0");
 
         ScheduleDTO mappedDTO = new ScheduleDTO(schedule.getId(), schedule.getScheduleDateTime(), schedule.getTag(),
-                versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()));
+                versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()), false, false);
         String expectedHash = "valid-hash-123";
 
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))

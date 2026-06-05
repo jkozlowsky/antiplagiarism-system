@@ -27,7 +27,7 @@ public class FindRulePresetsRepositoryTest extends BaseTestSetup {
     @BeforeEach
     public void setup() {
         ReportLevelDict raportLevel = entityManager.createQuery(
-                        "SELECT r FROM ReportLevelDict r WHERE r.name = 'FULL_VIEW'", ReportLevelDict.class)
+                        "SELECT r FROM ReportLevelDict r WHERE r.name = 'ONLY_PERCENTAGES'", ReportLevelDict.class)
                 .setMaxResults(1)
                 .getSingleResult();
 

@@ -4,7 +4,9 @@ import de.jplag.JPlagComparison;
 import de.jplag.JPlagResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
@@ -14,20 +16,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
@@ -56,6 +60,10 @@ public class ReportService {
     private final JPlagService jPlagService;
     private final GiteaRepositoryRepository giteaRepositoryRepository;
     private final ReportsRepository reportsRepository;
+    private final ScheduleRepository scheduleRepository;
+
+    @Value("${gitea.token}")
+    private String giteaToken;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -67,10 +75,22 @@ public class ReportService {
         }
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
-        giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
-            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + tag + "/" + repo.name());
-            GitService.cloneTag(repo.clone_url(), tag, targetDir);
-        });
+//        giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
+//            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + tag + "/" + repo.name());
+//            GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
+//        });
+        long successfulClonesCount = giteaRepoDTO.stream()
+                .filter(repo -> !repo.template())
+                .map(repo -> {
+                    File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + tag + "/" + repo.name());
+                    return GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
+                })
+                .filter(success -> success)
+                .count();
+
+        if (successfulClonesCount == 0) {
+            throw new GitCloneException();
+        }
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
 
@@ -78,6 +98,7 @@ public class ReportService {
         Report report = new Report();
         report.setSubject(subject);
         report.setTag(tag);
+        report.setScannedRepositories(successfulClonesCount);
         report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + tag + "/" + timestamp + ".jplag");
         report.setRepositoryList(repositoryList);
 
@@ -133,7 +154,8 @@ public class ReportService {
                         r.getAverageSimilarity(),
                         r.getCreatedAt(),
                         r.getSubject().getCreatedBy().getLogin(),
-                        r.getSubject().getName()
+                        r.getSubject().getName(),
+                        r.getScannedRepositories()
                 ))
                 .toList();
     }
@@ -272,8 +294,61 @@ public class ReportService {
         reportsRepository.delete(report);
     }
 
-    public void generateReportBySchedule() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    public boolean generateReportBySchedule() {
+        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute(PageRequest.of(0, 1));
+        if (schedules.isEmpty()) return false;
+
+        Schedule schedule = schedules.getFirst();
+        try {
+            RulePreset settings = schedule.getRulePreset();
+            Subject subject = settings.getSubject();
+            String giteaTag = schedule.getTag();
+
+            List<GiteaRepoDTO> giteaRepoList = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+            giteaRepoList.stream().filter(repo -> !repo.template()).forEach(repo -> {
+                File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
+                GitService.cloneTag(repo.clone_url(), giteaTag, targetDir, giteaToken);
+            });
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+            List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
+
+            Report report = new Report();
+            report.setSubject(subject);
+            report.setTag(giteaTag);
+            report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + giteaTag + "/" + timestamp + ".jplag");
+            report.setRepositoryList(repositoryList);
+
+            JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
+                    subject.getOrganizationName(),
+                    giteaTag,
+                    settings.getMinimumTokensMatch(),
+                    settings.getEnableNormalization(),
+                    report.getPathToReport()
+            );
+
+            Double avg = result.getAllComparisons().stream()
+                    .mapToDouble(JPlagComparison::similarity)
+                    .average()
+                    .orElse(0.0);
+            report.setAverageSimilarity(avg);
+
+            reportsRepository.saveAndFlush(report);
+
+            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+            subject.setAggregatedAverageSimilarity(newSubjectAggregate);
+            subjectRepository.saveAndFlush(subject);
+
+            schedule.setExecuted(true);
+            scheduleRepository.saveAndFlush(schedule);
+        } catch (Exception e) {
+            schedule.setExecuted(true);
+            schedule.setHasFailed(true);
+            scheduleRepository.saveAndFlush(schedule);
+        }
+        return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
@@ -309,7 +384,7 @@ public class ReportService {
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
             File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
             String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
-            GitService.cloneTag(repo.clone_url(), tag, targetDir);
+            GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
         });
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));

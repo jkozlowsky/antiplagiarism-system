@@ -19,10 +19,12 @@ import pl.lodz.p.it.ssbd2026.ssbd01.config.security.JwtAuthService;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelDictNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,6 +48,9 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
     private PlatformTransactionManager transactionManager;
     @Autowired
     private AccessLevelDictTestRepository accessLevelDictTestRepository;
+
+    @Autowired
+    private VersionHashService versionHashService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -133,6 +138,21 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
         });
     }
 
+    private String getVersionHash() {
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        return txTemplate.execute(_ -> {
+            Subject subject = subjectAssignmentTestRepository.findByTeacherAccountLogin(oldManagerLogin).getFirst().getSubject();
+            return versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        });
+    }
+
+    private Headers withIfMatch(Headers baseHeaders, String hash) {
+        List<Header> headerList = new ArrayList<>(baseHeaders.asList());
+        headerList.add(new Header("If-Match", hash));
+        return new Headers(headerList);
+    }
+
+
     @Test
     public void POS01_ChangeSubjectManager_Successfully() throws JsonProcessingException {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
@@ -141,7 +161,7 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
                 objectMapper.writeValueAsString(dto),
                 HttpStatus.NO_CONTENT.value(),
                 "/api/subjects/" + subjectId + "/manager",
-                adminHeaders
+                withIfMatch(adminHeaders, getVersionHash())
         );
     }
 
@@ -153,7 +173,7 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
                 objectMapper.writeValueAsString(dto),
                 HttpStatus.UNAUTHORIZED.value(),
                 "/api/subjects/" + subjectId + "/manager",
-                new Headers()
+                withIfMatch(new Headers(), getVersionHash())
         );
     }
 
@@ -165,7 +185,7 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
                 objectMapper.writeValueAsString(dto),
                 HttpStatus.FORBIDDEN.value(),
                 "/api/subjects/" + subjectId + "/manager",
-                teacherHeaders
+                withIfMatch(teacherHeaders, getVersionHash())
         );
     }
 
@@ -177,7 +197,7 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
                 objectMapper.writeValueAsString(dto),
                 HttpStatus.CONFLICT.value(),
                 "/api/subjects/" + subjectId + "/manager",
-                adminHeaders
+                withIfMatch(adminHeaders, getVersionHash())
         );
     }
 
@@ -189,8 +209,7 @@ public class SubjectControllerChangeSubjectManagerIntegrationTest extends BaseTe
                 objectMapper.writeValueAsString(dto),
                 HttpStatus.BAD_REQUEST.value(),
                 "/api/subjects/" + subjectId + "1/manager",
-                adminHeaders
+                withIfMatch(adminHeaders, getVersionHash())
         );
     }
-
 }

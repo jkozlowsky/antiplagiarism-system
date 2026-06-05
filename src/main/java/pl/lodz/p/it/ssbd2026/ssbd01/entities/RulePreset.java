@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "rule_preset", indexes = {
-        @Index(name = "idx_rule_preset_raport_level_id", columnList = "raport_level_id"),
+        @Index(name = "idx_rule_preset_report_level_id", columnList = "report_level_id"),
         @Index(name = "idx_rule_preset_subject_id", columnList = "subject_id"),
         @Index(name = "idx_rule_preset_created_by", columnList = "created_by"),
         @Index(name = "idx_rule_preset_modified_by", columnList = "modified_by")

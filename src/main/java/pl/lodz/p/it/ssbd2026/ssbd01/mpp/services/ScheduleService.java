@@ -60,7 +60,9 @@ public class ScheduleService  {
                             dto.id(),
                             dto.scheduleDateTime(),
                             dto.tag(),
-                            versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion())
+                            versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()),
+                            dto.isExecuted(),
+                            dto.hasFailed()
                     );
                 })
                 .toList();
@@ -85,7 +87,9 @@ public class ScheduleService  {
                 dto.id(),
                 dto.scheduleDateTime(),
                 dto.tag(),
-                versionHashService.hashObjectVersion(savedSchedule.getId(), savedSchedule.getVersion())
+                versionHashService.hashObjectVersion(savedSchedule.getId(), savedSchedule.getVersion()),
+                dto.isExecuted(),
+                dto.hasFailed()
         );
     }
 

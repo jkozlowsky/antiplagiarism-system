@@ -9,6 +9,7 @@ public record ReportDTO(
     Double average_similarity,
     LocalDateTime created_at,
     String created_by,
-    String subject_name
+    String subject_name,
+    Long  scanned_repositories
 ) {
 }

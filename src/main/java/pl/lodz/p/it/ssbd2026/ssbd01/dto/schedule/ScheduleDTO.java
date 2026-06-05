@@ -22,5 +22,10 @@ public record ScheduleDTO(
         String tag,
 
         @NotBlank(groups = {OnCreate.class, OnUpdate.class})
-        String versionHash
+        String versionHash,
+
+        @NotNull(groups = OnCreate.class)
+        boolean isExecuted,
+        @NotNull(groups = OnCreate.class)
+        boolean hasFailed
 ) {}

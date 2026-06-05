@@ -14,9 +14,6 @@ public record UpdateSubjectDTO(
         @Size(max = 2000, message = "error.subject.update.description.size")
         String subjectDescription,
 
-        @Size(max = 255, message = "error.subject.update.giteaURL.size")
-        String giteaURL,
-
         @NotNull(message = "error.subject.update.teachers.null")
         List<@Valid TeacherAssignmentDTO> teachers,
 
