@@ -58,6 +58,8 @@ services:
       - gitea_token
     volumes:
       - ../logs:/app/logs
+      - ../repos:/app/repos
+      - ../reports:/app/reports
     networks:
       - proxy-backend
       - backend-db

@@ -413,4 +413,18 @@ public class AccountController {
         accountService.unblockAccountViaEmailToken(token);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Zmień język konta", description = "Umożliwia zmianę języka w encji konta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Język został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono użytkownika."))),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanej wersji językowej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono słownika językowego.")))
+    })
+    @PostMapping("/language")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Void> changeLanguage(@RequestParam String language, Principal principal) {
+        accountService.changeAccountLanguage(language, principal.getName());
+        return ResponseEntity.noContent().build();
+    }
 }
