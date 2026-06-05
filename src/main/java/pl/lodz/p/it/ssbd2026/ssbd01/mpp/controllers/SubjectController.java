@@ -43,19 +43,29 @@ public class SubjectController  {
     })
     @PostMapping("/{subjectId}/sync")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void syncSubjectWithGitea(@PathVariable UUID subjectId) {
         subjectService.syncSubjectWithGitea(subjectId);
     }
 
-    @Operation(summary = "Pobierz listę przedmiotów", description = "Zwraca listę wszystkich przedmiotów, do których zalogowany użytkownik ma dostęp.")
+    @Operation(summary = "Pobierz listę przedmiotów (Nauczyciel)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
-        return ResponseEntity.ok(subjectService.getAllSubjects());
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<List<SubjectDTO>> getTeacherSubjects() {
+        return ResponseEntity.ok(subjectService.getTeacherSubjects());
+    }
+
+    @Operation(summary = "Pobierz listę przedmiotów (Student)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
+    })
+    @GetMapping("/student/list")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public ResponseEntity<List<SubjectDTO>> getStudentSubjects() {
+        return ResponseEntity.ok(subjectService.getStudentSubjects());
     }
 
     @Operation(summary = "Pobierz przypisaną kadrę", description = "Zwraca listę wszystkich nauczycieli przypisanych do wskazanego przedmiotu.")
@@ -64,18 +74,18 @@ public class SubjectController  {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
     })
     @GetMapping("/{subjectId}/users")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<List<TeacherAssignmentDTO>> getSubjectUsers(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
     }
 
-    @Operation(summary = "Pobierz szczegóły przedmiotu", description = "Zwraca dokładne dane wybranego przedmiotu wraz z wliczonymi uprawnieniami zalogowanego użytkownika.")
+    @Operation(summary = "Pobierz szczegóły przedmiotu", description = "Zwraca dokładne dane wybranego przedmiotu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
     })
     @GetMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
     }
@@ -128,7 +138,7 @@ public class SubjectController  {
             @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej - dane uległy zmianie w międzyczasie")
     })
     @PutMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<Void> updateSubject( @PathVariable UUID subjectId,
                                                @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
                                                @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto)
@@ -169,7 +179,10 @@ public class SubjectController  {
     @PatchMapping("/{subjectId}/manager")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public void changeSubjectManager(@PathVariable UUID subjectId, @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
-        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin());
+    public void changeSubjectManager(
+            @PathVariable UUID subjectId,
+            @RequestHeader("If-Match") String versionHash,
+            @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
+        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin(), versionHash);
     }
 }

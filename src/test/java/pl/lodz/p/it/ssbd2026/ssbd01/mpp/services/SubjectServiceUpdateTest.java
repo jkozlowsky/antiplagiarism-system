@@ -87,7 +87,7 @@ class SubjectServiceUpdateTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
-        UpdateSubjectDTO dto = new UpdateSubjectDTO("New Name", "Desc", "url",
+        UpdateSubjectDTO dto = new UpdateSubjectDTO("New Name", "Desc",
                 List.of(new TeacherAssignmentDTO("test_owner", TeacherSubjectRole.OWNER)), null);
 
         assertDoesNotThrow(() -> subjectService.updateSubject(subjectId, dto, VALID_HASH));
@@ -101,7 +101,7 @@ class SubjectServiceUpdateTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
-        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc", "url", List.of(), null);
+        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc",  List.of(), null);
 
         assertThrows(ConcurrentUpdateException.class, () ->
                 subjectService.updateSubject(subjectId, dto, "WRONG_HASH"));
@@ -114,7 +114,7 @@ class SubjectServiceUpdateTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
-        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc", "url", List.of(), null);
+        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc", List.of(), null);
 
         assertThrows(SubjectAccessDeniedException.class, () ->
                 subjectService.updateSubject(subjectId, dto, VALID_HASH));
@@ -127,7 +127,7 @@ class SubjectServiceUpdateTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
-        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc", "url",
+        UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc",
                 List.of(new TeacherAssignmentDTO("test_owner", TeacherSubjectRole.EDITOR)), null);
 
         assertThrows(SubjectMustHaveOwnerException.class, () ->
