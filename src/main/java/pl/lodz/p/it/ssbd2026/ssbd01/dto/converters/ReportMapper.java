@@ -12,7 +12,7 @@ public interface ReportMapper {
     @Mapping(source = "createdAt", target = "created_at")
     @Mapping(source = "createdBy.login", target = "created_by")
     @Mapping(source = "subject.name", target = "subject_name")
-//    @Mapping(source = "pathToReport", target = "path_to_report")
+    @Mapping(source = "scannedRepositories", target = "scanned_repositories")
     ReportDTO toDto(Report report);
 
 }

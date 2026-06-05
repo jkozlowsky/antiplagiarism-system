@@ -62,6 +62,8 @@ services:
       - frontend_url
     volumes:
       - ../logs:/app/logs
+      - ../repos:/app/repos
+      - ../reports:/app/reports
     networks:
       - proxy-backend
       - backend-db

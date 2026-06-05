@@ -13,22 +13,23 @@ public class GitService {
 
     private GitService(){}
 
-    public static void cloneTag(String repoUrl, String tagName, File localPath) {
+    public static boolean cloneTag(String repoUrl, String tagName, File localPath, String giteaToken) {
         try (Git git = Git.cloneRepository()
                 .setURI(repoUrl)
                 .setDirectory(localPath)
                 .setBranch("refs/tags/" + tagName)
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider("token", "bda43f3d99674914c59753bb04d306b1426aa54e"))
-                .call()) { // TODO: remove git token from here!!!!!!!!!
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider("token", giteaToken))
+                .call()) {
+
+            return true;
 
         } catch (GitAPIException e) {
-//            e.printStackTrace();
-//            throw new GitCloneException(e);
-//            TODO: zrobić tak żeby ten wyjątek był wyrzucany jeżeli ŻADEN repozytorium nie ma tagu, bo na razie wyrzuca nawet jak jeden nie ma.
             log.warn("Cannot clone repository {} at tag {} because tag is not present in the repository", repoUrl, tagName);
-        } catch (JGitInternalException e){
+            return false;
+
+        } catch (JGitInternalException e) {
             log.warn("Cannot clone repository {} at tag {} because it is already present in the folder", repoUrl, tagName);
-//            throw new JGitException(e);
+            return true;
         }
     }
 
