@@ -58,7 +58,7 @@ public class UpdateRulePresetTest extends BaseTestSetup {
 
     private UUID testRuleId;
     private Integer testRuleVersion;
-    private final String targetRaportLevelName = "FULL_VIEW";
+    private final String targetRaportLevelName = "ONLY_PERCENTAGES";
 
     @BeforeEach
     public void setupDataAndAuth() {

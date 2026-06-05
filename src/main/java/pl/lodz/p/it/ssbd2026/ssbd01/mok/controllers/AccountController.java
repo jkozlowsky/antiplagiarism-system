@@ -17,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiPublicResponses;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
@@ -35,6 +37,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @MethodCallLogged
 @Tag(name = "Konta", description = "Api służące do zarządzania kontami użytkowników")
+@ApiSecuredResponses
 public class AccountController {
 
     private final AccountService accountService;

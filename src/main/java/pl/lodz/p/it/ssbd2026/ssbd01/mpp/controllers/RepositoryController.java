@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentRepositoryDTO;
 
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RepositoryMapper;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/repositories")
 @RequiredArgsConstructor
 @MethodCallLogged
+@ApiSecuredResponses
 public class RepositoryController {
     private final RepositoryService repositoryService;
     private final RepositoryMapper repositoryMapper;

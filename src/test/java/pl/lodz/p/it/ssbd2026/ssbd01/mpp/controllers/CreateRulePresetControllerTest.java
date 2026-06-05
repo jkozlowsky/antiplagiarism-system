@@ -45,7 +45,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Test
     @DisplayName("Powinno pomyślnie utworzyć predefiniowany szablon reguł przy poprawnych parametrach")
     public void shouldCreateRulePresetTemplateSuccessfully() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "ONLY_PERCENTAGES", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -59,7 +59,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Test
     @DisplayName("Powinno pomyślnie utworzyć szablon z poprawnymi wartościami brzegowymi")
     public void shouldCreateRulePresetTemplateWithBoundaryValues() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(0, "FULL_VIEW", 1, false);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(0, "ONLY_PERCENTAGES", 1, false);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -101,7 +101,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Test
     @DisplayName("Powinno zwrócić kod 400, gdy minimumTokensMatch ma niedozwoloną wartość poniżej zera")
     public void shouldReturn400WhenMinimumTokensMatchIsNegative() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", -5, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "ONLY_PERCENTAGES", -5, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -115,7 +115,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Test
     @DisplayName("Powinno zwrócić kod 400, gdy minimumTokensMatch wynosi 0 (wymagane min. 1)")
     public void shouldReturn400WhenMinimumTokensMatchIsZero() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 0, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "ONLY_PERCENTAGES", 0, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -129,7 +129,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     @Test
     @DisplayName("Powinno zwrócić kod 400, gdy studentTicketCount ma niedozwoloną wartość poniżej zera")
     public void shouldReturn400WhenStudentTicketCountIsNegative() throws Exception {
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(-1, "FULL_VIEW", 20, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(-1, "ONLY_PERCENTAGES", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -145,7 +145,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     public void shouldReturn403WhenUserIsStudent() throws Exception {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "ONLY_PERCENTAGES", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
@@ -161,7 +161,7 @@ public class CreateRulePresetControllerTest extends BaseTestSetup {
     public void shouldReturn401WhenNoAuthorizationHeaderProvided() throws Exception {
         ((FilterableRequestSpecification) RestAssured.requestSpecification).removeHeader("Authorization");
 
-        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "FULL_VIEW", 20, true);
+        CreateRulePresetDTO dto = new CreateRulePresetDTO(15, "ONLY_PERCENTAGES", 20, true);
         String jsonBody = new ObjectMapper().writeValueAsString(dto);
 
         requestFunctions.sendPostRequest(
