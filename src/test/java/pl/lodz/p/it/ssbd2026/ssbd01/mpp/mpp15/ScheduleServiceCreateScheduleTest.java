@@ -57,7 +57,7 @@ public class ScheduleServiceCreateScheduleTest {
         mockSubjectId = UUID.randomUUID();
         mockRulePreset.setSubject(mockSubject);
         mockSubject.setRulePreset(mockRulePreset);
-        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1");
+        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1", false, false);
     }
 
     @Test

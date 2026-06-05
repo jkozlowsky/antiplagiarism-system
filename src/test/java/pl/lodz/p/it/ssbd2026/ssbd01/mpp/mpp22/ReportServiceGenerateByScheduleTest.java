@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
@@ -85,7 +86,7 @@ public class ReportServiceGenerateByScheduleTest {
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
 
-        when(scheduleRepository.findSchedulesToExecute()).thenReturn(List.of(schedule));
+        when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
         when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of(validRepo, templateRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subject.getId())).thenReturn(dbRepos);
         when(jPlagService.runPlagiarismScanOnOrganisation(eq(ORG_NAME), eq(TAG), eq(10), eq(true), anyString()))
@@ -111,7 +112,7 @@ public class ReportServiceGenerateByScheduleTest {
 
     @Test
     public void POS02_NoSchedulesReady_NothingHappens() {
-        when(scheduleRepository.findSchedulesToExecute()).thenReturn(List.of());
+        when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of());
 
         reportService.generateReportBySchedule();
 
@@ -123,7 +124,7 @@ public class ReportServiceGenerateByScheduleTest {
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
 
-        when(scheduleRepository.findSchedulesToExecute()).thenReturn(List.of(schedule));
+        when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
         when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of());
         when(giteaRepositoryRepository.getAllBySubjectId(any())).thenReturn(List.of());
         when(jPlagService.runPlagiarismScanOnOrganisation(any(), any(), any(), any(), any())).thenReturn(mockResult);
@@ -137,25 +138,33 @@ public class ReportServiceGenerateByScheduleTest {
 
     @Test
     public void NEG01_GiteaUnavailable_ExceptionIsLoggedAndReportIsNotSaved() {
-        when(scheduleRepository.findSchedulesToExecute()).thenReturn(List.of(schedule));
+        when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
         when(giteaService.getRepositoriesFromOrganization(ORG_NAME))
                 .thenThrow(new RuntimeException("Gitea unavailable"));
 
-        assertThrows(RuntimeException.class, () -> reportService.generateReportBySchedule());
+        boolean result = reportService.generateReportBySchedule();
 
-        verify(reportsRepository, never()).saveAndFlush(any());
+        assertTrue(result);
+        assertTrue(schedule.isExecuted());
+        assertTrue(schedule.isHasFailed());
+        verify(reportsRepository, never()).saveAndFlush(any(Report.class));
+        verify(scheduleRepository, times(1)).saveAndFlush(schedule);
     }
 
     @Test
     public void NEG02_JPlagFails_ExceptionIsLoggedAndReportIsNotSaved() {
-        when(scheduleRepository.findSchedulesToExecute()).thenReturn(List.of(schedule));
+        when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
         when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of());
         when(giteaRepositoryRepository.getAllBySubjectId(any())).thenReturn(List.of());
         when(jPlagService.runPlagiarismScanOnOrganisation(any(), any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("JPlag failed"));
 
-        assertThrows(RuntimeException.class,() -> reportService.generateReportBySchedule());
+        boolean result = reportService.generateReportBySchedule();
 
-        verify(reportsRepository, never()).saveAndFlush(any());
+        assertTrue(result);
+        assertTrue(schedule.isExecuted());
+        assertTrue(schedule.isHasFailed());
+        verify(reportsRepository, never()).saveAndFlush(any(Report.class));
+        verify(scheduleRepository, times(1)).saveAndFlush(schedule);
     }
 }

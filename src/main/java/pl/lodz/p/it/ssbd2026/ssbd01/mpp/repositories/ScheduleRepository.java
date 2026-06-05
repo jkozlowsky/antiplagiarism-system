@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories;
 
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
@@ -24,6 +25,6 @@ public interface ScheduleRepository extends AbstractRepository<Schedule> {
     //todo zweryfikować czy to ma sens i działa przy >1 instancjach, bo przy Pgpool możliwe, że będzie problem
     @Lock(LockModeType.PESSIMISTIC_WRITE) //To na wypadek, gdy będziemy mieli więcej niż jedną instancję aplikacji
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")) // -2 = skip locked
-    @Query(value = "select s from Schedule s where s.scheduleDateTime <= CURRENT_TIMESTAMP and not exists (select r from Report r where r.subject = s.rulePreset.subject and r.tag = s.tag)")
-    List<Schedule> findSchedulesToExecute();
+    @Query(value = "select s from Schedule s where s.scheduleDateTime <= CURRENT_TIMESTAMP and s.isExecuted = false")
+    List<Schedule> findSchedulesToExecute(Pageable pageable);
 }

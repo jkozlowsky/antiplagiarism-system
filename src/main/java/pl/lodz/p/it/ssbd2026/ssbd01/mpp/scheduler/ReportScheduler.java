@@ -14,6 +14,9 @@ public class ReportScheduler {
 
     @Scheduled(cron = "0 * * * * *")
     public void schedule() {
-        reportService.generateReportBySchedule();
+        boolean hasMoreSchedulesToProcess = true;
+        while(hasMoreSchedulesToProcess) {
+            hasMoreSchedulesToProcess = reportService.generateReportBySchedule();
+        }
     }
 }

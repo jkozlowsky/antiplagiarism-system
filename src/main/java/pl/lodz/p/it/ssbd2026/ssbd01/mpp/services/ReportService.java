@@ -5,6 +5,7 @@ import de.jplag.JPlagResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
@@ -274,9 +275,12 @@ public class ReportService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    public void generateReportBySchedule() {
-        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute();
-        for (Schedule schedule : schedules) {
+    public boolean generateReportBySchedule() {
+        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute(PageRequest.of(0, 1));
+        if (schedules.isEmpty()) return false;
+
+        Schedule schedule = schedules.getFirst();
+        try {
             RulePreset settings = schedule.getRulePreset();
             Subject subject = settings.getSubject();
             String giteaTag = schedule.getTag();
@@ -315,7 +319,15 @@ public class ReportService {
             Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
             subject.setAggregatedAverageSimilarity(newSubjectAggregate);
             subjectRepository.saveAndFlush(subject);
+
+            schedule.setExecuted(true);
+            scheduleRepository.saveAndFlush(schedule);
+        } catch (Exception e) {
+            schedule.setExecuted(true);
+            schedule.setHasFailed(true);
+            scheduleRepository.saveAndFlush(schedule);
         }
+        return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
