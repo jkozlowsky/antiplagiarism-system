@@ -45,25 +45,52 @@ public class ScheduleService  {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public List<Schedule> getSchedules(UUID subjectId) {
+    public List<ScheduleDTO> getSchedules(UUID subjectId) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
+
         if (subjectAssignment.isEmpty()) {
             throw new NoPermissionForThisSubjectException();
         }
-        return scheduleRepository.findAllBySubjectId(subjectId);
+
+        return scheduleRepository.findAllBySubjectId(subjectId).stream()
+                .map(schedule -> {
+                    ScheduleDTO dto = scheduleMapper.toScheduleDTO(schedule);
+                    return new ScheduleDTO(
+                            dto.id(),
+                            dto.scheduleDateTime(),
+                            dto.tag(),
+                            versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()),
+                            dto.isExecuted(),
+                            dto.hasFailed()
+                    );
+                })
+                .toList();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public Schedule createSchedule(UUID subjectId, Schedule schedule, String teacherLogin) {
+    public ScheduleDTO createSchedule(UUID subjectId, Schedule schedule, String teacherLogin) {
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+
         if (!subjectAssignmentRepository.hasEditPermissions(subject, teacherLogin)) {
             throw new NoPermissionForThisSubjectException();
         }
+
         schedule.setRulePreset(subject.getRulePreset());
-        return scheduleRepository.saveAndFlush(schedule);
+        Schedule savedSchedule = scheduleRepository.saveAndFlush(schedule);
+
+        ScheduleDTO dto = scheduleMapper.toScheduleDTO(savedSchedule);
+
+        return new ScheduleDTO(
+                dto.id(),
+                dto.scheduleDateTime(),
+                dto.tag(),
+                versionHashService.hashObjectVersion(savedSchedule.getId(), savedSchedule.getVersion()),
+                dto.isExecuted(),
+                dto.hasFailed()
+        );
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")

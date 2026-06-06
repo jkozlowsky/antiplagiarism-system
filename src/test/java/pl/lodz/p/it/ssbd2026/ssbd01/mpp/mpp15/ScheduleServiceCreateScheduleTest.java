@@ -7,9 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
@@ -17,6 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.NoPermissionForThisSubjectException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
@@ -40,6 +39,8 @@ public class ScheduleServiceCreateScheduleTest {
     private SubjectRepository subjectRepository;
     @Mock
     private ScheduleMapper scheduleMapper;
+    @Mock
+    private VersionHashService versionHashService;
     @InjectMocks
     private ScheduleService scheduleService;
 
@@ -57,29 +58,37 @@ public class ScheduleServiceCreateScheduleTest {
         mockSubjectId = UUID.randomUUID();
         mockRulePreset.setSubject(mockSubject);
         mockSubject.setRulePreset(mockRulePreset);
-        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1", false, false);
+        scheduleDTO = new ScheduleDTO(UUID.randomUUID(), LocalDateTime.now().plusMinutes(1), "zad1", null, false, false);
     }
 
     @Test
     public void POS01_CreateSchedule_Successfully() {
         Schedule testSchedule = new Schedule();
+        ReflectionTestUtils.setField(testSchedule, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(testSchedule, "version", 1);
         testSchedule.setScheduleDateTime(scheduleDTO.scheduleDateTime());
         testSchedule.setTag(scheduleDTO.tag());
+        testSchedule.setRulePreset(mockRulePreset);
+
+        ScheduleDTO mappedDTO = new ScheduleDTO(testSchedule.getId(), testSchedule.getScheduleDateTime(), testSchedule.getTag(),
+                versionHashService.hashObjectVersion(testSchedule.getId(), testSchedule.getVersion()), false, false);
+        String expectedHash = "valid-hash-123";
 
         when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
-        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
-                .thenReturn(true);
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN)).thenReturn(true);
         when(scheduleMapper.toSchedule(Mockito.any(ScheduleDTO.class))).thenReturn(testSchedule);
         when(scheduleRepository.saveAndFlush(Mockito.any(Schedule.class))).thenReturn(testSchedule);
+        when(scheduleMapper.toScheduleDTO(testSchedule)).thenReturn(mappedDTO);
+        when(versionHashService.hashObjectVersion(testSchedule.getId(), testSchedule.getVersion())).thenReturn(expectedHash);
 
-        Schedule result = scheduleService.createSchedule(mockSubjectId, scheduleMapper.toSchedule(scheduleDTO), principal.getName());
+        ScheduleDTO result = scheduleService.createSchedule(mockSubjectId, scheduleMapper.toSchedule(scheduleDTO), principal.getName());
 
         assertAll(
                 () -> assertNotNull(result),
-                () -> assertEquals("zad1", result.getTag()),
-                () -> assertEquals(scheduleDTO.scheduleDateTime(), result.getScheduleDateTime()),
-                () -> assertEquals(mockRulePreset, result.getRulePreset()),
+                () -> assertEquals("zad1", result.tag()),
+                () -> assertEquals(scheduleDTO.scheduleDateTime(), result.scheduleDateTime()),
+                () -> assertEquals(expectedHash, result.versionHash()),
                 () -> verify(scheduleRepository, times(1)).saveAndFlush(Mockito.any(Schedule.class))
         );
     }
@@ -95,8 +104,7 @@ public class ScheduleServiceCreateScheduleTest {
 
         verify(subjectRepository, times(1)).findById(invalidSubjectId);
         verify(scheduleRepository, never()).saveAndFlush(Mockito.any(Schedule.class));
-        verify(subjectAssignmentRepository, never())
-                .hasEditPermissions(Mockito.any(), Mockito.any());
+        verify(subjectAssignmentRepository, never()).hasEditPermissions(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -107,13 +115,11 @@ public class ScheduleServiceCreateScheduleTest {
 
         when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
         when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(mockSubject));
-        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN))
-                .thenReturn(false);
+        when(subjectAssignmentRepository.hasEditPermissions(mockSubject, TEST_TEACHER_LOGIN)).thenReturn(false);
 
         assertThrows(NoPermissionForThisSubjectException.class,
                 () -> scheduleService.createSchedule(mockSubjectId, testSchedule, principal.getName()));
 
-        verify(scheduleMapper, never()).toSchedule(any(ScheduleDTO.class));
         verify(scheduleRepository, never()).saveAndFlush(any());
     }
 }
