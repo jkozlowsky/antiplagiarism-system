@@ -15,6 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class RepositoryService {
 
     private final GiteaRepositoryRepository giteaRepositoryRepository;
+    private final ReportsRepository reportsRepository;
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<Repository> getRepositories(UUID subjectId) {
@@ -64,9 +66,11 @@ public class RepositoryService {
                 .findByStudentList_Account_Login(login)
                 .stream()
                 .map(repo -> {
-                    int used = repo.getTicketCount();
+                    int used = (int) reportsRepository.countReportsByIdAndCreatedByLogin(repo.getId(), login);
 
-                    int max = repo.getSubject().getRulePreset() != null ? repo.getSubject().getRulePreset().getStudentTicketCount() : 0;
+                    int max = repo.getSubject().getRulePreset() != null
+                            ? repo.getSubject().getRulePreset().getStudentTicketCount()
+                            : 0;
 
                     return new StudentRepositoryDTO(
                             repo.getId(),

@@ -23,9 +23,6 @@ public class Repository extends AbstractEntity {
     @Column(name = "repository_name", nullable = false, length = RepositoryContsts.REPOSITORY_NAME_LENGTH)
     private String repositoryName;
 
-    @Column(name = "ticket_count", nullable = false)
-    private int ticketCount;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;

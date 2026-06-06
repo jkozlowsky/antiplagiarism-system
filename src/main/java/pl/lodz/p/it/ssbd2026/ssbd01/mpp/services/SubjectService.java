@@ -75,12 +75,6 @@ public class SubjectService {
                 repository.setRepositoryName(giteaRepo.name());
                 repository.setSubject(subject);
                 repository.setStudentList(new ArrayList<>());
-
-                int tickets = subject.getRulePreset() != null
-                        ? subject.getRulePreset().getStudentTicketCount()
-                        : 0;
-                repository.setTicketCount(tickets);
-
                 subject.getRepositoryList().add(repository);
             }
 
@@ -90,7 +84,6 @@ public class SubjectService {
 
             for (GiteaUserDTO collaborator : collaborators) {
                 String email = collaborator.email() != null ? collaborator.email() : "";
-                String login = collaborator.login() != null ? collaborator.login() : "";
 
                 Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCase(email);
 
@@ -103,7 +96,6 @@ public class SubjectService {
             }
         }
     }
-
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
