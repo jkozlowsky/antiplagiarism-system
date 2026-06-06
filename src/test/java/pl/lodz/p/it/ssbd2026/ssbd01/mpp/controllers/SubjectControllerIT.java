@@ -238,7 +238,6 @@ class SubjectControllerIT extends BaseTestSetup {
                 targetRepo = new Repository();
                 targetRepo.setRepositoryName("test-repo");
                 targetRepo.setSubject(subject);
-                targetRepo.setTicketCount(10);
                 targetRepo.setStudentList(new ArrayList<>());
             } else {
                 targetRepo = repos.get(0);

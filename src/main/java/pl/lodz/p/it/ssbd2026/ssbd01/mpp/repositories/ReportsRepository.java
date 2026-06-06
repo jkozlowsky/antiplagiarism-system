@@ -36,4 +36,7 @@ public interface ReportsRepository extends AbstractRepository<Report> {
             "JOIN SubjectAssignment sa ON r.subject.id = sa.subject.id " +
             "WHERE sa.teacher.account.login = :login")
     Page<Report> findAllReportsForAssignedTeacherByLogin(@Param("login") String login, Pageable pageable);
+
+    @Query("SELECT COUNT(r) FROM Report r JOIN r.repositoryList repo WHERE repo.id = :repositoryId AND r.createdBy.login = :login")
+    int countReportsByIdAndCreatedByLogin(@Param("repositoryId") UUID repositoryId, @Param("login") String login);
 }

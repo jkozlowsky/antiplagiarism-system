@@ -82,7 +82,6 @@ public class GenerateStudentReportServiceTest {
         repository = new Repository();
         ReflectionTestUtils.setField(repository, "id", repositoryId);
         repository.setRepositoryName("repo64");
-        repository.setTicketCount(1);
         repository.setSubject(subject);
         repository.setStudentList(List.of(student));
     }
@@ -95,7 +94,10 @@ public class GenerateStudentReportServiceTest {
 
         GiteaRepoDTO validRepo = new GiteaRepoDTO("test-repo", "url1", false);
 
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
+        when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
+
+        when(reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, studentLogin)).thenReturn(0);
+
         when(giteaService.getRepositoriesFromOrganization("IAS64USECASE55")).thenReturn(List.of(validRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subject.getId())).thenReturn(List.of(repository));
 
@@ -119,8 +121,7 @@ public class GenerateStudentReportServiceTest {
             StudentReportDetailsDTO result = reportService.generateStudentReport(repositoryId, studentTag, taskTag, studentLogin);
 
             assertNotNull(result);
-            assertEquals(2, repository.getTicketCount());
-            verify(giteaRepositoryRepository).saveAndFlush(repository);
+
             verify(reportsRepository).saveAndFlush(any(Report.class));
         }
     }
@@ -128,8 +129,9 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify, if student cannot check code when not tickets are remaining.")
     void NEG01_GenerateStudentReport() {
-        repository.setTicketCount(3);
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
+        when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
+
+        when(reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, studentLogin)).thenReturn(3);
 
         assertThrows(NoTicketsLeftException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
@@ -138,7 +140,9 @@ public class GenerateStudentReportServiceTest {
     @DisplayName("Verify, if report level NOTHING result in no access to the system.")
     void NEG02_GenerateStudentReport() {
         rulePreset.getRaportLevel().setName("NOTHING");
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
+
+        when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
+        rulePreset.getRaportLevel().setName("NOTHING");
 
         assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
@@ -146,7 +150,7 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify, if checking code from repository which user does not own is blocked properly.")
     void NEG03_GenerateStudentReport() {
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
+        when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
 
         assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", "ias67"));
     }
@@ -154,7 +158,7 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify how system behaves when repository is not found.")
     void NEG04_GenerateStudentReport() {
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.empty());
+        when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.empty());
 
         assertThrows(RepositoryNotFoundException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
