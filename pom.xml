@@ -292,6 +292,12 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-translate</artifactId>
+            <version>2.93.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

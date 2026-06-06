@@ -21,6 +21,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectDescriptionTranslationService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
 import java.security.Principal;
@@ -32,8 +33,9 @@ import java.util.UUID;
 @MethodCallLogged
 @RestController
 @ApiSecuredResponses
-public class SubjectController  {
+public class SubjectController {
     private final SubjectService subjectService;
+    private final SubjectDescriptionTranslationService subjectDescriptionTranslationService;
 
     @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
     @ApiResponses({
@@ -113,9 +115,13 @@ public class SubjectController  {
     @PostMapping("/manual")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createSubjectManual(@Validated(OnCreate.class) @RequestBody CreateSubjectManualDTO dto, Principal principal) {
+    public void createSubjectManual(
+            @Validated(OnCreate.class) @RequestBody CreateSubjectManualDTO dto,
+            Principal principal,
+            @RequestHeader("Accept-Language") String originalLanguage
+    ) {
         String userLogin = principal.getName();
-        subjectService.createSubjectManual(dto, userLogin);
+        subjectService.createSubjectManual(dto, userLogin, originalLanguage);
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (szablon) (MPP.7)", description = "Tworzy nowy przedmiot wykorzystując szablon reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
@@ -126,9 +132,13 @@ public class SubjectController  {
     @PostMapping("/template")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createSubjectFromTemplate(@Validated(OnCreate.class) @RequestBody CreateSubjectTemplateDTO dto, Principal principal) {
+    public void createSubjectFromTemplate(
+            @Validated(OnCreate.class) @RequestBody CreateSubjectTemplateDTO dto,
+            Principal principal,
+            @RequestHeader("Accept-Language") String originalLanguage
+    ) {
         String userLogin = principal.getName();
-        subjectService.createSubjectFromTemplate(dto, userLogin);
+        subjectService.createSubjectFromTemplate(dto, userLogin, originalLanguage);
     }
 
     @Operation(summary = "Aktualizuj przedmiot (MPP.8)", description = "Aktualizuje podstawowe dane przedmiotu, zasady oraz przypisanych menedżerów.")
@@ -139,11 +149,12 @@ public class SubjectController  {
     })
     @PutMapping("/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    public ResponseEntity<Void> updateSubject( @PathVariable UUID subjectId,
-                                               @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
-                                               @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto)
-    {
-        subjectService.updateSubject(subjectId, dto, ifMatch);
+    public ResponseEntity<Void> updateSubject(@PathVariable UUID subjectId,
+                                              @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
+                                              @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto,
+                                              @RequestHeader("Accept-Language") String originalLanguage
+                                              ) {
+        subjectService.updateSubject(subjectId, dto, ifMatch, originalLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -184,5 +195,14 @@ public class SubjectController  {
             @RequestHeader("If-Match") String versionHash,
             @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
         subjectService.changeSubjectManager(subjectId, dto.newManagerLogin(), versionHash);
+    }
+
+    @GetMapping("/{subjectId}/translate")
+    public TranslatedSubjectDescriptionDTO translateSubjectDescription(
+            @PathVariable UUID subjectId,
+            @RequestHeader("Accept-Language") String language) {
+        return new TranslatedSubjectDescriptionDTO(
+                subjectDescriptionTranslationService.translateSubjectDescription(subjectId, language)
+        );
     }
 }

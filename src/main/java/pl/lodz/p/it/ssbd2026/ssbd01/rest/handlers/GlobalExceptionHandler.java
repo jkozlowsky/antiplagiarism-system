@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.rest.handlers;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +27,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
  */
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
     private final Translator translator;
@@ -68,7 +70,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(JpaSystemException.class)
     public ResponseEntity<String> handleJpaSystemException(JpaSystemException jse) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(jse.getMessage());
+        log.error("A critical database error occurred: ", jse);
+        String translatedMessage = translator.translate("error.database");
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(translatedMessage);
     }
 
     /**
