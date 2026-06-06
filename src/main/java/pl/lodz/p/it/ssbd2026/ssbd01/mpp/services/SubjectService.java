@@ -18,10 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
@@ -36,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -60,6 +58,8 @@ public class SubjectService {
 
     private final SubjectMapper subjectMapper;
     private final RuleMapper ruleMapper;
+    private final LanguageDictRepositoryMPP languageDictRepository;
+    private final SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
 
     private void internalSyncWithGitea(Subject subject) {
         List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
@@ -141,19 +141,52 @@ public class SubjectService {
 
         if (isAdmin) {
             List<Subject> subjects = subjectRepository.findAll();
+            List<UUID> subjectIds = subjects.stream()
+                    .map(Subject::getId)
+                    .toList();
+            List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                    .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+            Map<UUID, String> descriptionMap = translations.stream()
+                    .collect(Collectors.toMap(
+                            SubjectDescriptionTranslation::getId,
+                            SubjectDescriptionTranslation::getTranslatedDescription
+                    ));
             for (Subject subject : subjects) {
+                String originalDescription = descriptionMap.get(subject.getId());
+
+                if (originalDescription == null) {
+                    originalDescription = "";
+                }
+
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null));
+                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription));
             }
         } else {
             List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
+            List<UUID> subjectIds = assignments.stream()
+                    .map(assignment -> assignment.getSubject().getId())
+                    .toList();
+
+            List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                    .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+            Map<UUID, String> descriptionMap = translations.stream()
+                    .collect(Collectors.toMap(
+                            SubjectDescriptionTranslation::getId,
+                            SubjectDescriptionTranslation::getTranslatedDescription
+                    ));
             for (SubjectAssignment assignment : assignments) {
                 Subject subject = assignment.getSubject();
                 TeacherSubjectRole role = assignment.getSubjectRole();
+                String originalDescription = descriptionMap.get(subject.getId());
+                if (originalDescription == null) {
+                    originalDescription = "";
+                }
                 boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
                 boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null));
+                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription));
             }
         }
 
@@ -170,9 +203,27 @@ public class SubjectService {
         List<SubjectDTO> result = new ArrayList<>();
         List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
 
+        List<UUID> subjectIds = subjects.stream()
+                .map(Subject::getId)
+                .toList();
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
         for (Subject subject : subjects) {
+            String originalDescription = descriptionMap.get(subject.getId());
+
+            if (originalDescription == null) {
+                originalDescription = "";
+            }
+
             String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
+            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null, originalDescription));
         }
 
         return result;
@@ -188,6 +239,10 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.isPresent() ? originalDescriptionE.get().getTranslatedDescription() : "";
+
 
         UUID templateId = null;
         RulePresetDTO manualRules = null;
@@ -204,7 +259,7 @@ public class SubjectService {
         String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
 
         if (hasRole(authorities, AccountConsts.ROLE_ADMIN)) {
-            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules);
+            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules, originalDescription);
         }
 
         if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
@@ -221,7 +276,9 @@ public class SubjectService {
                     role == TeacherSubjectRole.OWNER,
                     true,
                     templateId,
-                    manualRules
+                    manualRules,
+                    originalDescription
+
             );
         }
 
@@ -238,6 +295,9 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.isPresent() ? originalDescriptionE.get().getTranslatedDescription() : "";
 
         if (!subjectRepository.isStudentAssignedToSubject(subjectId, login)) {
             throw new SubjectAccessDeniedException();
@@ -259,7 +319,7 @@ public class SubjectService {
                 subject.getName(),
                 subject.getOrganizationName(),
                 subject.getEdition(),
-                subject.getSubjectDescription(),
+                originalDescription,
                 subject.getGiteaURL(),
                 studentRepo != null ? repositoryMapper.toDto(studentRepo) : null,
                 visibilityLevel
@@ -278,12 +338,19 @@ public class SubjectService {
                         .orElseThrow(RaportLevelDictNotFoundException::new));
     }
 
-    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url) {
+    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url, String originalLanguage) {
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setTranslatedDescription(desc);
+        subjectDescriptionTranslation.setLanguageDict(
+                languageDictRepository.findByLanguage(originalLanguage)
+                        .orElseThrow(LanguageDictNotFoundException::new)
+        );
+        subjectDescriptionTranslation.setIsOriginal(true);
         Subject subject = new Subject();
         subject.setName(name);
         subject.setOrganizationName(orgName);
         subject.setEdition(edition);
-        subject.setSubjectDescription(desc);
+        subject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
         subject.setGiteaURL(url);
         subject.setArchived(false);
         subject.setSubjectAssignmentList(new ArrayList<>());
@@ -316,12 +383,20 @@ public class SubjectService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin) {
+    public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin, String originalLanguage) {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
         String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), generatedGiteaUrl);
+
+        Subject subject = createBaseSubject(
+                dto.name(),
+                dto.organizationName(),
+                dto.edition(),
+                dto.subjectDescription(),
+                generatedGiteaUrl,
+                originalLanguage
+        );
 
         RulePreset preset = new RulePreset();
         preset.setRaportLevel(fetchRaportLevel(dto.manualRules().raportLevelName()));
@@ -341,13 +416,19 @@ public class SubjectService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin) {
+    public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin, String originalLanguage) {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
         String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), generatedGiteaUrl);
-
+        Subject subject = createBaseSubject(
+                dto.name(),
+                dto.organizationName(),
+                dto.edition(),
+                dto.subjectDescription(),
+                generatedGiteaUrl,
+                originalLanguage
+        );
         RulePreset template = ruleRepository.findById(dto.templateId())
                 .orElseThrow(RulePresetTemplateNotFoundException::new);
 
@@ -370,7 +451,7 @@ public class SubjectService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash) {
+    public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash, String originalLanguage) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
@@ -391,8 +472,20 @@ public class SubjectService {
             throw new SubjectAccessDeniedException();
         }
 
+        subjectDescriptionTranslationRepository.deleteAllBySubjectId(subject.getId());
+
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setSubject(subject);
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setIsOriginal(true);
+        LanguageDict languageDict = languageDictRepository.findByLanguage(originalLanguage)
+                .orElseThrow(LanguageDictNotFoundException::new);
+        subjectDescriptionTranslation.setLanguageDict(languageDict);
+
         subject.setName(dto.name());
-        subject.setSubjectDescription(dto.subjectDescription());
+        subject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
 
         if (dto.rules() != null) {
             RulePreset preset = subject.getRulePreset();

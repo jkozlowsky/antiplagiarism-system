@@ -18,6 +18,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.TeacherSubjectRole;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.repositories.SubjectAssignmentTestRepository;
@@ -84,6 +85,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         given()
                 .header("Authorization", "Bearer " + teacherToken)
                 .header("If-Match", validETag)
+                .header("Accept-Language", "pl")
                 .contentType(ContentType.JSON)
                 .body(validDto)
                 .when()
@@ -142,6 +144,7 @@ public class SubjectControllerUpdateIntegrationTest extends BaseTestSetup {
         given()
                 .header("Authorization", "Bearer " + adminToken)
                 .header("If-Match", validETag)
+                .header("Accept-Language", "pl")
                 .contentType(ContentType.JSON)
                 .body(validDto)
                 .when()

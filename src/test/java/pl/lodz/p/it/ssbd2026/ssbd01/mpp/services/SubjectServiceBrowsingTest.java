@@ -26,6 +26,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectDescriptionTranslationRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
 import java.util.Collections;
@@ -56,6 +57,9 @@ class SubjectServiceBrowsingTest {
 
     @Mock
     private VersionHashService versionHashService;
+
+    @Mock
+    private SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -110,7 +114,7 @@ class SubjectServiceBrowsingTest {
         when(mockedDto.canManageTeachers()).thenReturn(true);
         when(mockedDto.canViewStats()).thenReturn(true);
 
-        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null)).thenReturn(mockedDto);
+        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null, "")).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 
@@ -137,7 +141,7 @@ class SubjectServiceBrowsingTest {
         when(mockedDto.canEdit()).thenReturn(false);
         when(mockedDto.canManageTeachers()).thenReturn(false);
 
-        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, true, null, null)).thenReturn(mockedDto);
+        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, true, null, null, "")).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 

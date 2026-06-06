@@ -20,11 +20,14 @@ public interface SubjectMapper {
     @Mapping(target = "canViewStats", source = "canViewStats")
     @Mapping(target = "templateId", source = "templateId")
     @Mapping(target = "manualRules", source = "manualRules")
+    @Mapping(target = "subjectDescription", source = "originalDescription")
     SubjectDTO toSubjectDTO(Subject subject,
                             String versionHash,
                             boolean canEdit,
                             boolean canManageTeachers,
                             boolean canViewStats,
                             UUID templateId,
-                            RulePresetDTO manualRules);
+                            RulePresetDTO manualRules,
+                            String originalDescription
+    );
 }

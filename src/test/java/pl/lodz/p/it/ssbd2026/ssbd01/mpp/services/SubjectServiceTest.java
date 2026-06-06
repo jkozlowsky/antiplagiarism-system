@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,16 +49,20 @@ class SubjectServiceTest {
     private GiteaService giteaService;
     @Mock
     private StudentRepository studentRepository;
-
+    @Mock
+    private LanguageDictRepositoryMPP languageDictRepository;
     @InjectMocks
     private SubjectService subjectService;
 
     private CreateSubjectManualDTO validDto;
     private final String TEACHER_LOGIN = "szponcik";
+    private LanguageDict languageDict;
 
     @BeforeEach
     void setUp() {
         RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        languageDict = new LanguageDict();
+        languageDict.setLanguage("pl");
 
         validDto = new CreateSubjectManualDTO(
                 "SSBD",
@@ -73,14 +78,14 @@ class SubjectServiceTest {
     void shouldSuccessfullyCreateSubjectAndAssignTeacher() {
         Teacher teacher = new Teacher();
         when(teacherRepository.findActiveTeacherByLogin(TEACHER_LOGIN)).thenReturn(Optional.of(teacher));
-
+        when(languageDictRepository.findByLanguage(anyString())).thenReturn(Optional.ofNullable(languageDict));
         ReportLevelDict mockDict = new ReportLevelDict();
         mockDict.setName("PEŁNY_WGLĄD");
         when(raportLevelRepository.findByName(anyString())).thenReturn(Optional.of(mockDict));
 
         when(giteaService.getRepositoriesFromOrganization(anyString())).thenReturn(List.of());
 
-        subjectService.createSubjectManual(validDto, TEACHER_LOGIN);
+        subjectService.createSubjectManual(validDto, TEACHER_LOGIN, "pl");
 
         assertAll(
                 () -> verify(subjectRepository, times(1)).saveAndFlush(any(Subject.class))
@@ -93,7 +98,7 @@ class SubjectServiceTest {
         when(teacherRepository.findActiveTeacherByLogin(notTeacherLogin)).thenReturn(Optional.empty());
 
         assertThrows(AccessLevelNotAssignedException.class, () ->
-                subjectService.createSubjectManual(validDto, notTeacherLogin)
+                subjectService.createSubjectManual(validDto, notTeacherLogin, "pl")
         );
     }
 
