@@ -137,11 +137,13 @@ public class GenerateStudentReportServiceTest {
     }
 
     @Test
-    @DisplayName("Verify, if report level HIDDEN result in no access to the system.")
+    @DisplayName("Verify, if report level NOTHING result in no access to the system.")
     void NEG02_GenerateStudentReport() {
-        rulePreset.getRaportLevel().setName("HIDDEN");
+        rulePreset.getRaportLevel().setName("NOTHING");
 
         when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
+        rulePreset.getRaportLevel().setName("NOTHING");
+        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
         assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }

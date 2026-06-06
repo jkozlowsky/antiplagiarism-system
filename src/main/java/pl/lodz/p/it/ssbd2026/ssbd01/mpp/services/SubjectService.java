@@ -241,7 +241,7 @@ public class SubjectService {
                 .findFirst()
                 .orElse(null);
 
-        String visibilityLevel = "HIDDEN";
+        String visibilityLevel = "NOTHING";
         if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
             visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }

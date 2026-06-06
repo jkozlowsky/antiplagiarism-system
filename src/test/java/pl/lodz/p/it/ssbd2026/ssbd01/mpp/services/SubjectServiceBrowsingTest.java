@@ -156,7 +156,7 @@ class SubjectServiceBrowsingTest {
 
         assertNotNull(result);
         assertEquals("Architektura Systemów Komputerowych", result.name());
-        assertEquals("HIDDEN", result.reportVisibilityLevel());
+        assertEquals("NOTHING", result.reportVisibilityLevel());
     }
 
     @Test
