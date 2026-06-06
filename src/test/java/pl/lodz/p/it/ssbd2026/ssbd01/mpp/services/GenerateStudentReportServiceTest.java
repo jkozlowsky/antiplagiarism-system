@@ -143,7 +143,6 @@ public class GenerateStudentReportServiceTest {
 
         when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
         rulePreset.getRaportLevel().setName("NOTHING");
-        when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
         assertThrows(SubjectAccessDeniedException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
