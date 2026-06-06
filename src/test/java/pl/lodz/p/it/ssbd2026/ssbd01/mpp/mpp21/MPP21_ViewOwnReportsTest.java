@@ -140,10 +140,10 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             student.setActive(true);
             accessLevelTestRepository.saveAndFlush(student);
 
-            ReportLevelDict raportLevel = raportLevelTestRepository.findByName("FULL_VIEW")
+            ReportLevelDict raportLevel = raportLevelTestRepository.findByName("ONLY_PERCENTAGES")
                     .orElseGet(() -> {
                         ReportLevelDict dict = new ReportLevelDict();
-                        ReflectionTestUtils.setField(dict, "name", "FULL_VIEW");
+                        ReflectionTestUtils.setField(dict, "name", "ONLY_PERCENTAGES");
                         return raportLevelTestRepository.saveAndFlush(dict);
                     });
 
@@ -215,8 +215,8 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
                 .then()
                 .statusCode(200)
                 .body("matches", hasSize(1))
-                .body("matches[0].matchedWith", equalTo("Repozytorium Innego Studenta"))
-                .body("matches[0].maxSimilarity", equalTo(85.5f));
+                .body("matches[0].matchedWith", equalTo("ANONYMIZED"))
+                .body("matches[0].studentSimilarity", equalTo(85.5f));
     }
 
     @Test
