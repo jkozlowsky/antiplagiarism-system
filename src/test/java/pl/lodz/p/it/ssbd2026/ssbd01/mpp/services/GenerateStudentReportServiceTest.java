@@ -82,7 +82,7 @@ public class GenerateStudentReportServiceTest {
         repository = new Repository();
         ReflectionTestUtils.setField(repository, "id", repositoryId);
         repository.setRepositoryName("repo64");
-        repository.setTicketCount(1);
+       // repository.setTicketCount(1);
         repository.setSubject(subject);
         repository.setStudentList(List.of(student));
     }
@@ -119,7 +119,7 @@ public class GenerateStudentReportServiceTest {
             StudentReportDetailsDTO result = reportService.generateStudentReport(repositoryId, studentTag, taskTag, studentLogin);
 
             assertNotNull(result);
-            assertEquals(2, repository.getTicketCount());
+            //assertEquals(2, repository.getTicketCount());
             verify(giteaRepositoryRepository).saveAndFlush(repository);
             verify(reportsRepository).saveAndFlush(any(Report.class));
         }
@@ -128,7 +128,7 @@ public class GenerateStudentReportServiceTest {
     @Test
     @DisplayName("Verify, if student cannot check code when not tickets are remaining.")
     void NEG01_GenerateStudentReport() {
-        repository.setTicketCount(3);
+        //repository.setTicketCount(3);
         when(giteaRepositoryRepository.findById(repositoryId)).thenReturn(Optional.of(repository));
 
         assertThrows(NoTicketsLeftException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));

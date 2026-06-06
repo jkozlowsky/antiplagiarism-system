@@ -17,14 +17,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -70,7 +66,7 @@ public class ReportService {
     public Report generateReportOnDemand(UUID subjectId, String tag, String login) {
 
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
-        if(!subjectRepository.isTeacherAssignedToSubject(subjectId, login)){
+        if (!subjectRepository.isTeacherAssignedToSubject(subjectId, login)) {
             throw new SubjectAccessDeniedException();
         }
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
@@ -354,11 +350,12 @@ public class ReportService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) {
-        Repository repository = giteaRepositoryRepository.findById(repositoryId)
+        Repository repository = giteaRepositoryRepository.findByIdWithLock(repositoryId)
                 .orElseThrow(RepositoryNotFoundException::new);
 
         boolean isStudentInThisRepository = repository.getStudentList().stream()
                 .anyMatch(s -> s.getAccount().getLogin().equals(login));
+
         if (!isStudentInThisRepository) {
             throw new SubjectAccessDeniedException();
         }
@@ -370,14 +367,11 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
-        int usedTickets = repository.getTicketCount();
+        int usedTickets = reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, login);
 
         if (usedTickets >= preset.getStudentTicketCount()) {
             throw new NoTicketsLeftException();
         }
-
-        repository.setTicketCount(usedTickets + 1);
-        giteaRepositoryRepository.saveAndFlush(repository);
 
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
