@@ -13,7 +13,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.NoPermissionForThisSubjectException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.RulePresetNotSetForSubjectException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
@@ -121,5 +123,27 @@ public class ScheduleServiceCreateScheduleTest {
                 () -> scheduleService.createSchedule(mockSubjectId, testSchedule, principal.getName()));
 
         verify(scheduleRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    public void NEG03_CreateSchedule_WhenRulePresetIsNull() {
+        Subject subjectWithoutPreset = new Subject();
+        subjectWithoutPreset.setRulePreset(null);
+
+        Schedule testSchedule = new Schedule();
+        testSchedule.setScheduleDateTime(scheduleDTO.scheduleDateTime());
+        testSchedule.setTag(scheduleDTO.tag());
+
+        when(principal.getName()).thenReturn(TEST_TEACHER_LOGIN);
+        when(subjectRepository.findById(mockSubjectId)).thenReturn(Optional.of(subjectWithoutPreset));
+
+        when(subjectAssignmentRepository.hasEditPermissions(subjectWithoutPreset, TEST_TEACHER_LOGIN)).thenReturn(true);
+
+        AppBaseException exception = assertThrows(RulePresetNotSetForSubjectException.class,
+                () -> scheduleService.createSchedule(mockSubjectId, testSchedule, principal.getName()));
+
+        verify(scheduleRepository, never()).saveAndFlush(any());
+
+        assertEquals("error.rulePresetNotSetForSubject", exception.getReason());
     }
 }

@@ -16,6 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
@@ -76,6 +77,10 @@ public class ScheduleService  {
 
         if (!subjectAssignmentRepository.hasEditPermissions(subject, teacherLogin)) {
             throw new NoPermissionForThisSubjectException();
+        }
+
+        if (subject.getRulePreset() == null) {
+            throw new RulePresetNotSetForSubjectException("error.rulePresetNotSetForSubject");
         }
 
         schedule.setRulePreset(subject.getRulePreset());
