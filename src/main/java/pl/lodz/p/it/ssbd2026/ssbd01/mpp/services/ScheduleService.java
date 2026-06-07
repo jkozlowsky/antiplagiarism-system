@@ -103,6 +103,10 @@ public class ScheduleService  {
     public void updateSchedule(UUID scheduleId, UpdateScheduleDTO scheduleDto, String userLogin) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
 
+        if (!scheduleDto.getVersionHash().equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
         Subject subject = schedule.getRulePreset().getSubject();
         boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 

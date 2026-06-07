@@ -13,6 +13,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.NoPermissionToEditScheduleException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ScheduleNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 
@@ -33,6 +34,9 @@ class ScheduleServiceUpdateTest {
 
     @Mock
     private SubjectAssignmentRepository subjectAssignmentRepository;
+
+    @Mock
+    private VersionHashService versionHashService;
 
     @InjectMocks
     private ScheduleService scheduleService;
@@ -57,6 +61,7 @@ class ScheduleServiceUpdateTest {
         updateScheduleDTO = new UpdateScheduleDTO();
         updateScheduleDTO.setScheduleDateTime(LocalDateTime.now().plusDays(5));
         updateScheduleDTO.setTag("newTag");
+        updateScheduleDTO.setVersionHash("validHash");
     }
 
     @Test
@@ -65,6 +70,7 @@ class ScheduleServiceUpdateTest {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
         when(subjectAssignmentRepository.hasEditPermissions(mockSubject, login))
                 .thenReturn(true);
+        when(versionHashService.hashObjectVersion(any(), any())).thenReturn("validHash");
 
         scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login);
 
@@ -79,6 +85,7 @@ class ScheduleServiceUpdateTest {
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(mockSchedule));
         when(subjectAssignmentRepository.hasEditPermissions(mockSubject, login))
                 .thenReturn(false);
+        when(versionHashService.hashObjectVersion(any(), any())).thenReturn("validHash");
 
         assertThrows(NoPermissionToEditScheduleException.class,
                 () -> scheduleService.updateSchedule(scheduleId, updateScheduleDTO, login));
