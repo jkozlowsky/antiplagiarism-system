@@ -37,8 +37,11 @@ public class Subject extends AbstractEntity {
     @Column(name = "archived", nullable = false)
     private Boolean archived;
 
-    @Column(name = "aggregated_average_similarity")
-    private Double aggregatedAverageSimilarity;
+//    @Column(name = "aggregated_average_similarity")
+//    private Double aggregatedAverageSimilarity;
+
+    @OneToOne(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    private SubjectStatistics subjectStatistics;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<Report> reportList = new ArrayList<>();

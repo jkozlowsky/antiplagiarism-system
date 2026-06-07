@@ -21,6 +21,7 @@ public interface SubjectMapper {
     @Mapping(target = "templateId", source = "templateId")
     @Mapping(target = "manualRules", source = "manualRules")
     @Mapping(target = "subjectDescription", source = "originalDescription")
+    @Mapping(target = "aggregatedAverageSimilarity", source = "subject.subjectStatistics.averageSimilarity")
     SubjectDTO toSubjectDTO(Subject subject,
                             String versionHash,
                             boolean canEdit,

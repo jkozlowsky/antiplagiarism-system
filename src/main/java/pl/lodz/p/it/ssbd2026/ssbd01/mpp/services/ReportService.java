@@ -58,6 +58,7 @@ public class ReportService {
     private final GiteaRepositoryRepository giteaRepositoryRepository;
     private final ReportsRepository reportsRepository;
     private final ScheduleRepository scheduleRepository;
+    private final SubjectStatisticsService subjectStatisticsService;
 
     @Value("${gitea.token}")
     private String giteaToken;
@@ -95,6 +96,7 @@ public class ReportService {
         Report report = new Report();
         report.setSubject(subject);
         report.setTag(tag);
+        report.setIsStudentReport(false);
         report.setScannedRepositories(successfulClonesCount);
         report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + tag + "/" + timestamp + ".jplag");
         report.setRepositoryList(repositoryList);
@@ -119,9 +121,17 @@ public class ReportService {
 
         reportsRepository.saveAndFlush(report);
 
-        Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subjectId);
-        subject.setAggregatedAverageSimilarity(newSubjectAggregate);
-        subjectRepository.saveAndFlush(subject);
+//        Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subjectId);
+//        if (subject.getSubjectStatistics() == null){
+//            SubjectStatistics subjectStatistics = new SubjectStatistics();
+//            subjectStatistics.setAverageSimilarity(newSubjectAggregate);
+//            subjectStatistics.setSubject(subject);
+//            subject.setSubjectStatistics(subjectStatistics);
+//        }else{
+//            subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
+//        }
+//        subjectRepository.saveAndFlush(subject);
+        subjectStatisticsService.recalculateAndUpdateStatistics(subjectId);
 
         return report;
     }
@@ -129,7 +139,7 @@ public class ReportService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<Report> getAllReportsForSubject(UUID subjectId, Pageable pageable) {
-        return reportsRepository.findAllBySubjectId(subjectId, pageable);
+        return reportsRepository.findAllBySubjectIdAndIsStudentReportFalse(subjectId, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
@@ -288,10 +298,23 @@ public class ReportService {
             String giteaTag = schedule.getTag();
 
             List<GiteaRepoDTO> giteaRepoList = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
-            giteaRepoList.stream().filter(repo -> !repo.template()).forEach(repo -> {
-                File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
-                GitService.cloneTag(repo.clone_url(), giteaTag, targetDir, giteaToken);
-            });
+//            giteaRepoList.stream().filter(repo -> !repo.template()).forEach(repo -> {
+//                File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
+//                GitService.cloneTag(repo.clone_url(), giteaTag, targetDir, giteaToken);
+//            });
+
+            long successfulClonesCount = giteaRepoList.stream()
+                    .filter(repo -> !repo.template())
+                    .map(repo -> {
+                        File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
+                        return GitService.cloneTag(repo.clone_url(), giteaTag, targetDir, giteaToken);
+                    })
+                    .filter(success -> success)
+                    .count();
+
+            if (successfulClonesCount == 0) {
+                throw new GitCloneException();
+            }
 
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
             List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
@@ -299,9 +322,10 @@ public class ReportService {
             Report report = new Report();
             report.setSubject(subject);
             report.setTag(giteaTag);
+            report.setScannedRepositories(successfulClonesCount);
+            report.setIsStudentReport(false);
             report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + giteaTag + "/" + timestamp + ".jplag");
             report.setRepositoryList(repositoryList);
-
             JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                     subject.getOrganizationName(),
                     giteaTag,
@@ -318,9 +342,17 @@ public class ReportService {
 
             reportsRepository.saveAndFlush(report);
 
-            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
-            subject.setAggregatedAverageSimilarity(newSubjectAggregate);
-            subjectRepository.saveAndFlush(subject);
+//            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+//            if (subject.getSubjectStatistics() == null){
+//                SubjectStatistics subjectStatistics = new SubjectStatistics();
+//                subjectStatistics.setAverageSimilarity(newSubjectAggregate);
+//                subjectStatistics.setSubject(subject);
+//                subject.setSubjectStatistics(subjectStatistics);
+//            }else{
+//                subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
+//            }
+//            subjectRepository.saveAndFlush(subject);
+            subjectStatisticsService.recalculateAndUpdateStatistics(subject.getId());
 
             schedule.setExecuted(true);
             scheduleRepository.saveAndFlush(schedule);
@@ -374,6 +406,8 @@ public class ReportService {
         report.setSubject(subject);
         report.setTag(studentTag);
         report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
+        report.setScannedRepositories(0L);
+        report.setIsStudentReport(true);
         report.setRepositoryList(repositoryList);
 
         JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
@@ -394,8 +428,8 @@ public class ReportService {
 
         reportsRepository.saveAndFlush(report);
 
-        Double aggValue = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
-        subject.setAggregatedAverageSimilarity(aggValue);
+//        Double aggValue = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+//        subject.getSubjectStatistics().setAverageSimilarity(aggValue);
         subjectRepository.saveAndFlush(subject);
 
         return getStudentReportDetails(report.getId(), login);

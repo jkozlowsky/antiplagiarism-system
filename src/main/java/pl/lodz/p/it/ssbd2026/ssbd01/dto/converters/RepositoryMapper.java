@@ -10,8 +10,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
 @Mapper(componentModel = "spring")
 public interface RepositoryMapper {
 
-    @Mapping(source = "studentList", target = "students")
-    RepositoryWithStudentDTO toDto(Repository repository);
+    @Mapping(source = "repository.studentList", target = "students")
+    @Mapping(source = "ticketCount", target = "ticketCount")
+    RepositoryWithStudentDTO toDto(Repository repository, Integer ticketCount);
 
     @Mapping(source = "account.name", target = "name")
     @Mapping(source = "account.surname", target = "surname")

@@ -7,10 +7,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
@@ -19,6 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectStatisticsService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
@@ -44,7 +42,8 @@ public class GenerateReportServiceTest {
     private GiteaRepositoryRepository giteaRepositoryRepository;
     @Mock
     private ReportsRepository reportsRepository;
-
+    @Mock
+    private SubjectStatisticsService subjectStatisticsService;
     @InjectMocks
     private ReportService reportService;
 
@@ -65,6 +64,10 @@ public class GenerateReportServiceTest {
         Subject subject = new Subject();
         subject.setOrganizationName(orgName);
         subject.setRulePreset(rulePreset);
+        SubjectStatistics subjectStatistics = new SubjectStatistics();
+        subjectStatistics.setSubject(subject);
+        subjectStatistics.setAverageSimilarity(0D);
+        subject.setSubjectStatistics(subjectStatistics);
 
         GiteaRepoDTO validRepo = new GiteaRepoDTO("test-repo", "url1", false);
         GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo", "url2", true);
@@ -75,8 +78,6 @@ public class GenerateReportServiceTest {
         when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization(orgName)).thenReturn(List.of(validRepo, templateRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subjectId)).thenReturn(dbRepositories);
-
-        when(reportsRepository.calculateAggregatedAverageForSubject(subjectId)).thenReturn(50.0);
 
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
@@ -107,6 +108,8 @@ public class GenerateReportServiceTest {
                             anyString()
                     ), times(1)
             );
+
+            verify(subjectStatisticsService, times(1)).recalculateAndUpdateStatistics(subjectId);
         }
     }
 
