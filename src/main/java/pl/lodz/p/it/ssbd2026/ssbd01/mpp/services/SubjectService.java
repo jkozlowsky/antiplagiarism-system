@@ -60,6 +60,7 @@ public class SubjectService {
     private final RuleMapper ruleMapper;
     private final LanguageDictRepositoryMPP languageDictRepository;
     private final SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
+    private final ReportsRepository reportsRepository;
 
     private void internalSyncWithGitea(Subject subject) {
         List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
@@ -305,6 +306,7 @@ public class SubjectService {
         if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
             visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }
+        int usedTickets = reportsRepository.countReportsByIdAndCreatedByLogin(studentRepo.getId(), login);
 
         return new StudentSubjectDetailsDTO(
                 subject.getId(),
@@ -313,7 +315,7 @@ public class SubjectService {
                 subject.getEdition(),
                 originalDescription,
                 subject.getGiteaURL(),
-                studentRepo != null ? repositoryMapper.toDto(studentRepo) : null,
+                studentRepo != null ? repositoryMapper.toDto(studentRepo , usedTickets ) : null,
                 visibilityLevel
         );
     }
@@ -346,6 +348,10 @@ public class SubjectService {
         subject.setGiteaURL(url);
         subject.setArchived(false);
         subject.setSubjectAssignmentList(new ArrayList<>());
+        SubjectStatistics subjectStatistics = new SubjectStatistics();
+        subjectStatistics.setAverageSimilarity(0D);
+        subjectStatistics.setSubject(subject);
+        subject.setSubjectStatistics(subjectStatistics);
         return subject;
     }
 

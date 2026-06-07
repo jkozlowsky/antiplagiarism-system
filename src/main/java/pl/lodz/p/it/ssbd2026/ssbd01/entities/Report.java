@@ -31,6 +31,9 @@ public class Report extends AbstractEntity {
     @Column(name = "scanned_repositories", nullable = false)
     private Long scannedRepositories;
 
+    @Column(name = "is_student_report", nullable = false)
+    private Boolean isStudentReport;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "report_repository",

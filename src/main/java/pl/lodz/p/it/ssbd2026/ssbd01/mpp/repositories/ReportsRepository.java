@@ -17,11 +17,11 @@ import java.util.UUID;
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface ReportsRepository extends AbstractRepository<Report> {
-    @Query("SELECT AVG(r.averageSimilarity) FROM Report r WHERE r.subject.id = :subjectId AND r.averageSimilarity IS NOT NULL")
+    @Query("SELECT AVG(r.averageSimilarity) FROM Report r WHERE r.subject.id = :subjectId AND r.averageSimilarity IS NOT NULL AND r.isStudentReport = FALSE")
     Double calculateAggregatedAverageForSubject(@Param("subjectId") UUID subjectId);
 
     @EntityGraph(attributePaths = {"subject", "createdBy"})
-    Page<Report> findAllBySubjectId(UUID subjectId, Pageable pageable);
+    Page<Report> findAllBySubjectIdAndIsStudentReportFalse(UUID subjectId, Pageable pageable);
 
     @Query("SELECT DISTINCT r FROM Report r " +
             "JOIN FETCH r.subject " +
@@ -34,7 +34,8 @@ public interface ReportsRepository extends AbstractRepository<Report> {
     @EntityGraph(attributePaths = {"subject", "createdBy"})
     @Query("SELECT r FROM Report r " +
             "JOIN SubjectAssignment sa ON r.subject.id = sa.subject.id " +
-            "WHERE sa.teacher.account.login = :login")
+            "WHERE sa.teacher.account.login = :login " +
+            "AND r.isStudentReport = false ")
     Page<Report> findAllReportsForAssignedTeacherByLogin(@Param("login") String login, Pageable pageable);
 
     @Query("SELECT COUNT(r) FROM Report r JOIN r.repositoryList repo WHERE repo.id = :repositoryId AND r.createdBy.login = :login")
