@@ -48,7 +48,7 @@ services:
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,loggers
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GITEA_URL=http://gitea:3000
-      - GOOGLE_APPLICATION_CREDENTIALS=/opt/api/secrets/google_credentials
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_credentials
     secrets:
       - pg_password
       - mok_password
