@@ -4,10 +4,6 @@ import org.springframework.http.HttpStatus;
 
 public class AccountIsNotVerifiedException extends AppBaseException {
     public AccountIsNotVerifiedException() {
-        super(HttpStatus.CONFLICT, "Account is not verified");
-    }
-
-    public AccountIsNotVerifiedException(Throwable cause) {
-        super(HttpStatus.CONFLICT, "Account is not verified", cause);
+        super(HttpStatus.CONFLICT, "error.account.not.verified");
     }
 }
