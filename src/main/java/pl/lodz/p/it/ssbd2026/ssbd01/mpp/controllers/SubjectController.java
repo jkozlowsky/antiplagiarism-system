@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,7 @@ public class SubjectController {
     @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Pomyślnie zsynchronizowano przedmioty z platformą Gitea"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "500", description = "Błąd komunikacji z zewnętrznym API Gitea")
     })
     @PostMapping("/{subjectId}/sync")
@@ -73,7 +74,7 @@ public class SubjectController {
     @Operation(summary = "Pobierz przypisaną kadrę", description = "Zwraca listę wszystkich nauczycieli przypisanych do wskazanego przedmiotu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę nauczycieli"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/users")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -84,7 +85,7 @@ public class SubjectController {
     @Operation(summary = "Pobierz szczegóły przedmiotu", description = "Zwraca dokładne dane wybranego przedmiotu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -99,7 +100,7 @@ public class SubjectController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
             @ApiResponse(responseCode = "403", description = "Brak dostępu - student nie jest przypisany do tego przedmiotu"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono wskazanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/student")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
@@ -144,7 +145,7 @@ public class SubjectController {
     @Operation(summary = "Aktualizuj przedmiot (MPP.8)", description = "Aktualizuje podstawowe dane przedmiotu, zasady oraz przypisanych menedżerów.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie zaktualizowany"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej - dane uległy zmianie w międzyczasie")
     })
     @PutMapping("/{subjectId}")
@@ -161,7 +162,7 @@ public class SubjectController {
     @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie usunięty"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "409", description = "Dane uległy zmianie (Błąd blokady optymistycznej) - odśwież widok")
     })
     @DeleteMapping("/{subjectId}")
@@ -185,7 +186,7 @@ public class SubjectController {
     @Operation(summary = "Zmień kierownika przedmiotu", description = "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Kierownik przedmiotu został pomyślnie zmieniony"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu lub wskazanego nauczyciela")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu lub nauczyciela", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @PatchMapping("/{subjectId}/manager")
     @ResponseStatus(HttpStatus.NO_CONTENT)
