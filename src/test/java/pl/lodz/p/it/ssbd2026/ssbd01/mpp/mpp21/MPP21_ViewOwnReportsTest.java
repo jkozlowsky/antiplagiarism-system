@@ -182,6 +182,7 @@ public class MPP21_ViewOwnReportsTest extends BaseTestSetup {
             report.setTag("v1");
             report.setScannedRepositories(0L);
             report.setAverageSimilarity(45.5);
+            report.setIsStudentReport(true);
             ReflectionTestUtils.setField(report, "createdBy", account);
             reportTestRepository.saveAndFlush(report);
 

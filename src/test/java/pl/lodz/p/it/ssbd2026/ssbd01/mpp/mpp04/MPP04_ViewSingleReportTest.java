@@ -86,6 +86,7 @@ public class MPP04_ViewSingleReportTest extends BaseTestSetup {
             report.setPathToReport(dummyReportPath.toString());
             report.setScannedRepositories(0L);
             report.setAverageSimilarity(45.5);
+            report.setIsStudentReport(true);
             reportTestRepository.saveAndFlush(report);
 
             reportId = report.getId();

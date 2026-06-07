@@ -46,6 +46,9 @@ public class GenerateStudentReportServiceTest {
     @Mock
     private JPlagService jPlagService;
 
+    @Mock
+    SubjectStatisticsService subjectStatisticsService;
+
     @InjectMocks
     private ReportService reportService;
 

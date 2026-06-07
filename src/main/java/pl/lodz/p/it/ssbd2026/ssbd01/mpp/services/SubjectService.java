@@ -306,8 +306,7 @@ public class SubjectService {
         if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
             visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }
-        int usedTickets = reportsRepository.countReportsByIdAndCreatedByLogin(studentRepo.getId(), login);
-
+        int usedTickets = studentRepo != null? reportsRepository.countReportsByIdAndCreatedByLogin(studentRepo.getId(), login) : 0;
         return new StudentSubjectDetailsDTO(
                 subject.getId(),
                 subject.getName(),

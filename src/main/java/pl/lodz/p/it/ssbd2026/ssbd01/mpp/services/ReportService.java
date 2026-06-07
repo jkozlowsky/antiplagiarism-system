@@ -58,6 +58,7 @@ public class ReportService {
     private final GiteaRepositoryRepository giteaRepositoryRepository;
     private final ReportsRepository reportsRepository;
     private final ScheduleRepository scheduleRepository;
+    private final SubjectStatisticsService subjectStatisticsService;
 
     @Value("${gitea.token}")
     private String giteaToken;
@@ -120,16 +121,17 @@ public class ReportService {
 
         reportsRepository.saveAndFlush(report);
 
-        Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subjectId);
-        if (subject.getSubjectStatistics() == null){
-            SubjectStatistics subjectStatistics = new SubjectStatistics();
-            subjectStatistics.setAverageSimilarity(newSubjectAggregate);
-            subjectStatistics.setSubject(subject);
-            subject.setSubjectStatistics(subjectStatistics);
-        }else{
-            subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
-        }
-        subjectRepository.saveAndFlush(subject);
+//        Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subjectId);
+//        if (subject.getSubjectStatistics() == null){
+//            SubjectStatistics subjectStatistics = new SubjectStatistics();
+//            subjectStatistics.setAverageSimilarity(newSubjectAggregate);
+//            subjectStatistics.setSubject(subject);
+//            subject.setSubjectStatistics(subjectStatistics);
+//        }else{
+//            subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
+//        }
+//        subjectRepository.saveAndFlush(subject);
+        subjectStatisticsService.recalculateAndUpdateStatistics(subjectId);
 
         return report;
     }
@@ -340,16 +342,17 @@ public class ReportService {
 
             reportsRepository.saveAndFlush(report);
 
-            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
-            if (subject.getSubjectStatistics() == null){
-                SubjectStatistics subjectStatistics = new SubjectStatistics();
-                subjectStatistics.setAverageSimilarity(newSubjectAggregate);
-                subjectStatistics.setSubject(subject);
-                subject.setSubjectStatistics(subjectStatistics);
-            }else{
-                subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
-            }
-            subjectRepository.saveAndFlush(subject);
+//            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
+//            if (subject.getSubjectStatistics() == null){
+//                SubjectStatistics subjectStatistics = new SubjectStatistics();
+//                subjectStatistics.setAverageSimilarity(newSubjectAggregate);
+//                subjectStatistics.setSubject(subject);
+//                subject.setSubjectStatistics(subjectStatistics);
+//            }else{
+//                subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
+//            }
+//            subjectRepository.saveAndFlush(subject);
+            subjectStatisticsService.recalculateAndUpdateStatistics(subject.getId());
 
             schedule.setExecuted(true);
             scheduleRepository.saveAndFlush(schedule);

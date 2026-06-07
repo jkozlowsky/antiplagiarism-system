@@ -23,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectStatisticsService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
@@ -47,6 +48,8 @@ public class ReportServiceGenerateByScheduleTest {
     private ReportsRepository reportsRepository;
     @Mock
     private ScheduleRepository scheduleRepository;
+    @Mock
+    private SubjectStatisticsService subjectStatisticsService;
 
     @InjectMocks
     private ReportService reportService;
@@ -91,9 +94,12 @@ public class ReportServiceGenerateByScheduleTest {
         when(giteaRepositoryRepository.getAllBySubjectId(subject.getId())).thenReturn(dbRepos);
         when(jPlagService.runPlagiarismScanOnOrganisation(eq(ORG_NAME), eq(TAG), eq(10), eq(true), anyString()))
                 .thenReturn(mockResult);
-        when(reportsRepository.calculateAggregatedAverageForSubject(subject.getId())).thenReturn(42.0);
+        // Removed unnecessary calculateAggregatedAverageForSubject stub
 
         try (MockedStatic<GitService> mockedGit = mockStatic(GitService.class)) {
+            // FIX: Explicitly tell the mock to return true so the clone is "successful"
+            mockedGit.when(() -> GitService.cloneTag(anyString(), anyString(), any(File.class), any())).thenReturn(true);
+
             reportService.generateReportBySchedule();
 
             mockedGit.verify(() -> GitService.cloneTag(eq("http://gitea/repo"), eq(TAG), any(File.class), any()), times(1));
@@ -101,6 +107,8 @@ public class ReportServiceGenerateByScheduleTest {
         }
 
         verify(reportsRepository).saveAndFlush(reportCaptor.capture());
+        verify(subjectStatisticsService).recalculateAndUpdateStatistics(subject.getId()); // Verify new service call
+
         Report saved = reportCaptor.getValue();
         assertEquals(subject, saved.getSubject());
         assertEquals(TAG, saved.getTag());
@@ -121,19 +129,26 @@ public class ReportServiceGenerateByScheduleTest {
 
     @Test
     public void POS03_ScheduleIsNotDeletedAfterExecution() {
+        GiteaRepoDTO validRepo = new GiteaRepoDTO("repo-student", "http://gitea/repo", false);
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
 
         when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
-        when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of());
+
+        // FIX: Provide a repo so it actually proceeds to the logic
+        when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of(validRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(any())).thenReturn(List.of());
         when(jPlagService.runPlagiarismScanOnOrganisation(any(), any(), any(), any(), any())).thenReturn(mockResult);
-        when(reportsRepository.calculateAggregatedAverageForSubject(any())).thenReturn(0.0);
 
-        reportService.generateReportBySchedule();
+        try (MockedStatic<GitService> mockedGit = mockStatic(GitService.class)) {
+            // FIX: Ensure clone passes
+            mockedGit.when(() -> GitService.cloneTag(anyString(), anyString(), any(File.class), any())).thenReturn(true);
 
-        verify(scheduleRepository, never()).delete(any());
-        verify(scheduleRepository, never()).deleteById(any());
+            reportService.generateReportBySchedule();
+
+            verify(scheduleRepository, never()).delete(any());
+            verify(scheduleRepository, never()).deleteById(any());
+        }
     }
 
     @Test
@@ -153,18 +168,26 @@ public class ReportServiceGenerateByScheduleTest {
 
     @Test
     public void NEG02_JPlagFails_ExceptionIsLoggedAndReportIsNotSaved() {
+        GiteaRepoDTO validRepo = new GiteaRepoDTO("repo-student", "http://gitea/repo", false);
+
         when(scheduleRepository.findSchedulesToExecute(PageRequest.of(0,1))).thenReturn(List.of(schedule));
-        when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of());
+        // FIX: Give it a repo to scan so it doesn't fail at the Git stage
+        when(giteaService.getRepositoriesFromOrganization(ORG_NAME)).thenReturn(List.of(validRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(any())).thenReturn(List.of());
         when(jPlagService.runPlagiarismScanOnOrganisation(any(), any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("JPlag failed"));
 
-        boolean result = reportService.generateReportBySchedule();
+        try (MockedStatic<GitService> mockedGit = mockStatic(GitService.class)) {
+            // FIX: Ensure clone passes so it reaches JPlag
+            mockedGit.when(() -> GitService.cloneTag(anyString(), anyString(), any(File.class), any())).thenReturn(true);
 
-        assertTrue(result);
-        assertTrue(schedule.isExecuted());
-        assertTrue(schedule.isHasFailed());
-        verify(reportsRepository, never()).saveAndFlush(any(Report.class));
-        verify(scheduleRepository, times(1)).saveAndFlush(schedule);
+            boolean result = reportService.generateReportBySchedule();
+
+            assertTrue(result);
+            assertTrue(schedule.isExecuted());
+            assertTrue(schedule.isHasFailed());
+            verify(reportsRepository, never()).saveAndFlush(any(Report.class));
+            verify(scheduleRepository, times(1)).saveAndFlush(schedule);
+        }
     }
 }
