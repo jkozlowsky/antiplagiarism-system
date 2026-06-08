@@ -88,7 +88,7 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void createSubjectManual_Success() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org-manual", "2026",
                 "Opis przedmiotu",
@@ -137,7 +137,7 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void createSubject_ForbiddenForStudent() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org", "2026",
                 "Opis przedmiotu",

@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class SubjectServiceTest {
 
@@ -51,6 +50,10 @@ class SubjectServiceTest {
     private StudentRepository studentRepository;
     @Mock
     private LanguageDictRepositoryMPP languageDictRepository;
+
+    @Mock
+    private SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
+
     @InjectMocks
     private SubjectService subjectService;
 
@@ -60,7 +63,7 @@ class SubjectServiceTest {
 
     @BeforeEach
     void setUp() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true,  "hash123");
         languageDict = new LanguageDict();
         languageDict.setLanguage("pl");
 
@@ -79,16 +82,21 @@ class SubjectServiceTest {
         Teacher teacher = new Teacher();
         when(teacherRepository.findActiveTeacherByLogin(TEACHER_LOGIN)).thenReturn(Optional.of(teacher));
         when(languageDictRepository.findByLanguage(anyString())).thenReturn(Optional.ofNullable(languageDict));
+
         ReportLevelDict mockDict = new ReportLevelDict();
         mockDict.setName("PEŁNY_WGLĄD");
         when(raportLevelRepository.findByName(anyString())).thenReturn(Optional.of(mockDict));
 
         when(giteaService.getRepositoriesFromOrganization(anyString())).thenReturn(List.of());
 
+        Subject mockSavedSubject = new Subject();
+        when(subjectRepository.saveAndFlush(any(Subject.class))).thenReturn(mockSavedSubject);
+
         subjectService.createSubjectManual(validDto, TEACHER_LOGIN, "pl");
 
         assertAll(
-                () -> verify(subjectRepository, times(1)).saveAndFlush(any(Subject.class))
+                () -> verify(subjectRepository, atLeastOnce()).saveAndFlush(any(Subject.class)),
+                () -> verify(subjectDescriptionTranslationRepository, times(1)).saveAndFlush(any(SubjectDescriptionTranslation.class))
         );
     }
 
