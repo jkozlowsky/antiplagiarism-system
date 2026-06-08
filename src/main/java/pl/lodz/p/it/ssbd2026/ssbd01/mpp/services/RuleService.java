@@ -61,7 +61,7 @@ public class RuleService {
                             dto.studentTicketCount(),
                             dto.minimumTokensMatch(),
                             dto.enableNormalization(),
-                            dto.version(),
+//                            dto.version(),
                             versionHashService.hashObjectVersion(preset.getId(), preset.getVersion())
                     );
                 })

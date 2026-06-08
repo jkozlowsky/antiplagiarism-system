@@ -7,14 +7,13 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectConfigDTO; // Upewnij się, że masz poprawny import!
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportDatabaseService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectStatisticsService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.GitService;
@@ -22,7 +21,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,23 +30,18 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class GenerateReportServiceTest {
+
     @Mock
-    private SubjectRepository subjectRepository;
+    private ReportDatabaseService reportDatabaseService; // 👈 Nowy główny mock bazy
     @Mock
     private GiteaService giteaService;
     @Mock
     private JPlagService jPlagService;
     @Mock
-    private GiteaRepositoryRepository giteaRepositoryRepository;
-    @Mock
-    private ReportsRepository reportsRepository;
-    @Mock
     private SubjectStatisticsService subjectStatisticsService;
+
     @InjectMocks
     private ReportService reportService;
-
-    @Captor
-    private ArgumentCaptor<Report> reportCaptor;
 
     @Test
     void generateReportOnDemand_Success() {
@@ -57,27 +50,12 @@ public class GenerateReportServiceTest {
         String orgName = "TestOrg";
         String login = "teacher123";
 
-        RulePreset rulePreset = new RulePreset();
-        rulePreset.setMinimumTokensMatch(12);
-        rulePreset.setEnableNormalization(true);
-
-        Subject subject = new Subject();
-        subject.setOrganizationName(orgName);
-        subject.setRulePreset(rulePreset);
-        SubjectStatistics subjectStatistics = new SubjectStatistics();
-        subjectStatistics.setSubject(subject);
-        subjectStatistics.setAverageSimilarity(0D);
-        subject.setSubjectStatistics(subjectStatistics);
+        SubjectConfigDTO configDTO = new SubjectConfigDTO(orgName, 12, true);
+        when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
 
         GiteaRepoDTO validRepo = new GiteaRepoDTO("test-repo", "url1", false);
         GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo", "url2", true);
-
-        List<Repository> dbRepositories = List.of(new Repository(), new Repository());
-
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization(orgName)).thenReturn(List.of(validRepo, templateRepo));
-        when(giteaRepositoryRepository.getAllBySubjectId(subjectId)).thenReturn(dbRepositories);
 
         JPlagResult mockResult = mock(JPlagResult.class);
         when(mockResult.getAllComparisons()).thenReturn(List.of());
@@ -90,6 +68,11 @@ public class GenerateReportServiceTest {
                 anyString()
         )).thenReturn(mockResult);
 
+        Report expectedReport = new Report();
+        when(reportDatabaseService.saveGeneratedReport(
+                eq(subjectId), eq(tag), eq(1L), anyString(), eq(0.0)
+        )).thenReturn(expectedReport);
+
         ReflectionTestUtils.setField(reportService, "giteaToken", "dummy-token-123");
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
@@ -98,7 +81,9 @@ public class GenerateReportServiceTest {
                     anyString(), anyString(), any(File.class), anyString()
             )).thenReturn(true);
 
-            reportService.generateReportOnDemand(subjectId, tag, login);
+            Report actualReport = reportService.generateReportOnDemand(subjectId, tag, login);
+
+            assertEquals(expectedReport, actualReport);
 
             mockedGitService.verify(
                     () -> GitService.cloneTag(
@@ -109,6 +94,7 @@ public class GenerateReportServiceTest {
                     ), times(1)
             );
 
+            verify(reportDatabaseService, times(1)).saveGeneratedReport(eq(subjectId), eq(tag), eq(1L), anyString(), eq(0.0));
             verify(subjectStatisticsService, times(1)).recalculateAndUpdateStatistics(subjectId);
         }
     }
@@ -117,13 +103,15 @@ public class GenerateReportServiceTest {
     void generateReportOnDemand_ThrowsException_WhenSubjectNotFound() {
         UUID subjectId = UUID.randomUUID();
         String login = "teacher123";
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.empty());
+
+        when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login))
+                .thenThrow(new SubjectNotFoundException());
 
         assertThrows(SubjectNotFoundException.class, () ->
                 reportService.generateReportOnDemand(subjectId, "v1.0", login)
         );
 
-        verifyNoInteractions(giteaService, jPlagService, giteaRepositoryRepository, reportsRepository);
+        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService);
     }
 
     @Test
@@ -132,17 +120,14 @@ public class GenerateReportServiceTest {
         String login = "unauthorizedTeacher";
         String tag = "v1.0";
 
-        Subject subject = new Subject();
-        subject.setOrganizationName("TestOrg");
-
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(false);
+        when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login))
+                .thenThrow(new SubjectAccessDeniedException());
 
         assertThrows(SubjectAccessDeniedException.class, () ->
                 reportService.generateReportOnDemand(subjectId, tag, login)
         );
 
-        verifyNoInteractions(giteaService, jPlagService, giteaRepositoryRepository, reportsRepository);
+        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService);
     }
 
     @Test
@@ -150,14 +135,11 @@ public class GenerateReportServiceTest {
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
         String login = "teacher123";
-        Subject subject = new Subject();
-        subject.setOrganizationName("TestOrg");
-        subject.setRulePreset(new RulePreset());
+
+        SubjectConfigDTO configDTO = new SubjectConfigDTO("TestOrg", 10, true);
+        when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
 
         GiteaRepoDTO templateRepo = new GiteaRepoDTO("template-repo","url2", true);
-
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        when(subjectRepository.isTeacherAssignedToSubject(subjectId, login)).thenReturn(true);
         when(giteaService.getRepositoriesFromOrganization("TestOrg")).thenReturn(List.of(templateRepo));
 
         try (MockedStatic<GitService> mockedGitService = mockStatic(GitService.class)) {
@@ -167,6 +149,8 @@ public class GenerateReportServiceTest {
             });
 
             mockedGitService.verifyNoInteractions();
+            verify(reportDatabaseService, never()).saveGeneratedReport(any(), any(), anyLong(), any(), anyDouble());
+            verifyNoInteractions(subjectStatisticsService);
         }
     }
 }

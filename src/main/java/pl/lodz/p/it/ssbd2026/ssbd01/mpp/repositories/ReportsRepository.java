@@ -38,6 +38,6 @@ public interface ReportsRepository extends AbstractRepository<Report> {
             "AND r.isStudentReport = false ")
     Page<Report> findAllReportsForAssignedTeacherByLogin(@Param("login") String login, Pageable pageable);
 
-    @Query("SELECT COUNT(r) FROM Report r JOIN r.repositoryList repo WHERE repo.id = :repositoryId AND r.createdBy.login = :login")
+    @Query("SELECT COUNT(r) FROM Report r JOIN r.repositoryList repo WHERE repo.id = :repositoryId AND r.isStudentReport = TRUE")
     int countReportsByIdAndCreatedByLogin(@Param("repositoryId") UUID repositoryId, @Param("login") String login);
 }
