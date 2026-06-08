@@ -2,9 +2,55 @@
 ## 3.1. Aktualizacja projektu funkcjonalności
 
 - Z tabeli Repository usunięto pole ticketCount. Z tego powodu dokonano refaktoryzacji obecnego kodu i zastosowano blokadę pesymistyczną przy sprawdzaniu własnego kodu przez studenta.
-### 1.4. Diagram(y) stanów (przejść)
 
-Wskazany element nie uległ zmianie.
+### 1.1 Słownik pojęć dziedzinowych
+
+W trakcie implementacji słownik uległ następującym zmianom:
+
+**Profil Prowadzącego (Teacher)** - Zrezygnowano z binarnej flagi `has_modify_privilege` na rzecz jawnej enumeracji
+`subject_role` przyjmującej wartości `OWNER`, `EDITOR` lub `VIEWER`.
+
+**Przedmiot (Subject)** — pole opisu (`subject_description`) zostało wyodrębnione do osobnej encji tłumaczeń, 
+umożliwiając przechowywanie opisu w wielu wersjach językowych. Zagregowany wskaźnik podobieństwa przeniesiono 
+do encji`SubjectStatistics`.
+
+**Zestaw reguł (~~Rule~~ RulePreset)** — dodano dwa parametry konfiguracyjne silnika JPlag:
+minimalną długość dopasowania tokenów `minimum_tokens_match`, która domyślnie przyjmuje wartość 20
+oraz flagę normalizacji kodu przed tokenizacją `normalization`.
+
+**Harmonogram (Schedule)** — dodano flagi oznaczające stan wykonania: `is_executed`oraz `has_failed`, pozwalające 
+odróżnić pozycje oczekujące od obsłużonych i błędnych.
+
+**Raport (Report)** — dodano etykietę zadania `tag`, liczbę przeskanowanych repozytoriów `scanned_repositories` 
+oraz flagę `is_student_report` odróżniającą raporty analizy prywatnej od raportów prowadzącego.
+
+Dodatkowo wprowadzono nowe pojęcia występujące w modelu danych utrwalanych w ramach projektu:
+
+**Historia haseł (PasswordHistory)** — encja przechowująca skróty poprzednich haseł konta, uniemożliwiająca ponowne 
+użycie hasła już wcześniej stosowanego.
+
+**Jednorazowy token (OneTimeTokenEnt)** — token o określonym czasie ważności, wykorzystywany do jednorazowych operacji 
+wymagających potwierdzenia jak np. reset hasła lub aktywacja konta. Posiada typ `token_type` pozwalający odróżnić tokeny 
+służące do różnych operacji.
+
+**Token cofnięcia adresu e-mail (EmailRevertTokenEnt)** — token umożliwiający anulowanie zmiany adresu e-mail. 
+Przechowuje poprzedni adres e-mail konta i wygasa po określonym czasie.
+
+**Statystyki przedmiotu (SubjectStatistics)** — encja przechowująca zagregowany wskaźnik podobieństwa dla przedmiotu, 
+wyodrębniona z tabeli `Subject`.
+
+**Tłumaczenie opisu przedmiotu (SubjectDescriptionTranslation)** — encja zastępująca pole `subject_description` 
+z encji `Subject`, umożliwiająca przechowywanie dynamicznych tłumaczeń opisu przedmiotu w różnych wersjach językowych.
+
+**Rola w przedmiocie (TeacherSubjectRole)** — enumeracja `OWNER`, `EDITOR` lub `VIEWER` zastępująca flagę `has_modify_privilege`.
+
+**Słownik języków (LanguageDict)** — encja słownikowa przechowująca dostępne wersje językowe interfejsu i treści systemu.
+
+**Słownik poziomów dostępu (AccessLevelDict)** — encja słownikowa definiująca dostępne role kont w systemie.
+
+**Słownik poziomów raportowania (ReportLevelDict)** — encja słownikowa definiująca możliwe poziomy szczegółowości raportu 
+prezentowanego studentowi.
+
 ### 1.2 Diagram modelu
 
 Diagram modelu dziedzinowego uległ zmianie z powodu dodania nowych klas encyjnych takich jak:
@@ -23,6 +69,11 @@ Dodano nowe pola do istniejących klas.
 ![Diagram uml](etap3/img/Domain_UML_final.png)
 
 Rysunek 3.1.1. Diagram UML wersji finałowej.
+
+### 1.4. Diagram(y) stanów (przejść)
+
+Wskazany element nie uległ zmianie.
+
 ## 1.5. Infrastruktura wdrożeniowa
 
 Element uległ zmianie w trakcie implementacji systemu. Pierwotna architektura została rozbudowana o nowe komponenty, co pociągnęło za sobą zmiany w diagramie wdrożenia, opisie topologii sieci oraz wykazie wykorzystanego oprogramowania:
