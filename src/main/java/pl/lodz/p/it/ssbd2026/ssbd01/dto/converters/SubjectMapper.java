@@ -6,6 +6,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
@@ -22,6 +23,7 @@ public interface SubjectMapper {
     @Mapping(target = "manualRules", source = "manualRules")
     @Mapping(target = "subjectDescription", source = "originalDescription")
     @Mapping(target = "aggregatedAverageSimilarity", source = "subject.subjectStatistics.averageSimilarity")
+    @Mapping(target = "nextScan", source = "nextScan")
     SubjectDTO toSubjectDTO(Subject subject,
                             String versionHash,
                             boolean canEdit,
@@ -29,6 +31,6 @@ public interface SubjectMapper {
                             boolean canViewStats,
                             UUID templateId,
                             RulePresetDTO manualRules,
-                            String originalDescription
-    );
+                            String originalDescription,
+                            LocalDateTime nextScan);
 }

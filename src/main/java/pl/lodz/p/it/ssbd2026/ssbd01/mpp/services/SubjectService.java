@@ -22,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAlreadyExistsException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAssignmentNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -32,6 +33,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,6 +56,7 @@ public class SubjectService {
     private final RuleRepository ruleRepository;
     private final StudentRepository studentRepository;
     private final RepositoryMapper repositoryMapper;
+    private final ScheduleRepository scheduleRepository;
 
 
     private final SubjectMapper subjectMapper;
@@ -137,6 +140,7 @@ public class SubjectService {
             List<UUID> subjectIds = subjects.stream()
                     .map(Subject::getId)
                     .toList();
+
             List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
                     .findBySubjectIdInAndIsOriginalTrue(subjectIds);
 
@@ -145,15 +149,20 @@ public class SubjectService {
                             SubjectDescriptionTranslation::getId,
                             SubjectDescriptionTranslation::getTranslatedDescription
                     ));
+
+            Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            ScheduleRepository.SubjectNextScan::getSubjectId,
+                            ScheduleRepository.SubjectNextScan::getNextScanTime
+                    ));
+
             for (Subject subject : subjects) {
-                String originalDescription = descriptionMap.get(subject.getId());
-
-                if (originalDescription == null) {
-                    originalDescription = "";
-                }
-
+                String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription));
+                LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription, nextScan));
             }
         } else {
             List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
@@ -169,17 +178,25 @@ public class SubjectService {
                             SubjectDescriptionTranslation::getId,
                             SubjectDescriptionTranslation::getTranslatedDescription
                     ));
+
+            Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            ScheduleRepository.SubjectNextScan::getSubjectId,
+                            ScheduleRepository.SubjectNextScan::getNextScanTime
+                    ));
+
             for (SubjectAssignment assignment : assignments) {
                 Subject subject = assignment.getSubject();
                 TeacherSubjectRole role = assignment.getSubjectRole();
-                String originalDescription = descriptionMap.get(subject.getId());
-                if (originalDescription == null) {
-                    originalDescription = "";
-                }
+                String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+
                 boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
                 boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
                 String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription));
+                LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
             }
         }
 
@@ -199,6 +216,7 @@ public class SubjectService {
         List<UUID> subjectIds = subjects.stream()
                 .map(Subject::getId)
                 .toList();
+
         List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
                 .findBySubjectIdInAndIsOriginalTrue(subjectIds);
 
@@ -208,15 +226,19 @@ public class SubjectService {
                         SubjectDescriptionTranslation::getTranslatedDescription
                 ));
 
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
         for (Subject subject : subjects) {
-            String originalDescription = descriptionMap.get(subject.getId());
-
-            if (originalDescription == null) {
-                originalDescription = "";
-            }
-
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
             String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null, originalDescription));
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null, originalDescription, nextScan));
         }
 
         return result;
@@ -234,7 +256,7 @@ public class SubjectService {
                 .orElseThrow(SubjectNotFoundException::new);
         Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
                 .findBySubjectIdAndIsOriginalTrue(subjectId);
-        String originalDescription = originalDescriptionE.isPresent() ? originalDescriptionE.get().getTranslatedDescription() : "";
+        String originalDescription = originalDescriptionE.map(SubjectDescriptionTranslation::getTranslatedDescription).orElse("");
 
 
         UUID templateId = null;
@@ -250,9 +272,10 @@ public class SubjectService {
         }
 
         String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        LocalDateTime nextScan = scheduleRepository.findNextScanTimeBySubjectId(subjectId).orElse(null);
 
         if (hasRole(authorities, AccountConsts.ROLE_ADMIN)) {
-            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules, originalDescription);
+            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules, originalDescription, nextScan);
         }
 
         if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
@@ -270,8 +293,8 @@ public class SubjectService {
                     true,
                     templateId,
                     manualRules,
-                    originalDescription
-
+                    originalDescription,
+                    nextScan
             );
         }
 
@@ -384,6 +407,10 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
+        if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+            throw new SubjectAlreadyExistsException();
+        }
+
         String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
 
         Subject subject = createBaseSubject(
@@ -417,7 +444,12 @@ public class SubjectService {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
+        if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+            throw new SubjectAlreadyExistsException();
+        }
+
         String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+
         Subject subject = createBaseSubject(
                 dto.name(),
                 dto.organizationName(),
@@ -449,7 +481,7 @@ public class SubjectService {
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash, String originalLanguage) {
-        Subject subject = subjectRepository.findById(subjectId)
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
@@ -594,7 +626,8 @@ public class SubjectService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public void changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash) {
 
-        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId).orElseThrow(SubjectNotFoundException::new);
+
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
