@@ -91,6 +91,9 @@ public record SubjectDTO(
 
         @Schema(description = "Zaggregowane średnie podobieństwo", example = "8.4", accessMode = Schema.AccessMode.READ_ONLY)
         @Null(groups = {OnCreate.class, OnUpdate.class})
-        Double aggregatedAverageSimilarity
+        Double aggregatedAverageSimilarity,
+
+        @Schema(description = "Data i czas najbliższego zaplanowanego skanowania (zwracane przez API w formacie ISO)", example = "2026-06-15T12:30:00", accessMode = Schema.AccessMode.READ_ONLY)
+                LocalDateTime nextScan
 
 ) {}

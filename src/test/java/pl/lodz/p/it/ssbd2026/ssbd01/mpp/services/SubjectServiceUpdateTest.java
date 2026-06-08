@@ -90,7 +90,7 @@ class SubjectServiceUpdateTest {
     @DisplayName("POS01: Administrator powinien pomyślnie zaktualizować przedmiot")
     void POS01_AdminShouldUpdateSubjectSuccessfully() {
         mockSecurityContext("admin_user", AccountConsts.ROLE_ADMIN);
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
         when(languageDictRepository.findByLanguage(ORIGINAL_LANGUAGE)).thenReturn(Optional.ofNullable(languageDict));
 
@@ -106,7 +106,7 @@ class SubjectServiceUpdateTest {
     @Test
     @DisplayName("NEG01: Rzuca ConcurrentUpdateException gdy hash (ETag) się nie zgadza")
     void NEG01_ShouldThrowConcurrentUpdateExceptionOnHashMismatch() {
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
         UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc",  List.of(), null);
@@ -119,7 +119,7 @@ class SubjectServiceUpdateTest {
     @DisplayName("NEG02: Rzuca SubjectAccessDenied dla studenta próbującego edytować")
     void NEG02_ShouldThrowAccessDeniedForStudent() {
         mockSecurityContext("student_1", AccountConsts.ROLE_STUDENT);
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
 
         UpdateSubjectDTO dto = new UpdateSubjectDTO("Name", "Desc", List.of(), null);
@@ -132,7 +132,7 @@ class SubjectServiceUpdateTest {
     @DisplayName("NEG03: Rzuca SubjectMustHaveOwnerException gdy próbuje się usunąć wszystkich ownerów")
     void NEG03_ShouldThrowWhenRemovingAllOwners() {
         mockSecurityContext("test_owner", AccountConsts.ROLE_TEACHER);
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
         when(languageDictRepository.findByLanguage(ORIGINAL_LANGUAGE)).thenReturn(Optional.ofNullable(languageDict));
 
