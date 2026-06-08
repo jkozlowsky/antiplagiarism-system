@@ -1,4 +1,5 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.mpp05;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -6,9 +7,11 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectStatisticsService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +33,9 @@ class RemoveReportTest {
     @Mock
     private SubjectRepository subjectRepository;
 
+    @Mock
+    private SubjectStatisticsService subjectStatisticsService;
+
     @InjectMocks
     private ReportService reportService;
 
@@ -39,7 +45,10 @@ class RemoveReportTest {
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/timestamp.jplag");
 
+        Subject subject = new Subject();
+
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.deleteIfExists(any(Path.class))).thenReturn(true);
@@ -48,6 +57,7 @@ class RemoveReportTest {
 
             mockedFiles.verify(() -> Files.deleteIfExists(eq(Path.of(report.getPathToReport()))));
             verify(reportsRepository).delete(report);
+            verify(subjectStatisticsService).recalculateAndUpdateStatistics(subject.getId());
         }
     }
 
@@ -57,7 +67,10 @@ class RemoveReportTest {
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/missing_file.jplag");
 
+        Subject subject = new Subject();
+
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.deleteIfExists(any(Path.class))).thenReturn(false);
@@ -65,6 +78,7 @@ class RemoveReportTest {
             assertDoesNotThrow(() -> reportService.deleteReport(reportId));
 
             verify(reportsRepository).delete(report);
+            verify(subjectStatisticsService).recalculateAndUpdateStatistics(subject.getId());
         }
     }
 
@@ -86,7 +100,8 @@ class RemoveReportTest {
             assertTrue(exception.getMessage().contains("Could not delete the report file"));
 
             verify(reportsRepository, never()).delete(any());
+            verify(subjectRepository, never()).findByReportId(any());
+            verify(subjectStatisticsService, never()).recalculateAndUpdateStatistics(any());
         }
     }
-
 }
