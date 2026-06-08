@@ -1,6 +1,7 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SubjectStatisticsService {
     private final SubjectRepository subjectRepository;
     private final ReportsRepository reportsRepository;
@@ -42,6 +44,8 @@ public class SubjectStatisticsService {
         } else {
             subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
         }
+        log.warn(String.valueOf(newSubjectAggregate));
+        log.warn(String.valueOf(subject.getSubjectStatistics().getAverageSimilarity()));
 
         subjectRepository.saveAndFlush(subject);
     }

@@ -332,18 +332,11 @@ public class SubjectService {
     }
 
     private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url, String originalLanguage) {
-        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
-        subjectDescriptionTranslation.setTranslatedDescription(desc);
-        subjectDescriptionTranslation.setLanguageDict(
-                languageDictRepository.findByLanguage(originalLanguage)
-                        .orElseThrow(LanguageDictNotFoundException::new)
-        );
-        subjectDescriptionTranslation.setIsOriginal(true);
+
         Subject subject = new Subject();
         subject.setName(name);
         subject.setOrganizationName(orgName);
         subject.setEdition(edition);
-        subject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
         subject.setGiteaURL(url);
         subject.setArchived(false);
         subject.setSubjectAssignmentList(new ArrayList<>());
@@ -406,7 +399,18 @@ public class SubjectService {
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         internalSyncWithGitea(subject);
-        subjectRepository.saveAndFlush(subject);
+//        subjectRepository.saveAndFlush(subject);
+        Subject savedSubject = subjectRepository.saveAndFlush(subject);
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setLanguageDict(
+                languageDictRepository.findByLanguage(originalLanguage)
+                        .orElseThrow(LanguageDictNotFoundException::new)
+        );
+        subjectDescriptionTranslation.setIsOriginal(true);
+        subjectDescriptionTranslation.setSubject(savedSubject);
+        savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
     }
 
     @MethodCallLogged
@@ -440,7 +444,17 @@ public class SubjectService {
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         internalSyncWithGitea(subject);
-        subjectRepository.saveAndFlush(subject);
+        Subject savedSubject = subjectRepository.saveAndFlush(subject);
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setLanguageDict(
+                languageDictRepository.findByLanguage(originalLanguage)
+                        .orElseThrow(LanguageDictNotFoundException::new)
+        );
+        subjectDescriptionTranslation.setIsOriginal(true);
+        subjectDescriptionTranslation.setSubject(savedSubject);
+        savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
     }
 
 

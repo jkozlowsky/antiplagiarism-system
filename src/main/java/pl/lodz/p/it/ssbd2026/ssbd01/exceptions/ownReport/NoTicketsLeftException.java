@@ -5,14 +5,14 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
 
 /**
  * Wyjątek rzucany w przypadku gdy student, który chce przeprowadzić skan swojego repozytorium nie ma już dostępnych skanowań.
- * Zwraca status 403 not found.
+ * Zwraca status 409 Conflict.
  */
 public class NoTicketsLeftException extends AppBaseException {
     public NoTicketsLeftException() {
-        super(HttpStatus.FORBIDDEN, "error.repository.no.tickets");
+        super(HttpStatus.CONFLICT, "error.repository.no.tickets");
     }
 
     public NoTicketsLeftException(Throwable cause) {
-        super(HttpStatus.FORBIDDEN, "error.repository.no.tickets", cause);
+        super(HttpStatus.CONFLICT, "error.repository.no.tickets", cause);
     }
 }
