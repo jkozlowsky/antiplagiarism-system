@@ -77,7 +77,7 @@ public class SubjectController {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/users")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<List<TeacherAssignmentDTO>> getSubjectUsers(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
     }
