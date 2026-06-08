@@ -39,4 +39,7 @@ public interface SubjectRepository extends AbstractRepository<Subject> {
     @Lock(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
     @Query("SELECT s FROM Subject s WHERE s.id = :id")
     Optional<Subject> findByIdForceIncrement(@Param("id") UUID id);
+
+    @Query("SELECT r.subject FROM Report r WHERE r.id = :reportId")
+    Optional<Subject> findByReportId(@Param("reportId") UUID reportId);
 }
