@@ -16,6 +16,7 @@ Diagram modelu dziedzinowego uległ zmianie z powodu dodania nowych klas encyjny
 - EmailRevertTokenEnt
 - SubjectStatistics
 - SubjectDescriptionTranslation
+
 Usunięto tabelę Tag oraz zmieniono nazwę tabeli Rule na RulePreset.
 Dodano nowe pola do istniejących klas.
 
@@ -26,7 +27,7 @@ Rysunek 3.1.1. Diagram UML wersji finałowej.
 
 Element uległ zmianie w trakcie implementacji systemu. Pierwotna architektura została rozbudowana o nowe komponenty, co pociągnęło za sobą zmiany w diagramie wdrożenia, opisie topologii sieci oraz wykazie wykorzystanego oprogramowania:
 
-![Diagram infrastruktury](etap3/img/diagram1.4.png)
+![Diagram infrastruktury](etap3/img/diagram_1.4.png)
 
 Rysunek 3.1.2 Diagram infrastruktury projektowej
 
@@ -34,7 +35,7 @@ Aktualizacja diagramu rysunku 1.5.1 została przedstawiona na rysunku 3.1.1. Do 
 
 Reorganizacja wirtualnych podsieci: Zrezygnowano z pierwotnego podziału na dwie strefy (siec_frontend i siec_backend). Zamiast tego zaimplementowano bardziej szczegółową izolację opartą na czterech sieciach: proxy-frontend, proxy-backend, backend-db oraz gitea-net. Oddzielono tym samym ruch z warstwy pośredniczącej (proxy-backend) od warstwy składowania danych – główna baza korzysta z sieci backend-db, natomiast baza danych dla systemu wersji z sieci gitea-net.
 
-Tabela 3.1.1Dodatkowe oprogramowanie wykorzystane w systemie
+Tabela 3.1.1 Dodatkowe oprogramowanie wykorzystane w systemie
 
 | Oprogramowanie | Wersja            | Rola w systemie                                       | Licencja           |
 |----------------|-------------------|-------------------------------------------------------|--------------------|
