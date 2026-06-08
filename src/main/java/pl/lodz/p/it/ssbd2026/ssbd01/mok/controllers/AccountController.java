@@ -27,6 +27,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -115,17 +118,39 @@ public class AccountController {
     }
 
     @Operation(summary = "Pobierz wszystkie konta", description = "Pobiera stronicowaną listę wszystkich kont, opcjonalnie filtrowaną po frazie.")
-    @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę kont")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Poprawnie pobrano stronicowaną listę kont z hiperłączami"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta administratora wykonującego zapytanie.")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Błąd blokady optymistycznej",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Konto zostało zmodyfikowane w międzyczasie, spróbuj ponownie.")
+                    )
+            )
+    })
     @GetMapping
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
-    public Page<AccountWithAccessLevelsDTO> getAllAccounts(
+    public PagedModel<EntityModel<AccountWithAccessLevelsDTO>> getAllAccounts(
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "size") Integer size,
             @RequestParam(required = false, name = "sortBy") String sortBy,
             @RequestParam(required = false, name = "sortDesc") Boolean sortDesc,
             @RequestParam(required = false, name = "phrase") String phrase,
-            Principal principal) {
+            Principal principal,
+            PagedResourcesAssembler<AccountWithAccessLevelsDTO> pagedResourcesAssembler) {
 
         String username = principal.getName();
         Page<Account> accountPage;
@@ -136,10 +161,14 @@ public class AccountController {
             accountPage = accountService.searchAccounts(phrase, page, size, sortBy, sortDesc, username);
         }
 
-        return accountPage.map(account -> accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                account,
-                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
-        ));
+        Page<AccountWithAccessLevelsDTO> dtoPage = accountPage.map(account ->
+                accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                        account,
+                        versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+                )
+        );
+
+        return pagedResourcesAssembler.toModel(dtoPage);
     }
 
     @Operation(summary = "Zarejestruj konto", description = "Tworzy nowe konto w systemie na podstawie przesłanych danych.")
