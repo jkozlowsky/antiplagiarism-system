@@ -140,6 +140,9 @@ public class AccountController {
                     )
             )
     })
+    @GetMapping
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @ResponseStatus(HttpStatus.OK)
     public PagedModel<EntityModel<AccountWithAccessLevelsDTO>> getAllAccounts(
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "size") Integer size,
