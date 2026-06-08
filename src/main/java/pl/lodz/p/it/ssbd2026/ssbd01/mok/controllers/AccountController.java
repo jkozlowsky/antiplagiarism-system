@@ -27,6 +27,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -137,16 +140,14 @@ public class AccountController {
                     )
             )
     })
-    @GetMapping
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    @ResponseStatus(HttpStatus.OK)
-    public Page<AccountWithAccessLevelsDTO> getAllAccounts(
+    public PagedModel<EntityModel<AccountWithAccessLevelsDTO>> getAllAccounts(
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "size") Integer size,
             @RequestParam(required = false, name = "sortBy") String sortBy,
             @RequestParam(required = false, name = "sortDesc") Boolean sortDesc,
             @RequestParam(required = false, name = "phrase") String phrase,
-            Principal principal) {
+            Principal principal,
+            PagedResourcesAssembler<AccountWithAccessLevelsDTO> pagedResourcesAssembler) {
 
         String username = principal.getName();
         Page<Account> accountPage;
@@ -157,10 +158,14 @@ public class AccountController {
             accountPage = accountService.searchAccounts(phrase, page, size, sortBy, sortDesc, username);
         }
 
-        return accountPage.map(account -> accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                account,
-                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
-        ));
+        Page<AccountWithAccessLevelsDTO> dtoPage = accountPage.map(account ->
+                accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
+                        account,
+                        versionHashService.hashObjectVersion(account.getId(), account.getVersion())
+                )
+        );
+
+        return pagedResourcesAssembler.toModel(dtoPage);
     }
 
     @Operation(summary = "Zarejestruj konto", description = "Tworzy nowe konto w systemie na podstawie przesłanych danych.")
