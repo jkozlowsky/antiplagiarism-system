@@ -70,6 +70,10 @@ Dodano nowe pola do istniejących klas.
 
 Rysunek 3.1.1. Diagram UML wersji finałowej.
 
+#### 1.3 Przypadki użycia
+
+Zmieniono przypadek użycia MPP.1 Synchronizacja przedmiotu z Gitea
+
 ### 1.4. Diagram(y) stanów (przejść)
 
 Wskazany element nie uległ zmianie.
