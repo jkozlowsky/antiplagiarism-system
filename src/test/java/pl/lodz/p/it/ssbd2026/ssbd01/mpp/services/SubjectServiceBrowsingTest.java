@@ -61,6 +61,9 @@ class SubjectServiceBrowsingTest {
     @Mock
     private SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
 
+    @Mock
+    private pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository scheduleRepository;
+
     @InjectMocks
     private SubjectService subjectService;
 
@@ -114,7 +117,7 @@ class SubjectServiceBrowsingTest {
         when(mockedDto.canManageTeachers()).thenReturn(true);
         when(mockedDto.canViewStats()).thenReturn(true);
 
-        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null, "")).thenReturn(mockedDto);
+        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null, "", null)).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 
@@ -141,7 +144,7 @@ class SubjectServiceBrowsingTest {
         when(mockedDto.canEdit()).thenReturn(false);
         when(mockedDto.canManageTeachers()).thenReturn(false);
 
-        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, true, null, null, "")).thenReturn(mockedDto);
+        when(subjectMapper.toSubjectDTO(subject, validHash, false, false, true, null, null, "", null)).thenReturn(mockedDto);
 
         SubjectDTO result = subjectService.getSubjectDetails(subjectId);
 

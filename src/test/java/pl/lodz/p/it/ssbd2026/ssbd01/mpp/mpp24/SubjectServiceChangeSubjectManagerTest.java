@@ -83,7 +83,7 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void POS01_ChangeSubjectManager_Successfully() {
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
 
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
@@ -112,7 +112,8 @@ public class SubjectServiceChangeSubjectManagerTest {
         newManagerTeacherNotAssigned.setAccount(newManagerAccountNotAssigned);
         ReflectionTestUtils.setField(newManagerTeacherNotAssigned, "id", newManagerIdNotAssigned);
 
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
+
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
 
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
@@ -132,7 +133,7 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void NEG01_ChangeSubjectManager_WhenNewManagerNotFound() {
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, subject.getVersion())).thenReturn("hash123");
 
         when(teacherRepository.findSubjectOwnerBySubjectId(subjectId)).thenReturn(Optional.of(currentManagerTeacher));
@@ -151,7 +152,7 @@ public class SubjectServiceChangeSubjectManagerTest {
 
     @Test
     public void NEG02_ChangeSubjectManager_WhenSubjectNotFound() {
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.empty());
+        when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.empty());
 
         assertAll(
                 () -> assertThrows(SubjectNotFoundException.class, () -> subjectService.changeSubjectManager(subjectId, "new_manager", "hash123")),
