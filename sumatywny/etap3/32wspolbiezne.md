@@ -3,7 +3,7 @@
 
 ### Równoległa edycja
 
-Przykładem problemu równoległej edycji danych w naszej aplikacji jest  jest edycja szablonów reguł (ustawień) przedmiotów. Akcja może być wykonana jednocześnie przez dwóch prowadzących którzy chcą zmodyfikować ten szablon.
+Przykładem problemu równoległej edycji danych w naszej aplikacji jest edycja szablonów reguł (ustawień) przedmiotów. Akcja może być wykonana jednocześnie przez dwóch prowadzących którzy chcą zmodyfikować ten szablon.
 
 Tabela 3.2.1. Oś czasu przeplotu żądań podczas równoległej edycji.
 
