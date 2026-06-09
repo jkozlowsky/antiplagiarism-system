@@ -206,4 +206,21 @@ public class SubjectController {
                 subjectDescriptionTranslationService.translateSubjectDescription(subjectId, language)
         );
     }
+
+    @Operation(summary = "Zmień stan archiwizacji przedmiotu (MPP.X)", description = "Zmienia flagę archiwizacji przedmiotu (archiwizuje lub przywraca). Zablokowany przedmiot nie pozwala na modyfikacje ani skanowanie.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Stan archiwizacji został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono podanego przedmiotu"))),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej - dane uległy zmianie w międzyczasie")
+    })
+
+    @PatchMapping("/{subjectId}/archive")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<Void> toggleArchiveSubject(
+            @PathVariable UUID subjectId,
+            @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch) {
+
+        subjectService.toggleArchiveSubject(subjectId, ifMatch);
+        return ResponseEntity.noContent().build();
+    }
 }

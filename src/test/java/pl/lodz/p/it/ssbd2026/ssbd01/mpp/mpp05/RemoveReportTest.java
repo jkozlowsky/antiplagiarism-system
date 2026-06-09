@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
@@ -42,10 +43,14 @@ class RemoveReportTest {
     @Test
     void deleteReport_Success_WhenFileExists() {
         UUID reportId = UUID.randomUUID();
-        Report report = new Report();
-        report.setPathToReport("reports/TestOrg/v1/timestamp.jplag");
 
         Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
+        Report report = new Report();
+        report.setPathToReport("reports/TestOrg/v1/timestamp.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
@@ -64,10 +69,14 @@ class RemoveReportTest {
     @Test
     void deleteReport_Success_WhenFileIsAlreadyMissingOnDisk() {
         UUID reportId = UUID.randomUUID();
-        Report report = new Report();
-        report.setPathToReport("reports/TestOrg/v1/missing_file.jplag");
 
         Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
+        Report report = new Report();
+        report.setPathToReport("reports/TestOrg/v1/missing_file.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
@@ -85,8 +94,14 @@ class RemoveReportTest {
     @Test
     void deleteReport_ThrowsException_WhenIoFails() {
         UUID reportId = UUID.randomUUID();
+
+        Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/locked_file.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
 

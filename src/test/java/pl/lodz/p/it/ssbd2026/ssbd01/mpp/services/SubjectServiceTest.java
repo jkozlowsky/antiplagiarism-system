@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class SubjectServiceTest {
 
@@ -117,6 +118,7 @@ class SubjectServiceTest {
         Subject subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
         subject.setOrganizationName("test-org");
+        subject.setArchived(false);
 
         Teacher teacher = new Teacher();
         Account teacherAcc = new Account();
@@ -136,7 +138,7 @@ class SubjectServiceTest {
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
-        GiteaRepoDTO repoDTO = new GiteaRepoDTO("grupa-01", "https://git.local/grupa-01", false);
+        GiteaRepoDTO repoDTO = new GiteaRepoDTO("grupa-01", "https://git.localmvngrupa-01", false);
         when(giteaService.getRepositoriesFromOrganization("test-org")).thenReturn(List.of(repoDTO));
 
         GiteaUserDTO userDTO = new GiteaUserDTO("jkowalski", "jkowalski@edu.pl");
@@ -160,6 +162,7 @@ class SubjectServiceTest {
         UUID subjectId = UUID.randomUUID();
         Subject subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
+        subject.setArchived(false);
 
         Authentication authentication = mock(Authentication.class);
         SecurityContext securityContext = mock(SecurityContext.class);
