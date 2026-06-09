@@ -23,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAlreadyExistsException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAssignmentNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -101,6 +102,38 @@ public class SubjectService {
         }
     }
 
+    private void checkIfNotArchived(Subject subject) {
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void toggleArchiveSubject(UUID subjectId, String versionHash) {
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        String currentHash = versionHashService.hashObjectVersion(subjectId, subject.getVersion());
+        if (versionHash == null || !versionHash.equals(currentHash)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
+        boolean isOwner = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(authentication.getName()) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+
+        if (!isAdmin && !isOwner) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        subject.setArchived(subject.getArchived() == null || !subject.getArchived());
+        subjectRepository.saveAndFlush(subject);
+    }
+
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
@@ -108,6 +141,8 @@ public class SubjectService {
     public void syncSubjectWithGitea(UUID subjectId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
@@ -498,6 +533,8 @@ public class SubjectService {
         Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
+        checkIfNotArchived(subject);
+
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -537,6 +574,29 @@ public class SubjectService {
             preset.setMinimumTokensMatch(dto.rules().minimumTokensMatch());
             preset.setEnableNormalization(dto.rules().enableNormalization());
             preset.setIsPreset(false);
+        }
+        if (!isAdmin && !isOwner && isEditor) {
+            boolean isTeacherListModified = false;
+
+            if (dto.teachers() != null) {
+                if (dto.teachers().size() != subject.getSubjectAssignmentList().size()) {
+                    isTeacherListModified = true;
+                } else {
+                    for (TeacherAssignmentDTO incoming : dto.teachers()) {
+                        boolean match = subject.getSubjectAssignmentList().stream()
+                                .anyMatch(existing -> existing.getTeacher().getAccount().getLogin().equals(incoming.login()) &&
+                                        existing.getSubjectRole() == incoming.role());
+                        if (!match) {
+                            isTeacherListModified = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isTeacherListModified) {
+                throw new SubjectAccessDeniedException();
+            }
         }
 
         if (isAdmin || isOwner) {
@@ -587,6 +647,8 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -641,6 +703,8 @@ public class SubjectService {
     public void changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash) {
 
         Subject subject = subjectRepository.findByIdForceIncrement(subjectId).orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();

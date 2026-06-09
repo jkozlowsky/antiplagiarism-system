@@ -23,6 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
@@ -68,6 +69,11 @@ public class ReportService {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Report generateReportOnDemand(UUID subjectId, String tag, String login) {
         SubjectConfigDTO config = reportDatabaseService.verifyAccessAndGetConfig(subjectId, login);
+
+        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
 
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(config.organizationName());
 
@@ -248,6 +254,10 @@ public class ReportService {
         Report report = reportsRepository.findById(reportId).orElseThrow(ReportNotFoundException::new);
         Path filePath = Path.of(report.getPathToReport());
 
+        if (report.getSubject().getArchived()) {
+            throw new SubjectArchivedException();
+        }
+
         try {
             boolean deleted = Files.deleteIfExists(filePath);
             if (!deleted) {
@@ -271,6 +281,10 @@ public class ReportService {
 
 //        Schedule schedule = schedules.getFirst();
         try {
+            Subject subject = subjectRepository.findById(config.subjectId()).orElseThrow(SubjectNotFoundException::new);
+            if (subject.getArchived()) {
+                throw new SubjectArchivedException();
+            }
 //            RulePreset settings = schedule.getRulePreset();
 //            Subject subject = settings.getSubject();
 //            String giteaTag = schedule.getTag();
@@ -362,6 +376,9 @@ public class ReportService {
         }
 
         Subject subject = repository.getSubject();
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
         RulePreset preset = subject.getRulePreset();
 
         if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
