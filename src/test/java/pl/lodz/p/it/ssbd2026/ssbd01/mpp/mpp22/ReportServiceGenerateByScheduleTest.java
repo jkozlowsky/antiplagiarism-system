@@ -8,8 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ScheduleConfigDTO; // Upewnij się, że masz poprawny import
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ScheduleConfigDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportDatabaseService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
@@ -19,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +41,9 @@ public class ReportServiceGenerateByScheduleTest {
     @Mock
     private SubjectStatisticsService subjectStatisticsService;
 
+    @Mock
+    private SubjectRepository subjectRepository;
+
     @InjectMocks
     private ReportService reportService;
 
@@ -49,6 +56,11 @@ public class ReportServiceGenerateByScheduleTest {
     @BeforeEach
     void setUp() {
         config = new ScheduleConfigDTO(SCHEDULE_ID, SUBJECT_ID, ORG_NAME, TAG, 10, true);
+
+        Subject mockSubject = new Subject();
+        ReflectionTestUtils.setField(mockSubject, "id", SUBJECT_ID);
+        mockSubject.setArchived(false);
+        lenient().when(subjectRepository.findById(SUBJECT_ID)).thenReturn(Optional.of(mockSubject));
     }
 
     @Test

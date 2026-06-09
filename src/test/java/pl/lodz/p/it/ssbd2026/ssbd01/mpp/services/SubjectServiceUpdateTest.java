@@ -57,9 +57,10 @@ class SubjectServiceUpdateTest {
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "id", subjectId);
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "version", 1);
 
+        subject.setArchived(false);
+
         languageDict = new LanguageDict();
         languageDict.setLanguage(ORIGINAL_LANGUAGE);
-
 
         Account account = new Account();
         account.setLogin("test_owner");
@@ -93,7 +94,6 @@ class SubjectServiceUpdateTest {
         when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
         when(languageDictRepository.findByLanguage(ORIGINAL_LANGUAGE)).thenReturn(Optional.ofNullable(languageDict));
-
 
         UpdateSubjectDTO dto = new UpdateSubjectDTO("New Name", "Desc",
                 List.of(new TeacherAssignmentDTO("test_owner", TeacherSubjectRole.OWNER)), null);

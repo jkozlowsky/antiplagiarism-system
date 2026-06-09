@@ -54,6 +54,7 @@ public class SubjectServiceChangeSubjectManagerTest {
 
         subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
+        subject.setArchived(false);
 
         currentManagerTeacher = createTestTeacher(currentOwnerId, "current_manager");
         newManagerTeacher = createTestTeacher(newManagerId, "new_manager");

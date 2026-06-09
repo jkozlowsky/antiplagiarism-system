@@ -7,11 +7,12 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.GiteaRepoDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectConfigDTO; // Upewnij się, że masz poprawny import!
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectConfigDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.GiteaService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportDatabaseService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
@@ -21,6 +22,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils.JPlagService;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,13 +34,15 @@ import static org.mockito.Mockito.*;
 public class GenerateReportServiceTest {
 
     @Mock
-    private ReportDatabaseService reportDatabaseService; // 👈 Nowy główny mock bazy
+    private ReportDatabaseService reportDatabaseService;
     @Mock
     private GiteaService giteaService;
     @Mock
     private JPlagService jPlagService;
     @Mock
     private SubjectStatisticsService subjectStatisticsService;
+    @Mock
+    private SubjectRepository subjectRepository;
 
     @InjectMocks
     private ReportService reportService;
@@ -49,6 +53,10 @@ public class GenerateReportServiceTest {
         String tag = "v1.0";
         String orgName = "TestOrg";
         String login = "teacher123";
+
+        Subject mockSubject = new Subject();
+        mockSubject.setArchived(false);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
 
         SubjectConfigDTO configDTO = new SubjectConfigDTO(orgName, 12, true);
         when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
@@ -111,7 +119,7 @@ public class GenerateReportServiceTest {
                 reportService.generateReportOnDemand(subjectId, "v1.0", login)
         );
 
-        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService);
+        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService, subjectRepository);
     }
 
     @Test
@@ -127,7 +135,7 @@ public class GenerateReportServiceTest {
                 reportService.generateReportOnDemand(subjectId, tag, login)
         );
 
-        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService);
+        verifyNoInteractions(giteaService, jPlagService, subjectStatisticsService, subjectRepository);
     }
 
     @Test
@@ -135,6 +143,10 @@ public class GenerateReportServiceTest {
         UUID subjectId = UUID.randomUUID();
         String tag = "v1.0";
         String login = "teacher123";
+
+        Subject mockSubject = new Subject();
+        mockSubject.setArchived(false);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
 
         SubjectConfigDTO configDTO = new SubjectConfigDTO("TestOrg", 10, true);
         when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
