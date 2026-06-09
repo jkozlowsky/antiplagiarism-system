@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.dto.converters;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ReportListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 
 @Mapper(componentModel = "spring")
@@ -15,4 +16,11 @@ public interface ReportMapper {
     @Mapping(source = "scannedRepositories", target = "scanned_repositories")
     ReportDTO toDto(Report report);
 
+
+    @Mapping(target = "average_similarity", source = "report.averageSimilarity")
+    @Mapping(target = "created_at", source = "report.creationDate")
+    @Mapping(target = "subject_name", source = "report.subjectName")
+//    @Mapping(target = "created_by", source = "createdBy")
+    @Mapping(target = "scanned_repositories", source = "scannedRepositories")
+    ReportDTO projectionToDto(ReportListProjectionDTO report);
 }
