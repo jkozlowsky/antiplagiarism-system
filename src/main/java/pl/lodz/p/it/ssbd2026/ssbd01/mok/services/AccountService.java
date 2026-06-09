@@ -17,8 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.utils.PostCommitTransactionManager;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccessLevelDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AccountWithAccessLevelsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.AccountListProjectionDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.AccountRoleProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelAlreadyAssignedException;
@@ -35,7 +39,11 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
 import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
@@ -55,6 +63,7 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final VersionHashService hashService;
     private final EmailRevertTokenRepository revertTokenRepository;
+    private final AccessLevelRepository accessLevelRepository;
     private final VersionHashService versionHashService;
     private final MokRefreshRepository mokRefreshRepository;
     private final AccountMapper accountMapper;
@@ -155,14 +164,15 @@ public class AccountService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
-    public Page<Account> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+    public Page<AccountWithAccessLevelsDTO> getAllAccounts(Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
         Account admin = accountRepository.findByLogin(username)
                 .orElseThrow(AccountNotFoundException::new);
 
         updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
 
         Pageable pageable = createPageable(page, admin);
-        return accountRepository.findAll(pageable);
+        Page<AccountListProjectionDTO> projectedPage = accountRepository.findAllProjected(pageable);
+        return mapProjectedPageToDto(projectedPage);
     }
 
     @MethodCallLogged
@@ -193,14 +203,16 @@ public class AccountService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mokTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    public Page<Account> searchAccounts(String phrase, Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
+    public Page<AccountWithAccessLevelsDTO> searchAccounts(String phrase, Integer page, Integer size, String sortBy, Boolean sortDesc, String username) {
         Account admin = accountRepository.findByLogin(username)
                 .orElseThrow(AccountNotFoundException::new);
 
         updatePreferencesIfProvided(admin, size, sortBy, sortDesc);
 
         Pageable pageable = createPageable(page, admin);
-        return accountRepository.findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(phrase, phrase, pageable);
+
+        Page<AccountListProjectionDTO> projectedPage = accountRepository.searchAccountsProjected(phrase, pageable);
+        return mapProjectedPageToDto(projectedPage);
     }
 
     @MethodCallLogged
@@ -593,5 +605,35 @@ public class AccountService {
         Account account = accountRepository.findByLogin(login).orElseThrow(AccountNotFoundException::new);
         LanguageDict languageEnt = languageDictRepository.findByLanguage(language).orElseThrow(LanguageDictNotFoundException::new);
         account.setLanguageVersion(languageEnt);
+    }
+
+    private Page<AccountWithAccessLevelsDTO> mapProjectedPageToDto(Page<AccountListProjectionDTO> projectedPage) {
+        if (projectedPage.isEmpty()) {
+            return Page.empty(projectedPage.getPageable());
+        }
+
+        List<UUID> accountIds = projectedPage.stream().map(AccountListProjectionDTO::id).toList();
+
+        List<AccountRoleProjectionDTO> rawRoles = accessLevelRepository.findRolesByAccountIds(accountIds);
+
+        Map<UUID, List<AccessLevelDTO>> rolesByAccountId = rawRoles.stream()
+                .collect(Collectors.groupingBy(
+                        AccountRoleProjectionDTO::accountId,
+                        Collectors.mapping(roleProj -> {
+                            AccessLevelDTO dto = new AccessLevelDTO();
+                            dto.setId(roleProj.accessLevelId());
+                            dto.setAccessLevelName(roleProj.accessLevelName());
+                            dto.setActive(roleProj.active());
+                            dto.setVersion(roleProj.version());
+                            return dto;
+                        }, Collectors.toList())
+                ));
+
+        return projectedPage.map(proj -> {
+            String hash = versionHashService.hashObjectVersion(proj.id(), proj.version());
+            List<AccessLevelDTO> roles = rolesByAccountId.getOrDefault(proj.id(), new ArrayList<>());
+            AccountDTO accountDto = accountMapper.projectionToAccountDTO(proj, hash);
+            return new AccountWithAccessLevelsDTO(accountDto, roles);
+        });
     }
 }
