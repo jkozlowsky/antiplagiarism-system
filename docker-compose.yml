@@ -37,7 +37,7 @@ services:
     environment:
       - APP_FRONTEND_URL=https://localhost
       - TZ=Europe/Warsaw
-      - DB_HOST=db
+      - DB_HOST=pgpool
       - DB_PORT=5432
       - DB_NAME=${PG_DATABASE}
       - ADMIN_USER=${PG_USERNAME}
@@ -58,7 +58,6 @@ services:
       - mpp_password
       - mail_password
       - jwt_secret
-      - mail_password
       - frontend_url
     volumes:
       - ../logs:/app/logs
@@ -66,40 +65,31 @@ services:
       - proxy-backend
       - backend-db
     depends_on:
-      db:
-        condition: service_healthy
+      pgpool:
+        condition: service_started
     healthcheck:
       test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
       start_period: 40s
 
-  db:
-    image: postgres:18.3
-    environment:
-      POSTGRES_USER: ${PG_USERNAME}
-      POSTGRES_DB: ${PG_DATABASE}
-      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
-      MOK_USER: ${MOK_USER}
-      MPP_USER: ${MPP_USER}
-
-    secrets:
-      - pg_password
-      - mok_password
-      - mpp_password
-      - jwt_secret
+  pgpool:
+    build: ./pgpool
     ports:
-      - 5434:5432
-    volumes:
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-      - db_data:/var/lib/postgresql
+      - "5434:5432"
     networks:
       - backend-db
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 5432 -U repuser -d postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+    depends_on:
+      db-primary:
+        condition: service_healthy
+      db-replica-1:
+        condition: service_healthy
+      db-replica-2:
+        condition: service_healthy
 
   gitea:
     image: docker.gitea.com/gitea:1.25.2-rootless
