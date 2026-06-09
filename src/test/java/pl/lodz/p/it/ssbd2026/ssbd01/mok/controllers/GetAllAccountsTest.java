@@ -6,7 +6,6 @@ import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
 import io.restassured.specification.FilterableRequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,7 +81,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("content");
+        List<Object> accounts = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList");
 
         assertAll(
                 () -> assertNotNull(accounts),
@@ -90,7 +89,6 @@ public class GetAllAccountsTest extends BaseTestSetup {
         );
     }
 
-//    @Disabled
     @Test
     @DisplayName("Pomyślne zapisanie preferencji sortowania i stronicowania i wczytanie ich dla zapytań bez parametrów")
     public void shouldRememberPaginationAndSortingPreferences() {
@@ -106,8 +104,8 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        int size = JsonPath.from(responseBody).getInt("size");
-        List<String> emails = JsonPath.from(responseBody).getList("content.account.email", String.class);
+        int size = JsonPath.from(responseBody).getInt("page.size");
+        List<String> emails = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList.account.email", String.class);
 
         assertEquals(5, size);
 
@@ -125,7 +123,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<String> names = JsonPath.from(responseBody).getList("content.account.name", String.class);
+        List<String> names = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList.account.name", String.class);
 
         assertAll(
                 () -> assertFalse(names.isEmpty()),
@@ -142,7 +140,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<String> surnames = JsonPath.from(responseBody).getList("content.account.surname", String.class);
+        List<String> surnames = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList.account.surname", String.class);
 
         assertAll(
                 () -> assertFalse(surnames.isEmpty()),
@@ -159,9 +157,9 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("content");
+        List<Object> accounts = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList");
 
-        assertTrue(accounts.isEmpty());
+        assertTrue(accounts == null || accounts.isEmpty());
     }
 
     @Test
@@ -173,7 +171,7 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        int totalElements = JsonPath.from(responseBody).getInt("totalElements");
+        int totalElements = JsonPath.from(responseBody).getInt("page.totalElements");
 
         assertTrue(totalElements >= 4);
     }
@@ -187,9 +185,9 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("content");
+        List<Object> accounts = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList");
 
-        assertTrue(accounts.isEmpty());
+        assertTrue(accounts == null || accounts.isEmpty());
     }
 
     @Test
@@ -201,9 +199,9 @@ public class GetAllAccountsTest extends BaseTestSetup {
                 adminHeaders
         );
 
-        List<Object> accounts = JsonPath.from(responseBody).getList("content");
+        List<Object> accounts = JsonPath.from(responseBody).getList("_embedded.accountWithAccessLevelsDTOList");
 
-        assertTrue(accounts.isEmpty());
+        assertTrue(accounts == null || accounts.isEmpty());
     }
 
     @Test

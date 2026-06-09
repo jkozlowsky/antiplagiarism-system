@@ -267,7 +267,11 @@ public class ReportService {
             throw new RuntimeException("Could not delete the report file physically", e);
         }
 
+        Subject subject = subjectRepository.findByReportId(reportId).orElseThrow(SubjectNotFoundException::new);
+
         reportsRepository.delete(report);
+
+        subjectStatisticsService.recalculateAndUpdateStatistics(subject.getId());
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = false, transactionManager = "mppTransactionManager")
