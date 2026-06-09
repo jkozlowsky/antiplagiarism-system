@@ -99,7 +99,7 @@ public class GenerateStudentReportServiceTest {
 
         when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
 
-        when(reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, studentLogin)).thenReturn(0);
+        when(reportsRepository.countReportsByInitiatedId(repositoryId)).thenReturn(0);
 
         when(giteaService.getRepositoriesFromOrganization("IAS64USECASE55")).thenReturn(List.of(validRepo));
         when(giteaRepositoryRepository.getAllBySubjectId(subject.getId())).thenReturn(List.of(repository));
@@ -134,7 +134,7 @@ public class GenerateStudentReportServiceTest {
     void NEG01_GenerateStudentReport() {
         when(giteaRepositoryRepository.findByIdWithLock(repositoryId)).thenReturn(Optional.of(repository));
 
-        when(reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, studentLogin)).thenReturn(3);
+        when(reportsRepository.countReportsByInitiatedId(repositoryId)).thenReturn(3);
 
         assertThrows(NoTicketsLeftException.class, () -> reportService.generateStudentReport(repositoryId, "64", "64", studentLogin));
     }
