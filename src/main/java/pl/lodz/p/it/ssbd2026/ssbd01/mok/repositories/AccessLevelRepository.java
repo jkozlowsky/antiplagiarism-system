@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories;
 
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 import java.util.Optional;
 
+@JaversSpringDataAuditable
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
 public interface AccessLevelRepository extends AbstractRepository<AccessLevel> {
