@@ -1222,6 +1222,53 @@ Operacje te wykonywane są w granicach transakcji na następujących obiektach e
 * `RulePreset`
 * `Schedule`
 
+### MPP.16 Edycja harmonogramu
+
+W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
+
+Dana transakcja realizuje edycję harmonogramu skanowania repozytoriów. Przed zapisem sprawdzane są uprawnienia prowadzącego do możliwego zapisu oraz hash chroniący przed współbieżnym zapisem.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public void updateSchedule(UUID scheduleId, UpdateScheduleDTO scheduleDto, String userLogin) {
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
+
+        if (!scheduleDto.getVersionHash().equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        Subject subject = schedule.getRulePreset().getSubject();
+        boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
+
+        checkIfNotArchived(subject);
+
+        if (!hasPermission) {
+            throw new NoPermissionToEditScheduleException();
+        }
+
+        schedule.setScheduleDateTime(scheduleDto.getScheduleDateTime());
+        schedule.setTag(scheduleDto.getTag());
+
+        scheduleRepository.save(schedule);
+    }
+```
+
+Listing 19.16.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.16.
+
+Transakcja jest inicjowana przez metodę updateSchedule(UUID scheduleId, UpdateScheduleDTO scheduleDto, String userLogin) z klasy ScheduleService, którą przedstawiono na listingu 19.16.1. W ramach tej transakcji wywoływane są metody komponentów z propagacją REQUIRES_NEW.
+
+Są to metody:
+- scheduleRepository.findById(scheduleId)
+- subjectAssignmentRepository.hasEditPermissions(subject, userLogin)
+- scheduleRepository.save(schedule)
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- Schedule,
+- Subject,
+- RulePreset,
+- SubjectAssignment.
+
 ### MPP.17 Usuwanie harmonogramu
 
 W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
@@ -1287,6 +1334,162 @@ W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propag
 * `giteaRepositoryRepository.findBySubjectId(subjectId)`
 
 Operacja ta wykonywana jest na encji JPA **Repository**.
+
+### MPP.19 Przeglądanie kont użytkowników
+
+W tym przypadku użycia zastosowano jedną transakcję do odczytu.
+
+Transakcja pobiera listę kont studentów, które są powiązane z repozytoriami przypisanymi do danego przedmiotu.
+
+```java
+ @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {
+        List<Repository> repos = giteaRepositoryRepository.findBySubject_Name(subjectName);
+        List<SubjectStudentStatsDTO> results = new ArrayList<>();
+
+        repos.forEach(repo -> {
+            repo.getStudentList().forEach(student -> {
+                Account account = student.getAccount();
+
+                results.add(new SubjectStudentStatsDTO(
+                        student.getId(),
+                        account.getName(),
+                        account.getSurname(),
+                        repo.getId(),
+                        repo.getRepositoryName(),
+                        null
+                ));
+            });
+        });
+
+        return results;
+    }
+```
+
+Listing 19.19.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.19.
+
+Z uwagi na definicję parametrów transakcji na poziomie klasy, wyglądają one następująco:
+
+```java
+@RequiredArgsConstructor
+@Service
+@MethodCallLogged
+@TransactionLogged
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+@Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+public class RepositoryService {
+```
+
+Listing 19.19.2. Ustawienia transakcji aplikacyjnej w ramach przypadku MPP.19.
+
+Transakcja jest inicjowana przez metodę getUserAccounts(String subjectName) z klasy RepositoryService, którą przedstawiono na listingu 19.19.1. W ramach transakcji wywoływana jest metoda komponentu z propagacją REQUIRES_NEW.
+
+Jest to metoda:
+- giteaRepositoryRepository.findBySubject_Name(subjectName)
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- Repository,
+- Student,
+- Account.
+
+### MPP 20 Sprawdzenie swojego kodu
+
+W tym przypadku użycia zastosowano transakcję aplikacyjną o charakterze zapisu.
+
+Transakcja weryfikuje dostęp studenta do repozytorium, sprawdza ilość dostępnych tokenów i generuje nowy raport antyplagiatowy wraz z wyliczeniem i aktualizacją statystyk całego przedmiotu.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) {
+        Repository repository = giteaRepositoryRepository.findByIdWithLock(repositoryId)
+                .orElseThrow(RepositoryNotFoundException::new);
+
+        boolean isStudentInThisRepository = repository.getStudentList().stream()
+                .anyMatch(s -> s.getAccount().getLogin().equals(login));
+
+        if (!isStudentInThisRepository) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        Subject subject = repository.getSubject();
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
+        RulePreset preset = subject.getRulePreset();
+
+        if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        int usedTickets = reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, login);
+
+        if (usedTickets >= preset.getStudentTicketCount()) {
+            throw new NoTicketsLeftException();
+        }
+
+        List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
+
+        giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
+            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
+            String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
+            GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
+        });
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+
+        List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
+
+        Report report = new Report();
+        report.setSubject(subject);
+        report.setTag(studentTag);
+        report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
+        report.setScannedRepositories(0L);
+        report.setIsStudentReport(true);
+        report.setRepositoryList(repositoryList);
+
+        JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
+                subject.getOrganizationName(),
+                studentTag,
+                preset.getMinimumTokensMatch(),
+                preset.getEnableNormalization(),
+                report.getPathToReport()
+        );
+
+        List<JPlagComparison> comparisons = result.getAllComparisons();
+
+        Double avg = comparisons.stream()
+                .mapToDouble(JPlagComparison::similarity)
+                .average()
+                .orElse(0.0);
+        report.setAverageSimilarity(avg);
+
+        reportsRepository.saveAndFlush(report);
+        subjectRepository.saveAndFlush(subject);
+
+        return getStudentReportDetails(report.getId(), login);
+    }
+```
+
+Listing 19.20.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.20.
+
+Transakcja jest inicjowana przez metodę generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) z klasy ReportService, którą przedstawiono na listingu 19.20.1. W ramach tej transakcji wywoływane są metody komponentów z propagacją REQUIRES_NEW. Dodatkowo, pierwsza metoda korzysta z  blokady pesymistycznej na poziomie bazy danych (findByIdWithLock).
+
+Wywoływane metody to:
+- giteaRepositoryRepository.findByIdWithLock(repositoryId)
+- reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, login)
+- giteaService.getRepositoriesFromOrganization(subject.getOrganizationName())
+- giteaRepositoryRepository.getAllBySubjectId(subject.getId())
+- reportsRepository.saveAndFlush(report)
+- subjectRepository.saveAndFlush(subject)
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- Repository,
+- Student,
+- Account,
+- Subject,
+- RulePreset,
+- Report.
 
 ### MPP 21: Przeglądanie swoich raportów
 
