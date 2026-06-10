@@ -62,9 +62,9 @@ public Report generateReportOnDemand(UUID subjectId, String tag, String login) {
 }
 ```
 
-Listing 19.x Metoda wykonująca generowanie raportów anty plagiatu.
+Listing 19.2.1 Metoda wykonująca generowanie raportów anty plagiatu.
 
-Metoda na listingu 19.x nie inicjuje transakcji z tego powodu że wykonuje żądania do innej aplikacji (gitea), pobiera repozytoria oraz wykonuje uciążliwe obliczenia anty plagiatu.
+Metoda na listingu 19.2.1  nie inicjuje transakcji z tego powodu że wykonuje żądania do innej aplikacji (gitea), pobiera repozytoria oraz wykonuje uciążliwe obliczenia anty plagiatu.
 
 Pierwszą transakcję w tym przypadku użycia rozpoczyna funkcja `verifyAccessAndGetConfig()` która autoryzuje prowadzącego na podstawie tego czy jest on przypisany do przedmiotu, weryfikuje że przedmiot nie jest zarchiwizowany oraz buduje obiekt `SubjectConfigDTO` z wyłącznie istotnymi danymi dla dalszego przetwarzania.
 
@@ -89,10 +89,10 @@ public SubjectConfigDTO verifyAccessAndGetConfig(UUID subjectId, String login) {
 }
 ```
 
-Listing 19.y Metoda wykonująca generowanie raportów anty plagiatu.
+Listing 19.2.2 Metoda wykonująca generowanie raportów anty plagiatu.
 
 Transakcja jest inicjowana przez metodę `verifyAccessAndGetConfig(UUID subjectId, String login)` z `ReportDatabaseService`, którą przedstawiono 
-na listingu 19.y. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza 
+na listingu 19.2.2. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza 
 do niej z propagacją `MANDATORY`.
 
 Jest to:
@@ -122,10 +122,10 @@ public Report saveGeneratedReport(UUID subjectId, String tag, long scannedCount,
     return reportsRepository.saveAndFlush(report);  
 }
 ```
-Listing 19.z. Metoda inicjująca drugą transakcję aplikacyjną w ramach przypadku MPP.2.
+Listing 19.2.3. Metoda inicjująca drugą transakcję aplikacyjną w ramach przypadku MPP.2.
 
 Transakcja jest inicjowana przez metodę `saveGeneratedReport(UUID subjectId, String tag, long scannedCount, String reportPath, Double avgSimilarity)` z `ReportDatabaseService`, którą przedstawiono 
-na listingu 19.z. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
+na listingu 19.2.3. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
 do niej z propagacją `MANDATORY`.
 
 Są to:
@@ -162,10 +162,10 @@ public void recalculateAndUpdateStatistics(UUID subjectId) {
     subjectRepository.saveAndFlush(subject);  
 }
 ```
-Listing 19.a. Metoda inicjująca trzecią transakcję aplikacyjną w ramach przypadku MPP.2.
+Listing 19.2.4. Metoda inicjująca trzecią transakcję aplikacyjną w ramach przypadku MPP.2.
 
 Transakcja jest inicjowana przez metodę `recalculateAndUpdateStatistics(UUID subjectId)` z `ReportDatabaseService`, którą przedstawiono 
-na listingu 19.a. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
+na listingu 19.2.4. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
 do niej z propagacją `MANDATORY`.
 
 Są to:
@@ -189,10 +189,10 @@ public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
     return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);  
 }
 ```
-19.a. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.3.
+19.3.1 . Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.3.
 
 Transakcja jest inicjowana przez metodę `getAllReportsForTeacher(String login, Pageable pageable)` z klasy `ReportService`, którą przedstawiono 
-na listingu 19.a. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+na listingu 19.3.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
 
 W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją MANDATORY:
 * `reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable)`
@@ -234,10 +234,10 @@ public void deleteReport(UUID reportId) {
     subjectStatisticsService.recalculateAndUpdateStatistics(subject.getId());  
 }
 ```
-Listing 19.a. Metoda inicjująca pierwszą transakcję aplikacyjną w ramach przypadku MPP.5.
+Listing 19.5.1. Metoda inicjująca pierwszą transakcję aplikacyjną w ramach przypadku MPP.5.
 
-Transakcja jest inicjowana przez metodę `rgetAllReportsForTeacher(String login, Pageable pageable)` z klasy `ReportService`, którą przedstawiono 
-na listingu 19.a. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+Transakcja jest inicjowana przez metodę `getAllReportsForTeacher(String login, Pageable pageable)` z klasy `ReportService`, którą przedstawiono 
+na listingu 19.5.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
 
 W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją MANDATORY:
 * `reportsRepository.findById(reportId)`
@@ -270,10 +270,10 @@ public void recalculateAndUpdateStatistics(UUID subjectId) {
     subjectRepository.saveAndFlush(subject);  
 }
 ```
-Listing 19.b. Metoda inicjująca trzecią transakcję aplikacyjną w ramach przypadku MPP.5.
+Listing 19.5.2. Metoda inicjująca trzecią transakcję aplikacyjną w ramach przypadku MPP.5.
 
 Transakcja jest inicjowana przez metodę `recalculateAndUpdateStatistics(UUID subjectId)` z `ReportDatabaseService`, którą przedstawiono 
-na listingu 19.b. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
+na listingu 19.5.2. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają 
 do niej z propagacją `MANDATORY`.
 
 Są to:
@@ -298,10 +298,10 @@ public List<Repository> getRepositories(UUID subjectId) {
     return giteaRepositoryRepository.findBySubjectId(subjectId);  
 }
 ```
-19.a. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.18.
+19.18.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.18.
 
 Transakcja jest inicjowana przez metodę `getRepositories(UUID subjectId)` z klasy `RepositoryService`, którą przedstawiono 
-na listingu 19.a. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+na listingu 19.18.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
 
 W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją MANDATORY:
 * `giteaRepositoryRepository.findBySubjectId(subjectId)`
