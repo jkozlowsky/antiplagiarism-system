@@ -211,7 +211,59 @@ Operacja ta wykonywana jest na encji JPA **Report**.
 
 ### MPP.4 Przeglądanie jednego raportu
 
-TODO
+W tym przypadku użycia zastosowano jedną transakcję o charakterze wyłącznie odczytowym.
+
+Dana transakcja realizuje odczyt szczegółowych danych wybranego raportu antyplagiatowego oraz weryfikację uprawnień zalogowanego użytkownika (Prowadzącego będącego twórcą przedmiotu lub Prowadzącego dodatkowego przypisanego do przedmiotu).
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public TeacherReportDetailsDTO getTeacherReportDetails(UUID reportId, String login) {
+
+        Report report = reportsRepository.findById(reportId)
+                .orElseThrow(ReportNotFoundException::new);
+
+        boolean isCreator = report.getSubject().getCreatedBy().getLogin().equals(login);
+        boolean isAssigned = report.getSubject().getSubjectAssignmentList().stream()
+                .anyMatch(sa -> sa.getTeacher().getAccount().getLogin().equals(login));
+
+        if (!isCreator && !isAssigned) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        List<TeacherComparisonDTO> parsedComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
+
+        List<TeacherComparisonDTO> sortedComparisons = parsedComparisons.stream()
+                .sorted((c1, c2) -> Double.compare(
+                        c2.maxSimilarity() != null ? c2.maxSimilarity() : 0.0,
+                        c1.maxSimilarity() != null ? c1.maxSimilarity() : 0.0
+                ))
+                .toList();
+
+        return new TeacherReportDetailsDTO(
+                report.getId(),
+                report.getTag(),
+                report.getSubject().getName(),
+                report.getCreatedAt(),
+                report.getAverageSimilarity(),
+                sortedComparisons
+        );
+    }
+```
+Listing 19.4.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.4.
+
+Transakcja jest inicjowana przez metodę `getTeacherReportDetails(UUID reportId, String login)` z klasy `ReportService`, którą przedstawiono na listingu 19.4.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+
+W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją `MANDATORY`:
+
+* `reportsRepository.findById(reportId)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+* `Report`
+* `Subject`
+* `SubjectAssignment`
+* `Teacher`
+* `Account`
 
 ### MPP.5 Usuwanie raportów.
 W tym przypadku użycia zastosowano dwie transakcje.
@@ -298,11 +350,129 @@ Operacja ta wykonywana jest w granicach transakcji na następujących obiektach 
 
 ### MPP.9 Usuwanie przedmiotu
 
-TODO
+W tym przypadku użycia zastosowano jedną transakcję o charakterze odczytowo-zapisowym (modyfikującym).
+
+Dana transakcja realizuje proces kaskadowego usunięcia przedmiotu z bazy danych wraz z fizycznym usunięciem powiązanych plików raportów (wykonywanym wyłącznie po zatwierdzeniu transakcji) oraz weryfikuje uprawnienia zarządzającego prowadzącego.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void deleteSubject(UUID subjectId, String versionHash, String currentUsername, boolean deleteGiteaOrg) {
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        boolean hasPermission = subject.getSubjectAssignmentList().stream()
+                .anyMatch(assignment ->
+                        assignment.getTeacher().getAccount().getLogin().equals(currentUsername) &&
+                                assignment.getSubjectRole().equals(TeacherSubjectRole.OWNER)
+                );
+
+        if (!hasPermission) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        List<String> reportPaths = subject.getReportList().stream()
+                .map(Report::getPathToReport)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (deleteGiteaOrg) {
+            try {
+                giteaService.deleteGiteaOrganization(subject.getOrganizationName());
+            } catch (Exception e) {
+                log.error("Błąd komunikacji z Gitea dla organizacji: {}", subject.getOrganizationName(), e);
+                throw new GiteaIntegrationException(e);
+            }
+        }
+
+        subjectRepository.delete(subject);
+        subjectRepository.flush();
+
+        postCommitTransactionManager.register(() -> {
+            for (String path : reportPaths) {
+                try {
+                    Files.deleteIfExists(Paths.get(path));
+                    log.info("Plik raportu został trwale usunięty z dysku: {}", path);
+                } catch (IOException e) {
+                    log.error("Nie udało się usunąć fizycznego pliku z dysku po usunięciu przedmiotu. Ścieżka: {}", path, e);
+                }
+            }
+        });
+    }
+```
+Listing 19.9.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.9.
+
+Transakcja jest inicjowana przez metodę `deleteSubject(UUID subjectId, String versionHash, String currentUsername, boolean deleteGiteaOrg)` z odpowiedniej klasy serwisowej, którą przedstawiono na listingu 19.9.1. W ramach tej transakcji wywoływane są metody komponentu dostępowego, które dołączają do niej z propagacją `MANDATORY`.
+
+W ramach tej transakcji wywoływane są metody komponentu dostępowego z propagacją `MANDATORY`:
+
+* `subjectRepository.findById(subjectId)`
+* `subjectRepository.delete(subject)`
+* `subjectRepository.flush()`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+
+* `Subject`
+* `SubjectAssignment`
+* `Teacher`
+* `Account`
+* `Report`
+
+W metodzie zaimplementowano mechanizm blokady optymistycznej oraz ponawiania transakcji aplikacyjnej. Stan przedmiotu weryfikowany jest za pomocą zahaszowanej wartości wersji (versionHash). W przypadku wykrycia modyfikacji współbieżnej rzucany jest wyjątek ConcurrentUpdateException. Adnotacja @Retryable definiuje, że w przypadku wystąpienia tego wyjątku (lub błędu systemowego bazy danych JpaSystemException) system automatycznie podejmie próbę ponownego wykonania całej transakcji zgodnie z narzuconą polityką opóźnień (backoff). Zastosowano także rozwiązanie wykorzystujące postCommitTransactionManager, które upewnia się, że nieodwracalne usunięcie plików z pamięci masowej serwera wykona się dopiero po zatwierdzeniu głównej transakcji w bazie danych.
 
 ### MPP 13: Usuwanie reguł
 
-TODO
+W tym przypadku użycia zastosowano jedną transakcję o charakterze odczytowo-zapisowym (modyfikującym).
+
+Dana transakcja realizuje proces trwałego usunięcia z bazy danych zestawu reguł (presetu) powiązanego z przedmiotem. Ponieważ encja ta jest nadrzędna w stosunku do harmonogramów sprawdzania, operacja ta wymusza również kaskadowe usunięcie powiązanych obiektów podrzędnych.
+
+```java
+@MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    public void deleteRulePreset(UUID ruleId, String versionHash) {
+
+        RulePreset rulePreset = ruleRepository.findById(ruleId)
+                .orElseThrow(RulePresetNotFoundException::new);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(ruleId, rulePreset.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        if (!Boolean.TRUE.equals(rulePreset.getIsPreset())) {
+            throw new RulePresetNoAccessException();
+        }
+
+        ruleRepository.delete(rulePreset);
+        ruleRepository.flush();
+    }
+```
+Listing 19.13.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.13.
+
+Transakcja jest inicjowana przez metodę `deleteRulePreset(UUID ruleId, String versionHash)` z odpowiedniej klasy serwisowej, którą przedstawiono na listingu 19.13.1. W ramach tej transakcji wywoływane są metody komponentu dostępowego, które dołączają do niej z propagacją `MANDATORY`.
+
+W ramach tej transakcji wywoływane są metody komponentu dostępowego z propagacją `MANDATORY`:
+
+* `ruleRepository.findById(ruleId)`
+* `ruleRepository.delete(rulePreset)`
+* `ruleRepository.flush()`
+
+Operacja ta wykonywana jest w granicach transakcji na następującym obiekcie encji JPA (oraz kaskadowo na powiązanych z nim obiektach podrzędnych):
+
+* `RulePreset`
+* `Schedule` (usuwane kaskadowo)
+
+W tej metodzie zastosowano mechanizm blokady optymistycznej oraz ponawiania odwołanych transakcji. Integralność danych weryfikowana jest za pomocą porównania zahaszowanej wartości wersji przysłanej z frontu (versionHash) z aktualną wersją w bazie. Niezgodność skutkuje wyrzuceniem wyjątku ConcurrentUpdateException. Adnotacja @Retryable definiuje, że w przypadku wystąpienia tego błędu (związanego ze współbieżną modyfikacją) lub błędu infrastrukturalnego bazy (JpaSystemException), aplikacja automatycznie, na poziomie serwisu, ponowi próbę wykonania całej transakcji zgodnie ze zdefiniowaną polityką prób (maxAttemptsExpression) i opóźnień (backoff).
 
 ### MPP.18 Przeglądanie repozytoriów
 
@@ -327,6 +497,130 @@ W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propag
 
 Operacja ta wykonywana jest na encji JPA **Repository**.
 
-### MPP 21: Przeglądanie listy swoich raportów
+### MPP 21: Przeglądanie swoich raportów
 
-TODO
+W tym przypadku użycia zastosowano dwie oddzielne transakcje aplikacyjne o charakterze wyłącznie odczytowym.
+
+Pierwsza transakcja realizuje pobranie listy wszystkich raportów antyplagiatowych, do których dany student ma nadany dostęp (zależny od konfiguracji przedmiotu).
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public List<ReportDTO> getStudentOwnReports(String login) {
+        List<Report> reports = reportsRepository.findVisibleReportsForStudent(login);
+
+        return reports.stream()
+                .map(r -> new ReportDTO(
+                        r.getId(),
+                        r.getTag(),
+                        r.getAverageSimilarity(),
+                        r.getCreatedAt(),
+                        r.getSubject().getCreatedBy().getLogin(),
+                        r.getSubject().getName(),
+                        r.getScannedRepositories()
+                ))
+                .toList();
+    }
+```
+Listing 19.21.1. Metoda inicjująca pierwszą transakcję aplikacyjną w ramach przypadku MPP.21, odpowiedzialna za odczyt listy raportów.
+
+Transakcja jest inicjowana przez metodę `getStudentOwnReports(String login)` z klasy `ReportService`, którą przedstawiono na listingu 19.21.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+
+W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją `MANDATORY`:
+
+* `reportsRepository.findVisibleReportsForStudent(login)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+
+* `Report`
+* `Subject`
+* `Account` (poprzez powiązanie z twórcą przedmiotu)
+
+Druga transakcja odpowiada za odczyt szczegółów konkretnego raportu, weryfikację uprawnień studenta do jego zawartości oraz odpowiednie przefiltrowanie wyników w zależności od reguł (poziomu raportu), aby ukryć dane wrażliwe innych studentów.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public StudentReportDetailsDTO getStudentReportDetails(UUID reportId, String login) {
+        Report report = reportsRepository.findById(reportId)
+                .orElseThrow(ReportNotFoundException::new);
+
+        boolean hasAccess = report.getRepositoryList().stream()
+                .flatMap(repo -> repo.getStudentList().stream())
+                .anyMatch(student -> student.getAccount().getLogin().equals(login));
+
+        if (!hasAccess) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
+
+        List<String> studentRepoNames = report.getRepositoryList().stream()
+                .filter(repo -> repo.getStudentList().stream()
+                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
+                .map(Repository::getRepositoryName)
+                .toList();
+
+        List<FilteredComparisonDTO> filteredMatches = new ArrayList<>();
+
+        if (!"NOTHING".equals(raportLevel)) {
+            List<TeacherComparisonDTO> allComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
+
+            filteredMatches = allComparisons.stream()
+                    .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
+                    .map(c -> {
+                        Double studentSimilarity = null;
+                        Double otherSimilarity = null;
+                        Double avgSim = null;
+
+                        boolean isFirst = studentRepoNames.contains(c.firstSubmission());
+
+                        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
+                            studentSimilarity = c.maxSimilarity();
+                        } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
+                            studentSimilarity = c.maxSimilarity();
+                            avgSim = c.averageSimilarity();
+                        }
+                        return new FilteredComparisonDTO("ANONYMIZED", studentSimilarity, otherSimilarity, avgSim);
+                    })
+                    .sorted((c1, c2) -> Double.compare(
+                            c2.getStudentSimilarity() != null ? c2.getStudentSimilarity() : 0.0,
+                            c1.getStudentSimilarity() != null ? c1.getStudentSimilarity() : 0.0
+                    ))
+                    .toList();
+
+            if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !filteredMatches.isEmpty()) {
+                filteredMatches = List.of(filteredMatches.get(0));
+            }
+        }
+            return new StudentReportDetailsDTO(
+                    report.getId(),
+                    report.getTag(),
+                    report.getSubject().getName(),
+                    report.getCreatedAt(),
+                    filteredMatches,
+                    raportLevel
+            );
+    }
+```
+Listing 19.21.2. Metoda inicjująca drugą transakcję aplikacyjną w ramach przypadku MPP.21, odpowiedzialna za szczegóły raportu studenckiego.
+
+Transakcja jest inicjowana przez metodę `getStudentReportDetails(UUID reportId, String login)` z klasy `ReportService`, którą przedstawiono na listingu 19.21.2. Podobnie jak wcześniej, w ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją `MANDATORY`.
+
+W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją `MANDATORY`:
+
+* `reportsRepository.findById(reportId)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA (weryfikacja dostępu i konfiguracji widoczności ukrytej w powiązaniach encji):
+
+* `Report`
+* `Repository`
+* `Student`
+* `Account`
+* `Subject`
+* `RulePreset`
+* `RaportLevel`
