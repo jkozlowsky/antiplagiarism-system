@@ -38,6 +38,7 @@ public class RepositoryService {
     private final RepositoryMapper repositoryMapper;
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public List<RepositoryWithStudentDTO> getRepositories(UUID subjectId) {
 
         List<RepositorySimpleProjectionDTO> repos = giteaRepositoryRepository.findProjectedRepositoriesBySubjectId(subjectId);
@@ -63,6 +64,9 @@ public class RepositoryService {
             return repositoryMapper.projectionToWithStudentDto(repo, assignedStudents);
         }).toList();
     }
+//    public List<Repository> getRepositories(UUID subjectId) {
+//        return giteaRepositoryRepository.findBySubjectId(subjectId);
+//    }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {

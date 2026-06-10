@@ -198,35 +198,7 @@ public class SubjectService {
             String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
             LocalDateTime nextScan = nextScanMap.get(subject.getId());
 
-            List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
-                    .findBySubjectIdInAndIsOriginalTrue(subjectIds);
-
-            Map<UUID, String> descriptionMap = translations.stream()
-                    .collect(Collectors.toMap(
-                            translation -> translation.getSubject().getId(),
-                            SubjectDescriptionTranslation::getTranslatedDescription
-                    ));
-
-            Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
-                    .stream()
-                    .collect(Collectors.toMap(
-                            ScheduleRepository.SubjectNextScan::getSubjectId,
-                            ScheduleRepository.SubjectNextScan::getNextScanTime
-                    ));
-
-            for (SubjectAssignment assignment : assignments) {
-                Subject subject = assignment.getSubject();
-                TeacherSubjectRole role = assignment.getSubjectRole();
-                String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
-
-                boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
-                boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                LocalDateTime nextScan = nextScanMap.get(subject.getId());
-
-                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
-            }
-            //result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
+            result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
         }
 
         return result;

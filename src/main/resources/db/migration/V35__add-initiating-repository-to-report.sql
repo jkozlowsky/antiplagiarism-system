@@ -4,4 +4,4 @@ ALTER TABLE report
 ALTER TABLE report
     ADD CONSTRAINT FK_REPORT_ON_INITIATING_REPOSITORY FOREIGN KEY (initiating_repository) REFERENCES repository (id);
 
-CREATE INDEX idx_report_repository ON report (initiating_repository);
+CREATE INDEX if not exists idx_report_repository ON report (initiating_repository);
