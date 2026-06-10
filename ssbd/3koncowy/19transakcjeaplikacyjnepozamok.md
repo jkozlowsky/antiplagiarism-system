@@ -300,9 +300,178 @@ Operacja ta wykonywana jest w granicach transakcji na następujących obiektach 
 
 TODO
 
+### MPP.10 Przeglądanie reguł
+
+W tym przypadku użycia zastosowano jedną transakcję o charakterze wyłącznie odczytowym.
+
+Dana transakcja realizuje odczyt wszystkich globalnych szablonów reguł wraz z obliczeniem hasha wersji każdego z nich.
+
+```java
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public List getRulePresetsTemplates() {
+    return ruleRepository.findAllByIsPreset(true).stream()
+            .map(preset -> {
+                RulePresetDTO dto = ruleMapper.toRuleDTO(preset);
+                return new RulePresetDTO(
+                        dto.id(),
+                        dto.raportLevelName(),
+                        dto.studentTicketCount(),
+                        dto.minimumTokensMatch(),
+                        dto.enableNormalization(),
+                        dto.version(),
+                        versionHashService.hashObjectVersion(preset.getId(), preset.getVersion())
+                );
+            })
+            .collect(Collectors.toList());
+}
+```
+
+Listing 19.10.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.10.
+
+Transakcja jest inicjowana przez metodę `getRulePresetsTemplates()` z klasy `RuleService`, którą przedstawiono
+na listingu 19.10.1. W ramach tej transakcji wywoływana jest metoda komponentu dostępowego, która dołącza do niej z propagacją `MANDATORY`.
+
+Jest to ta metoda:
+* `ruleRepository.findAllByIsPreset(true)`
+
+Operacja ta wykonywana jest na encji JPA **RulePreset**.
+
+### MPP.11 Tworzenie reguł
+
+W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu.
+
+Dana transakcja realizuje utworzenie nowego globalnego szablonu reguł na podstawie przekazanych danych oraz powiązanie go z odpowiednim poziomem raportu ze słownika.
+
+```java
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void createRulePreset(CreateRulePresetDTO dto) {
+    RulePreset newPreset = new RulePreset();
+    newPreset.setIsPreset(true);
+    newPreset.setSubject(null);
+
+    if (dto.raportLevelName() == null || dto.studentTicketCount() == null ||
+            dto.minimumTokensMatch() == null || dto.enableNormalization() == null) {
+        throw new RulePresetInvalidPartametersException();
+    }
+
+    ReportLevelDict raportLevel = raportLevelDictRepository.findByName(dto.raportLevelName())
+            .orElseThrow(RaportLevelDictNotFoundException::new);
+
+    newPreset.setRaportLevel(raportLevel);
+    newPreset.setStudentTicketCount(dto.studentTicketCount());
+    newPreset.setMinimumTokensMatch(dto.minimumTokensMatch());
+    newPreset.setEnableNormalization(dto.enableNormalization());
+
+    ruleRepository.save(newPreset);
+}
+```
+
+Listing 19.11.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.11.
+
+Transakcja jest inicjowana przez metodę `createRulePreset(CreateRulePresetDTO dto)` z klasy `RuleService`, którą przedstawiono
+na listingu 19.11.1. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są to:
+- `raportLevelDictRepository.findByName(dto.raportLevelName())`
+- `ruleRepository.save(newPreset)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- `ReportLevelDict`
+- `RulePreset`
+
+### MPP.12 Edycja reguł
+
+W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
+
+Dana transakcja realizuje modyfikację istniejącego szablonu reguł. Przed zapisem weryfikowana jest spójność wersji obiektu przy pomocy hasha, co zabezpiecza przed równoczesną modyfikacją przez wielu użytkowników.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+public void updateRulePreset(UUID ruleId, UpdateRulePresetDTO ruleDto, String versionHash) {
+    RulePreset rulePreset = ruleRepository.findById(ruleId)
+            .orElseThrow(RulePresetNotFoundException::new);
+
+    if (!versionHash.equals(versionHashService.hashObjectVersion(ruleId, rulePreset.getVersion()))) {
+        throw new ConcurrentUpdateException();
+    }
+
+    ReportLevelDict raportLevel = raportLevelDictRepository.findByName(ruleDto.raportLevelName())
+            .orElseThrow(RaportLevelDictNotFoundException::new);
+
+    rulePreset.setStudentTicketCount(ruleDto.studentTicketCount());
+    rulePreset.setMinimumTokensMatch(ruleDto.minimumTokensMatch());
+    rulePreset.setEnableNormalization(ruleDto.enableNormalization());
+    rulePreset.setRaportLevel(raportLevel);
+
+    ruleRepository.saveAndFlush(rulePreset);
+}
+```
+
+Listing 19.12.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.12.
+
+Transakcja jest inicjowana przez metodę `updateRulePreset(UUID ruleId, UpdateRulePresetDTO ruleDto, String versionHash)` z klasy `RuleService`, którą przedstawiono
+na listingu 19.12.1. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są to:
+- `ruleRepository.findById(ruleId)`
+- `raportLevelDictRepository.findByName(ruleDto.raportLevelName())`
+- `ruleRepository.saveAndFlush(rulePreset)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- `RulePreset`
+- `ReportLevelDict`
+
 ### MPP 13: Usuwanie reguł
 
 TODO
+
+### MPP.17 Usuwanie harmonogramu
+
+W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
+
+Dana transakcja realizuje usunięcie harmonogramu po uprzedniej weryfikacji wersji obiektu oraz uprawnień prowadzącego do edycji danego przedmiotu.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+public void deleteSchedule(UUID scheduleId, String userLogin, String versionHash) {
+    Schedule schedule = scheduleRepository.findById(scheduleId)
+            .orElseThrow(ScheduleNotFoundException::new);
+
+    if (!versionHash.equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
+        throw new ConcurrentUpdateException();
+    }
+
+    Subject subject = schedule.getRulePreset().getSubject();
+    boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
+
+    if (!hasPermission) {
+        throw new NoPermissionToEditScheduleException();
+    }
+
+    scheduleRepository.delete(schedule);
+}
+```
+
+Listing 19.17.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.17.
+
+Transakcja jest inicjowana przez metodę `deleteSchedule(UUID scheduleId, String userLogin, String versionHash)` z klasy `ScheduleService`, którą przedstawiono
+na listingu 19.17.1. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są to:
+- `scheduleRepository.findById(scheduleId)`
+- `subjectAssignmentRepository.hasEditPermissions(subject, userLogin)`
+- `scheduleRepository.delete(schedule)`
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+- `Schedule`
+- `Subject`
+- `SubjectAssignment`
 
 ### MPP.18 Przeglądanie repozytoriów
 
