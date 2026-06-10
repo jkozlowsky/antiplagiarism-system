@@ -182,14 +182,17 @@ W takim przypadku opis może być zapisany w języku angielskim, o ile ten języ
 
 TODO (rysunki):
 
-![Rys. 22.6.1](img/mok6_account_details.png)
-*Rys. 22.6.1. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z dostępnymi poziomami dostępu.*
+![Rys. 22.1.6.1](3koncowy/img/mok6_account_list.png)
+*Rys. 22.1.6.1. Fragment graficznego interfejsu użytkownika przedstawiający widok kont z rolami użytkowników.*
 
-![Rys. 22.6.2](img/mok6_grant_success.png)
-*Rys. 22.6.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym nadaniu poziomu dostępu.*
+![Rys. 22.1.6.2](3koncowy/img/mok6_account_details.png)
+*Rys. 22.1.6.2. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z dostępnymi poziomami dostępu.*
 
-![Rys. 22.6.3](img/mok6_grant_already_assigned.png)
-*Rys. 22.6.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd przy próbie nadania poziomu dostępu, który jest już przypisany do konta.*
+![Rys. 22.1.6.3](3koncowy/img/mok6_grant_save.png)
+*Rys. 22.1.6.3. Fragment graficznego interfejsu użytkownika przedstawiający widok z oknem potwierdzającym nadanie poziomu dostępu.*
+
+![Rys. 22.1.6.4](3koncowy/img/mok6_grant_success.png)
+*Rys. 22.1.6.4. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym nadaniu poziomu dostępu.*
 
 ### MOK.7 - Odłącz poziom dostępu od konta
 
@@ -349,14 +352,17 @@ TODO (rysunki):
 
 TODO (rysunki):
 
-![Rys. 22.7.1](img/mok7_account_details.png)
-*Rys. 22.7.1. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z aktywnymi poziomami dostępu.*
+![Rys. 22.1.7.1](3koncowy/img/mok7_account_list.png)
+*Rys. 22.1.7.1. Fragment graficznego interfejsu użytkownika przedstawiający widok kont z rolami użytkowników.*
 
-![Rys. 22.7.2](img/mok7_revoke_success.png)
-*Rys. 22.7.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym odebraniu poziomu dostępu.*
+![Rys. 22.1.7.2](3koncowy/img/mok7_account_details.png)
+*Rys. 22.1.7.2. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z aktywnymi poziomami dostępu.*
 
-![Rys. 22.7.3](img/mok7_revoke_already_revoked.png)
-*Rys. 22.7.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd przy próbie odebrania poziomu dostępu, który jest już nieaktywny.*
+![Rys. 22.1.7.3](3koncowy/img/mok7_revoke_save.png)
+*Rys. 22.1.7.3. Fragment graficznego interfejsu użytkownika przedstawiający widok okno potwierdzające odebranie poziomu dostępu.*
+
+![Rys. 22.1.7.3](3koncowy/img/mok7_revoke_success.png)
+*Rys. 22.1.7.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym odebraniu poziomu dostępu.*
 
 ### MOK.15 - Wyświetl listę użytkowników
 
@@ -526,14 +532,14 @@ TODO (rysunki):
 
 TODO (rysunki):
 
-![Rys. 22.15.1](img/mok15_accounts_list.png)
-*Rys. 22.15.1. Fragment graficznego interfejsu użytkownika przedstawiający widok listy wszystkich użytkowników.*
+![Rys. 22.1.15.1](3koncowy/img/mok15_accounts_list.png)
+*Rys. 22.1.15.1. Fragment graficznego interfejsu użytkownika przedstawiający widok listy wszystkich użytkowników.*
 
-![Rys. 22.15.2](img/mok15_accounts_search.png)
-*Rys. 22.15.2. Fragment graficznego interfejsu użytkownika przedstawiający widok listy użytkowników z zastosowanym filtrowaniem po frazie.*
+![Rys. 22.1.15.2](3koncowy/img/mok15_accounts_search.png)
+*Rys. 22.1.15.2. Fragment graficznego interfejsu użytkownika przedstawiający widok listy użytkowników z zastosowanym filtrowaniem po frazie "Jan".*
 
-![Rys. 22.15.3](img/mok15_accounts_sorted.png)
-*Rys. 22.15.3. Fragment graficznego interfejsu użytkownika przedstawiający widok listy użytkowników z zastosowanym sortowaniem.*
+![Rys. 22.1.15.3](3koncowy/img/mok15_accounts_sorted.png)
+*Rys. 22.1.15.3. Fragment graficznego interfejsu użytkownika przedstawiający widok listy użytkowników z zastosowanym sortowaniem po nazwisku.*
 
 ### MPP.10 - Przeglądanie reguł
 
@@ -633,8 +639,8 @@ TODO (rysunki):
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-![Rys. 22.10.1](img/mpp10_rules_list.png)
-*Rys. 22.10.1. Fragment graficznego interfejsu użytkownika przedstawiający widok listy szablonów reguł.*
+![Rys. 22.2.10.1](3koncowy/img/mpp10_rules_list.png)
+*Rys. 22.2.10.1. Fragment graficznego interfejsu użytkownika przedstawiający widok listy szablonów reguł.*
 
 ### MPP.11 - Tworzenie reguł
 
@@ -741,14 +747,14 @@ TODO (rysunki):
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-![Rys. 22.11.1](img/mpp11_create_rule_form.png)
-*Rys. 22.11.1. Fragment graficznego interfejsu użytkownika przedstawiający formularz tworzenia nowego szablonu reguł.*
+![Rys. 22.2.11.1](3koncowy/img/mpp11_create_rule_form.png)
+*Rys. 22.2.11.1. Fragment graficznego interfejsu użytkownika przedstawiający formularz tworzenia nowego szablonu reguł.*
 
-![Rys. 22.11.2](img/mpp11_create_rule_success.png)
-*Rys. 22.11.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym utworzeniu szablonu reguł.*
+![Rys. 22.2.11.2](3koncowy/img/mpp11_create_rule_success.png)
+*Rys. 22.2.11.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym utworzeniu szablonu reguł.*
 
-![Rys. 22.11.3](img/mpp11_create_rule_invalid.png)
-*Rys. 22.11.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza tworzenia szablonu reguł.*
+![Rys. 22.2.11.3](3koncowy/img/mpp11_create_rule_invalid.png)
+*Rys. 22.2.11.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza tworzenia szablonu reguł.*
 
 ### MPP.12 - Edycja reguł
 
@@ -890,14 +896,14 @@ TODO (rysunki):
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-![Rys. 22.12.1](img/mpp12_edit_rule_form.png)
-*Rys. 22.12.1. Fragment graficznego interfejsu użytkownika przedstawiający formularz edycji szablonu reguł.*
+![Rys. 22.2.12.1](3koncowy/img/mpp12_edit_rule_form.png)
+*Rys. 22.2.12.1. Fragment graficznego interfejsu użytkownika przedstawiający formularz edycji szablonu reguł.*
 
-![Rys. 22.12.2](img/mpp12_edit_rule_success.png)
-*Rys. 22.12.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnej aktualizacji szablonu reguł.*
+![Rys. 22.2.12.2](3koncowy/img/mpp12_edit_rule_success.png)
+*Rys. 22.2.12.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnej aktualizacji szablonu reguł.*
 
-![Rys. 22.12.3](img/mpp12_edit_rule_invalid.png)
-*Rys. 22.12.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza edycji szablonu reguł.*
+![Rys. 22.2.12.3](3koncowy/img/mpp12_edit_rule_invalid.png)
+*Rys. 22.2.12.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza edycji szablonu reguł.*
 
 ### MPP.17 - Usuwanie harmonogramu
 
@@ -1019,11 +1025,11 @@ TODO (rysunki):
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-![Rys. 22.17.1](img/mpp17_schedule_list.png)
-*Rys. 22.17.1. Fragment graficznego interfejsu użytkownika przedstawiający listę harmonogramów z opcją usunięcia.*
+![Rys. 22.2.17.1](3koncowy/img/mpp17_schedule_list.png)
+*Rys. 22.2.17.1. Fragment graficznego interfejsu użytkownika przedstawiający listę harmonogramów z opcją usunięcia.*
 
-![Rys. 22.17.2](img/mpp17_delete_confirm.png)
-*Rys. 22.17.2. Fragment graficznego interfejsu użytkownika przedstawiający dialog potwierdzenia usunięcia harmonogramu.*
+![Rys. 22.2.17.2](3koncowy/img/mpp17_delete_confirm.png)
+*Rys. 22.2.17.2. Fragment graficznego interfejsu użytkownika przedstawiający dialog potwierdzenia usunięcia harmonogramu.*
 
-![Rys. 22.17.3](img/mpp17_delete_success.png)
-*Rys. 22.17.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym usunięciu harmonogramu.*
+![Rys. 22.2.17.3](3koncowy/img/mpp17_delete_success.png)
+*Rys. 22.2.17.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym usunięciu harmonogramu.*
