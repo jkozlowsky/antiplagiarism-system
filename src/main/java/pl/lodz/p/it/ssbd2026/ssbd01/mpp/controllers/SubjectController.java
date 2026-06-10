@@ -14,11 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectManualDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateSubjectTemplateDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherAssignmentDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateSubjectDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -38,6 +33,16 @@ public class SubjectController {
     private final SubjectService subjectService;
     private final SubjectDescriptionTranslationService subjectDescriptionTranslationService;
 
+    @Operation(summary = "Pobierz listę wszystkich przedmiotów (Admin)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
+    })
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
+        return ResponseEntity.ok(subjectService.getAllSubjects());
+    }
+
     @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Pomyślnie zsynchronizowano przedmioty z platformą Gitea"),
@@ -56,7 +61,7 @@ public class SubjectController {
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<List<SubjectDTO>> getTeacherSubjects() {
         return ResponseEntity.ok(subjectService.getTeacherSubjects());
     }
@@ -77,7 +82,7 @@ public class SubjectController {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/users")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER) or hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<List<TeacherAssignmentDTO>> getSubjectUsers(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
     }
@@ -154,7 +159,7 @@ public class SubjectController {
                                               @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
                                               @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto,
                                               @RequestHeader("Accept-Language") String originalLanguage
-                                              ) {
+    ) {
         subjectService.updateSubject(subjectId, dto, ifMatch, originalLanguage);
         return ResponseEntity.noContent().build();
     }
@@ -215,7 +220,7 @@ public class SubjectController {
     })
 
     @PatchMapping("/{subjectId}/archive")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<Void> toggleArchiveSubject(
             @PathVariable UUID subjectId,
             @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch) {
