@@ -44,8 +44,6 @@ public class SubjectStatisticsService {
         } else {
             subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
         }
-        log.warn(String.valueOf(newSubjectAggregate));
-        log.warn(String.valueOf(subject.getSubjectStatistics().getAverageSimilarity()));
 
         subjectRepository.saveAndFlush(subject);
     }
