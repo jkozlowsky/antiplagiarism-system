@@ -25,6 +25,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,6 +94,7 @@ public class ScheduleService  {
         }
 
         schedule.setRulePreset(subject.getRulePreset());
+        schedule.setModifiableUntil(schedule.getScheduleDateTime());
         Schedule savedSchedule = scheduleRepository.saveAndFlush(schedule);
 
         ScheduleDTO dto = scheduleMapper.toScheduleDTO(savedSchedule);
@@ -112,6 +114,10 @@ public class ScheduleService  {
     public void updateSchedule(UUID scheduleId, UpdateScheduleDTO scheduleDto, String userLogin) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
 
+        if (LocalDateTime.now().isAfter(schedule.getModifiableUntil())) {
+            throw new ScheduleModificationDeadlineExceededException();
+        }
+
         if (!scheduleDto.getVersionHash().equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -127,6 +133,7 @@ public class ScheduleService  {
 
         schedule.setScheduleDateTime(scheduleDto.getScheduleDateTime());
         schedule.setTag(scheduleDto.getTag());
+        schedule.setModifiableUntil(scheduleDto.getScheduleDateTime());
 
         scheduleRepository.save(schedule);
     }
@@ -136,6 +143,10 @@ public class ScheduleService  {
     public void deleteSchedule(UUID scheduleId, String userLogin, String versionHash) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(ScheduleNotFoundException::new);
+
+        if (LocalDateTime.now().isAfter(schedule.getModifiableUntil())) {
+            throw new ScheduleModificationDeadlineExceededException();
+        }
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
             throw new ConcurrentUpdateException();

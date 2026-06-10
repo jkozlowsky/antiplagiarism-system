@@ -73,6 +73,7 @@ public class ScheduleControllerGetScheduleIntegrationTest extends BaseTestSetup 
             schedule.setScheduleDateTime(LocalDateTime.now().plusDays(1));
             schedule.setTag("v1.0");
             schedule.setRulePreset(rulePreset);
+            schedule.setModifiableUntil(LocalDateTime.now().plusDays(1));
 
             Schedule savedSchedule = scheduleTestRepository.save(schedule);
             createdScheduleId = savedSchedule.getId();
