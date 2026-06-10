@@ -1817,3 +1817,72 @@ Są nimi kolejno:
 
 Operacje te wykonywane są w granicach transakcji na następującym obiekcie encji JPA:
 - `Subject`
+
+### Blokady optymistyczne 
+
+Ochrona przed współbieżnymi modyfikacjami w Module Poszukiwania Plagiatu (MPP) opiera się na skrócie wersji encji 
+`versionHash` przekazywanym między warstwą prezentacji a warstwą logiki biznesowej. Podejście to zastosowano w 
+przypadkach: MPP.8, MPP.9, MPP.12, MPP.13, MPP.17, MPP.24 i MPP.26.
+
+Każda metoda odczytująca dane modyfikowalne jak `getSubjectDetails(UUID)` lub `getRulePresetsTemplates()` zwraca 
+w obiekcie DTO skrót wyliczany przez `VersionHashService.hashObjectVersion(UUID id, Long version)`. 
+Klient przesyła go z powrotem w nagłówku `If-Match` przy każdym żądaniu zapisu. Metoda modyfikująca weryfikuje zgodność 
+tego skrótu z bieżącą wersją encji. Niezgodność oznacza, że obiekt zmienił się w międzyczasie i skutkuje 
+rzuceniem `ConcurrentUpdateException` oraz wycofaniem transakcji. Adnotacja `@Retryable` zapewnia automatyczne ponowienie 
+próby po upływie czasu określonego w parametrze backoff.
+
+Wiarygodność mechanizmu gwarantuje fakt, że skrót powstaje z pary identyfikatora encji i pola `@Version`. 
+Wartości tej nie da się sfałszować po stronie klienta. Niezależnie od tego JPA samodzielnie weryfikuje pole `@Version` 
+przy każdym wysłaniu kwerend do bazy (flush-u) i w przypadku konfliktu rzuca `OptimisticLockException`.
+
+W przypadkach MPP.8, MPP.24 i MPP.26 zamiast zwykłego `findById` stosowana jest metoda `findByIdForceIncrement` 
+z adnotacją `@Lock(LockModeType.OPTIMISTIC_FORCE_INCREMENT)`:
+
+```java
+@Lock(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
+@Query("SELECT s FROM Subject s WHERE s.id = :id")
+Optional<Subject> findByIdForceIncrement(@Param("id") UUID id);
+```
+Listing 19.27.1. Metoda repozytorium z typem blokady OPTIMISTIC_FORCE_INCREMENT w SubjectRepository.
+
+Jej użycie gwarantuje bezwarunkowe podbicie `@Version` encji `Subject` przy zatwierdzeniu transakcji, niezależnie od tego, 
+czy którekolwiek pole zostało faktycznie zmienione. Każda inna transakcja próbująca zapisać ten sam obiekt z nieaktualną 
+wersją zostanie przez JPA odrzucona. 
+
+Przykład zastosowania widoczny jest na listingach 19.26.1 dla MPP.26 oraz 19.8.1 dla MPP.8.
+
+### Blokady pesymistyczne 
+
+W module MPP zastosowano dwie blokady pesymistyczne, każda adresująca inny rodzaj wyścigu.
+
+Pierwsza dotyczy pobierania harmonogramów do wykonania i znajduje się w metodzie `findSchedulesToExecute(Pageable)` 
+repozytorium `ScheduleRepository`:
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE) 
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")) 
+    @Query(value = "select s from Schedule s where s.scheduleDateTime <= CURRENT_TIMESTAMP and s.isExecuted = false")
+    List<Schedule> findSchedulesToExecute(Pageable pageable);
+```
+Listing 19.28.1. Blokada pesymistyczna w ScheduleRepository.findSchedulesToExecute.
+
+Wartość timeout `-2` odpowiada dyrektywie `SKIP LOCKED`. Wiersz już zablokowany przez inną instancję aplikacji jest pomijany, 
+zamiast blokować bieżące żądanie. Przy wdrożeniu wieloinstancyjnym każdy węzeł pobiera tym samym inny harmonogram, 
+eliminując ryzyko dwukrotnego wygenerowania tego samego raportu. Ostatecznie aplikacja działa w konfiguracji 
+jednoinstancyjnej, jednak blokada pozostaje jako zabezpieczenie na wypadek zmiany tej decyzji. Blokada jest zakładana 
+w ramach transakcji `fetchNextScheduleToExecute()` (MPP.22) i zwalniana po jej zakończeniu.
+
+Druga blokada zabezpiecza operację sprawdzenia kodu przez studenta i zdefiniowana jest w metodzie `findByIdWithLock(UUID)`
+repozytorium `GiteaRepositoryRepository`:
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Repository r WHERE r.id = :id")
+    Optional<pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository> findByIdWithLock(@Param("id") UUID id);
+```
+Listing 19.28.2. Blokada pesymistyczna w GiteaRepositoryRepository.findByIdWithLock.
+
+Metoda wywoływana jest w metodzie `generateStudentReport(...)` klasy `ReportService` (MPP.20). Zablokowanie wiersza 
+`Repository`na czas całej transakcji uniemożliwia równoległe wejście innego wątku, co mogłoby nastąpić, gdyby student 
+wysłał kilka żądań skanowania jednocześnie. Bez tej blokady weryfikacja limitu biletów `countReportsByIdAndCreatedByLogin` 
+byłaby podatna na wyścig i student mógłby przekroczyć dozwoloną liczbę skanowań.
