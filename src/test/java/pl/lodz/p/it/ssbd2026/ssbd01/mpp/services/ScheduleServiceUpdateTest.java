@@ -57,6 +57,7 @@ class ScheduleServiceUpdateTest {
         mockSchedule = new Schedule();
         mockSchedule.setRulePreset(mockRulePreset);
         mockSchedule.setTag("oldTag");
+        mockSchedule.setModifiableUntil(LocalDateTime.now().plusDays(1));
 
         updateScheduleDTO = new UpdateScheduleDTO();
         updateScheduleDTO.setScheduleDateTime(LocalDateTime.now().plusDays(5));

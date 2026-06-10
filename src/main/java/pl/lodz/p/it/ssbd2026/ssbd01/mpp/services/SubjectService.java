@@ -24,6 +24,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAlreadyExistsException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAssignmentNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
@@ -102,23 +103,55 @@ public class SubjectService {
         }
     }
 
+    private void checkIfNotArchived(Subject subject) {
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
+    }
+
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void toggleArchiveSubject(UUID subjectId, String versionHash) {
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        String currentHash = versionHashService.hashObjectVersion(subjectId, subject.getVersion());
+        if (versionHash == null || !versionHash.equals(currentHash)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isOwner = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(authentication.getName()) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+
+        if (!isOwner) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        subject.setArchived(subject.getArchived() == null || !subject.getArchived());
+        subjectRepository.saveAndFlush(subject);
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void syncSubjectWithGitea(UUID subjectId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
+        checkIfNotArchived(subject);
+
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         boolean isOwnerOrEditor = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) &&
                         (a.getSubjectRole() == TeacherSubjectRole.OWNER || a.getSubjectRole() == TeacherSubjectRole.EDITOR));
 
-        if (!isAdmin && !isOwnerOrEditor) {
+        if (!isOwnerOrEditor) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -127,49 +160,43 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public List<SubjectDTO> getTeacherSubjects() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String login = authentication.getName();
-        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
-
         List<SubjectDTO> result = new ArrayList<>();
 
-        if (isAdmin) {
-            List<Subject> subjects = subjectRepository.findAll();
-            List<UUID> subjectIds = subjects.stream()
-                    .map(Subject::getId)
-                    .toList();
+        List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
+        List<UUID> subjectIds = assignments.stream()
+                .map(assignment -> assignment.getSubject().getId())
+                .toList();
 
-            List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
-                    .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
 
-            Map<UUID, String> descriptionMap = translations.stream()
-                    .collect(Collectors.toMap(
-                            SubjectDescriptionTranslation::getId,
-                            SubjectDescriptionTranslation::getTranslatedDescription
-                    ));
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
 
-            Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
-                    .stream()
-                    .collect(Collectors.toMap(
-                            ScheduleRepository.SubjectNextScan::getSubjectId,
-                            ScheduleRepository.SubjectNextScan::getNextScanTime
-                    ));
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
 
-            for (Subject subject : subjects) {
-                String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                LocalDateTime nextScan = nextScanMap.get(subject.getId());
+        for (SubjectAssignment assignment : assignments) {
+            Subject subject = assignment.getSubject();
+            TeacherSubjectRole role = assignment.getSubjectRole();
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
 
-                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription, nextScan));
-            }
-        } else {
-            List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
-            List<UUID> subjectIds = assignments.stream()
-                    .map(assignment -> assignment.getSubject().getId())
-                    .toList();
+            boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
+            boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
 
             List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
                     .findBySubjectIdInAndIsOriginalTrue(subjectIds);
@@ -199,6 +226,7 @@ public class SubjectService {
 
                 result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
             }
+            //result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
         }
 
         return result;
@@ -248,7 +276,7 @@ public class SubjectService {
 
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public SubjectDTO getSubjectDetails(UUID subjectId) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -277,9 +305,6 @@ public class SubjectService {
         String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
         LocalDateTime nextScan = scheduleRepository.findNextScanTimeBySubjectId(subjectId).orElse(null);
 
-        if (hasRole(authorities, AccountConsts.ROLE_ADMIN)) {
-            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules, originalDescription, nextScan);
-        }
 
         if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
             TeacherSubjectRole role = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(login, subjectId)
@@ -495,11 +520,13 @@ public class SubjectService {
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash, String originalLanguage) {
         Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -507,14 +534,13 @@ public class SubjectService {
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         boolean isOwner = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
         boolean isEditor = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.EDITOR);
 
-        if (!isAdmin && !isOwner && !isEditor) {
+        if (!isOwner && !isEditor) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -541,8 +567,31 @@ public class SubjectService {
             preset.setEnableNormalization(dto.rules().enableNormalization());
             preset.setIsPreset(false);
         }
+        if (!isOwner && isEditor) {
+            boolean isTeacherListModified = false;
 
-        if (isAdmin || isOwner) {
+            if (dto.teachers() != null) {
+                if (dto.teachers().size() != subject.getSubjectAssignmentList().size()) {
+                    isTeacherListModified = true;
+                } else {
+                    for (TeacherAssignmentDTO incoming : dto.teachers()) {
+                        boolean match = subject.getSubjectAssignmentList().stream()
+                                .anyMatch(existing -> existing.getTeacher().getAccount().getLogin().equals(incoming.login()) &&
+                                        existing.getSubjectRole() == incoming.role());
+                        if (!match) {
+                            isTeacherListModified = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isTeacherListModified) {
+                throw new SubjectAccessDeniedException();
+            }
+        }
+
+        if (isOwner) {
             List<SubjectAssignment> currentAssignments = subject.getSubjectAssignmentList();
 
             List<SubjectAssignment> assignmentsToRemove = currentAssignments.stream()
@@ -590,6 +639,8 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -645,6 +696,8 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findByIdForceIncrement(subjectId).orElseThrow(SubjectNotFoundException::new);
 
+        checkIfNotArchived(subject);
+
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -674,8 +727,47 @@ public class SubjectService {
         subjectAssignmentRepository.saveAndFlush(newOwnerAssignment);
     }
 
+
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getAllSubjects() {
+        List<SubjectDTO> result = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findAll();
+
+        List<UUID> subjectIds = subjects.stream()
+                .map(Subject::getId)
+                .toList();
+
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
+        for (Subject subject : subjects) {
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+            result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription, nextScan));
+        }
+
+        return result;
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER) or hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public List<TeacherAssignmentDTO> getSubjectUsers(UUID subjectId) {
         Subject subject = subjectRepository.findById(subjectId)

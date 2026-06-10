@@ -17,6 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
@@ -24,6 +25,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,6 +45,15 @@ public class ScheduleService  {
     private final ScheduleMapper scheduleMapper;
     private final VersionHashService versionHashService;
 
+    private void checkIfNotArchived(Subject subject) {
+        if (Boolean.TRUE.equals(subject.getArchived())) {
+            throw new SubjectArchivedException();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<ScheduleDTO> getSchedules(UUID subjectId) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
@@ -69,6 +80,8 @@ public class ScheduleService  {
     public ScheduleDTO createSchedule(UUID subjectId, Schedule schedule, String teacherLogin) {
         Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
 
+        checkIfNotArchived(subject);
+
         if (!subjectAssignmentRepository.hasEditPermissions(subject, teacherLogin)) {
             throw new NoPermissionForThisSubjectException();
         }
@@ -78,6 +91,7 @@ public class ScheduleService  {
         }
 
         schedule.setRulePreset(subject.getRulePreset());
+        schedule.setModifiableUntil(schedule.getScheduleDateTime());
         Schedule savedSchedule = scheduleRepository.saveAndFlush(schedule);
 
         ScheduleDTO dto = scheduleMapper.toScheduleDTO(savedSchedule);
@@ -97,6 +111,10 @@ public class ScheduleService  {
     public void updateSchedule(UUID scheduleId, UpdateScheduleDTO scheduleDto, String userLogin) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new);
 
+        if (LocalDateTime.now().isAfter(schedule.getModifiableUntil())) {
+            throw new ScheduleModificationDeadlineExceededException();
+        }
+
         if (!scheduleDto.getVersionHash().equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
@@ -104,12 +122,15 @@ public class ScheduleService  {
         Subject subject = schedule.getRulePreset().getSubject();
         boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
 
+        checkIfNotArchived(subject);
+
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();
         }
 
         schedule.setScheduleDateTime(scheduleDto.getScheduleDateTime());
         schedule.setTag(scheduleDto.getTag());
+        schedule.setModifiableUntil(scheduleDto.getScheduleDateTime());
 
         scheduleRepository.save(schedule);
     }
@@ -120,12 +141,18 @@ public class ScheduleService  {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(ScheduleNotFoundException::new);
 
+        if (LocalDateTime.now().isAfter(schedule.getModifiableUntil())) {
+            throw new ScheduleModificationDeadlineExceededException();
+        }
+
         if (!versionHash.equals(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion()))) {
             throw new ConcurrentUpdateException();
         }
 
         Subject subject = schedule.getRulePreset().getSubject();
         boolean hasPermission = subjectAssignmentRepository.hasEditPermissions(subject, userLogin);
+
+        checkIfNotArchived(subject);
 
         if (!hasPermission) {
             throw new NoPermissionToEditScheduleException();

@@ -52,6 +52,7 @@ public class UpdateRulePresetServiceTest {
         existingRule.setEnableNormalization(false);
 
         ReportLevelDict newRaportLevel = new ReportLevelDict();
+        ReflectionTestUtils.setField(newRaportLevel, "id", UUID.randomUUID());
         newRaportLevel.setName("NEW_LEVEL");
 
         UpdateRulePresetDTO dto = new UpdateRulePresetDTO("NEW_LEVEL", 15, 20, true);
@@ -66,7 +67,8 @@ public class UpdateRulePresetServiceTest {
                 () -> assertEquals(15, existingRule.getStudentTicketCount()),
                 () -> assertEquals(20, existingRule.getMinimumTokensMatch()),
                 () -> assertTrue(existingRule.getEnableNormalization()),
-                () -> assertEquals(newRaportLevel, existingRule.getRaportLevel())
+                () -> assertNotNull(existingRule.getRaportLevel(), "Raport level nie powinien być null"),
+                () -> assertEquals("NEW_LEVEL", existingRule.getRaportLevel().getName())
         );
         verify(ruleRepository, times(1)).saveAndFlush(existingRule);
     }

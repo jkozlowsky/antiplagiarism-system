@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -57,9 +57,10 @@ class SubjectServiceUpdateTest {
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "id", subjectId);
         org.springframework.test.util.ReflectionTestUtils.setField(subject, "version", 1);
 
+        subject.setArchived(false);
+
         languageDict = new LanguageDict();
         languageDict.setLanguage(ORIGINAL_LANGUAGE);
-
 
         Account account = new Account();
         account.setLogin("test_owner");
@@ -78,22 +79,21 @@ class SubjectServiceUpdateTest {
     }
 
     private void mockSecurityContext(String username, String role) {
-        Authentication authentication = mock(Authentication.class);
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        when(authentication.getName()).thenReturn(username);
-        doReturn(Collections.singletonList(new SimpleGrantedAuthority(role))).when(authentication).getAuthorities();
     }
 
     @Test
-    @DisplayName("POS01: Administrator powinien pomyślnie zaktualizować przedmiot")
-    void POS01_AdminShouldUpdateSubjectSuccessfully() {
-        mockSecurityContext("admin_user", AccountConsts.ROLE_ADMIN);
+    @DisplayName("POS01: Prowadzący (Właściciel) powinien pomyślnie zaktualizować przedmiot")
+    void POS01_TeacherOwnerShouldUpdateSubjectSuccessfully() {
+        mockSecurityContext("test_owner", AccountConsts.ROLE_TEACHER);
         when(subjectRepository.findByIdForceIncrement(subjectId)).thenReturn(Optional.of(subject));
         when(versionHashService.hashObjectVersion(subjectId, 1)).thenReturn(VALID_HASH);
         when(languageDictRepository.findByLanguage(ORIGINAL_LANGUAGE)).thenReturn(Optional.ofNullable(languageDict));
-
 
         UpdateSubjectDTO dto = new UpdateSubjectDTO("New Name", "Desc",
                 List.of(new TeacherAssignmentDTO("test_owner", TeacherSubjectRole.OWNER)), null);

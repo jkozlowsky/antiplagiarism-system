@@ -4,6 +4,7 @@ import jakarta.persistence.QueryHint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,7 +26,7 @@ import java.util.UUID;
 import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.EMAIL_LENGTH;
 import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.LOGIN_LENGTH;
 
-
+@JaversSpringDataAuditable
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mokTransactionManager")
 public interface AccountRepository extends AbstractRepository<Account> {

@@ -77,6 +77,7 @@ public class GenerateStudentReportServiceTest {
         rulePreset.setEnableNormalization(true);
 
         subject = new Subject();
+        subject.setArchived(false);
         subject.setOrganizationName("IAS64USECASE55");
         subject.setName("IAS64");
         subject.setRulePreset(rulePreset);

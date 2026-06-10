@@ -105,26 +105,28 @@ class SubjectServiceBrowsingTest {
         lenient().doReturn(Collections.singletonList(authority)).when(authentication).getAuthorities();
     }
 
-    @Test
-    @DisplayName("POS01_getSubjectDetails: Admin powinien otrzymać detale przedmiotu z pełnymi prawami")
-    void POS01_AdminShouldGetSubjectDetailsWithAllPermissions() {
-        mockSecurityContext("test_admin", "ADMIN");
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        lenient().when(versionHashService.hashObjectVersion(any(), any())).thenReturn(validHash);
 
-        SubjectDTO mockedDto = mock(SubjectDTO.class);
-        when(mockedDto.canEdit()).thenReturn(true);
-        when(mockedDto.canManageTeachers()).thenReturn(true);
-        when(mockedDto.canViewStats()).thenReturn(true);
-
-        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null, "", null)).thenReturn(mockedDto);
-
-        SubjectDTO result = subjectService.getSubjectDetails(subjectId);
-
-        assertTrue(result.canEdit());
-        assertTrue(result.canManageTeachers());
-        assertTrue(result.canViewStats());
-    }
+    // no teraz admin juz nie może xDDD
+//    @Test
+//    @DisplayName("POS01_getSubjectDetails: Admin powinien otrzymać detale przedmiotu z pełnymi prawami")
+//    void POS01_AdminShouldGetSubjectDetailsWithAllPermissions() {
+//        mockSecurityContext("test_admin", "ADMIN");
+//        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+//        lenient().when(versionHashService.hashObjectVersion(any(), any())).thenReturn(validHash);
+//
+//        SubjectDTO mockedDto = mock(SubjectDTO.class);
+//        when(mockedDto.canEdit()).thenReturn(true);
+//        when(mockedDto.canManageTeachers()).thenReturn(true);
+//        when(mockedDto.canViewStats()).thenReturn(true);
+//
+//        when(subjectMapper.toSubjectDTO(subject, validHash, true, true, true, null, null, "", null)).thenReturn(mockedDto);
+//
+//        SubjectDTO result = subjectService.getSubjectDetails(subjectId);
+//
+//        assertTrue(result.canEdit());
+//        assertTrue(result.canManageTeachers());
+//        assertTrue(result.canViewStats());
+//    }
 
     @Test
     @DisplayName("POS02_getSubjectDetails: Nauczyciel VIEWER nie ma praw do edycji i zarządzania")
