@@ -277,6 +277,530 @@ Rysunek 22.1.3.7. Interfejs graficzny użytkownika przedstawiający stronę potw
 
 Rysunek 22.1.3.8. Interfejs graficzny użytkownika przedstawiający stronę z komunikatem o pomyślnym resecie hasła.
 
+### MOK.4 - Zablokuj konto użytkownika
+
+**Role uprawnione:** Administrator (`ADMIN`)
+
+```json
+"/account/block/{id}": {
+      "post": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Zablokuj konto",
+        "description": "Pozwala administratorowi ręcznie zablokować konto użytkownika. Wymaga nagłówka If-Match.",
+        "operationId": "blockUserAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Konto zostało pomyślnie zablokowane"
+          },
+          "404": {
+            "description": "Nie znaleziono konta",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono konta o podanym ID."
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "text/plain": {
+                "example": "Konto jest już zablokowane."
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+
+Listing 22.1.4.1. Dokumentacja OpenApi dla metody POST `/account/block/{id}`.
+
+
+**Sekwencja wywołań:**
+1. AccountRepository.blockUserAccount(UUID, String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+2. AccountService.blockUserAccount(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+3. AccountRepository.findById(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+4. AccountNotFoundException.AccountNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. MokRefreshRepository.refresh(AbstractEntity)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+7. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+9. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+10. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+12. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+13. Account.getIsBlocked()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. AccountIsBlockedException.AccountIsBlockedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+15. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+16. Account.setIsBlocked(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+18. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
+19. Account.getEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+20. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. Account.getLanguageVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. LanguageDict.getLanguage()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. EmailService.sendAccountIsBlockedInfo(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+24. Translator.translateForUser(String, String, Object...)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.config.i18n)
+25. EmailService.sendEmail(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+26. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Listing 22.1.4.2. Sekwencja wywołań dla blockUserAccount.
+
+**Fragmenty graficznego interfejsu użytkownika:**
+
+![Rys. 22.4.1.](img/mok4_1.png)
+*Rys. 22.4.1. Widok danego konta i przycisku do blokowania konta.*
+
+![Rys. 22.4.2.](img/mok4_2.png)
+*Rys. 22.4.2. Widok potwierdzenia akcji blokowania konta.*
+
+![Rys. 22.4.3.](img/mok4_3.png)
+*Rys. 22.4.2. Widok danego konta po akcji blokowania konta.*
+
+### MOK.5 - Odblokuj konto użytkownika
+
+**Role uprawnione:** Administrator (`ADMIN`)
+
+```json
+"/account/unblock/{id}": {
+      "post": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Odblokuj konto",
+        "description": "Pozwala administratorowi ręcznie odblokować zablokowane konto użytkownika. Wymaga nagłówka If-Match.",
+        "operationId": "unblockUserAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Konto zostało pomyślnie odblokowane"
+          },
+          "404": {
+            "description": "Nie znaleziono konta",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono konta o podanym ID."
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "text/plain": {
+                "example": "Konto jest już odblokowane."
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    }
+```
+
+Listing 22.1.5.1. Dokumentacja OpenApi dla metody POST `/account/unblock/{id}`.
+
+
+**Sekwencja wywołań:**
+1. AccountRepository.unblockUserAccount(UUID, String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+2. AccountService.unblockUserAccount(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+3. AccountRepository.findById(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+4. AccountNotFoundException.AccountNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. MokRefreshRepository.refresh(AbstractEntity)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+7. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+9. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+10. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+12. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+13. Account.getIsBlocked()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. AccountIsNotBlockedException.AccountIsNotBlockedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+15. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+16. Account.setIsBlocked(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+18. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
+19. Account.getEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+20. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. Account.getLanguageVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. LanguageDict.getLanguage()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. EmailService.sendAccountIsUnblockedInfo(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+24. Translator.translateForUser(String, String, Object...)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.config.i18n)
+25. EmailService.sendEmail(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+26. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Listing 22.1.5.2. Sekwencja wywołań dla unblockUserAccount.
+
+
+**Fragmenty graficznego interfejsu użytkownika:**
+
+![Rys. 22.5.1.](img/mok5_1.png)
+*Rys. 22.5.1. Widok danego konta i przycisku do odblokowania konta.*
+
+![Rys. 22.5.2.](img/mok5_2.png)
+*Rys. 22.5.2. Widok potwierdzenia akcji odblokowania konta.*
+
+![Rys. 22.5.3.](img/mok5_3.png) //uzupelnic
+*Rys. 22.5.2. Widok danego konta po akcji odblokowania konta.*
+
+
+### MOK.10 - Zmień adres e-mail własnego konta
+
+**Role uprawnione:** Administrator, Prowadzący, Prowadzący dodatkowy, Student
+
+Część z wysłaniem linku do zmiany adresu e-mail własnego konta:
+
+```json
+"/account/email/change": {
+      "post": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Zarządaj zmiany e-maila",
+        "description": "Inicjuje proces zmiany własnego adresu e-mail przez wysłanie tokenu autoryzacyjnego.",
+        "operationId": "requestEmailChange",
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Proces zainicjowany, wiadomość e-mail została wysłana"
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    }
+```
+
+Listing 22.1.10.1. Dokumentacja OpenApi dla metody POST `/account/email/change`.
+
+
+Część z potwierdzeniem zmiany adresu e-mail za pomocą linku:
+
+```json
+"/account/email/confirm": {
+      "post": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Potwierdź zmianę e-maila",
+        "description": "Weryfikuje token i aktualizuje adres na nowy.",
+        "operationId": "confirmEmailChange",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnEmailChangeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Adres e-mail został zmieniony poprawnie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "text/plain": {
+                "example": "Podany nowy adres e-mail jest już zajęty."
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    }
+```
+
+Listing 22.1.10.2. Dokumentacja OpenApi dla metody POST `/account/email/confirm`.
+
+**Sekwencja wywołań - wysłanie wiadomości mailowej z linkiem do zmiany e-mail:**
+1. AccountController.requestEmailChange(Authentication)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
+2. AccountService.createUrlOwnEmailChange(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+3. AccountRepository.findByLogin(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+4. AccountNotFoundException.AccountNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. OneTimeTokenEnt.OneTimeTokenEnt()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. OneTimeTokenEnt.setTokenValue(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. OneTimeTokenEnt.setUsername(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. OneTimeTokenEnt.setExpiresAt(LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. OneTimeTokenEnt.setTokenType(OneTimeTokenType)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. OneTimeTokenEnt.setIsUsed(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+13. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
+14. Account.getEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. Account.getLanguageVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. LanguageDict.getLanguage()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+18. EmailService.sendUrlToChangeOwnEmail(String, String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+19. Translator.translateForUser(String, String, Object...)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.config.i18n)
+20. EmailService.sendEmail(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+21. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Listing 22.1.10.3. Sekwencja wywołań dla requestEmailChange.
+
+
+**Sekwencja wywołań - potwierdzenie zmiany adresu e-mail poprzez dostarczony link:**
+1. AccountController.confirmEmailChange(OwnEmailChangeDTO)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
+2. OwnEmailChangeDTO.token()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+3. OwnEmailChangeDTO.password()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+4. OwnEmailChangeDTO.newEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+5. AccountService.confirmOwnEmailChange(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+6. OneTimeTokenRepository.findByTokenValueAndTokenTypeAndIsUsedIsFalseAndExpiresAtAfter(String, OneTimeTokenType, LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+7. OneTimeTokenInvalidException.OneTimeTokenInvalidException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+8. OneTimeTokenEnt.getUsername()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. AccountRepository.findByLogin(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+10. AccountNotFoundException.AccountNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. Account.getPasswordHash()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. InvalidCredentialsProvidedException.InvalidCredentialsProvidedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+13. Account.getEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. Account.setEmail(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. OneTimeTokenEnt.setIsUsed(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. EmailRevertTokenEnt.EmailRevertTokenEnt()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17.  EmailRevertTokenEnt.setTokenValue(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+18. Account.getLogin()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+19. EmailRevertTokenEnt.setUsername(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+20. EmailRevertTokenEnt.setOldEmail(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. EmailRevertTokenEnt.setExpiresAt(LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. EmailRevertTokenEnt.setUsed(boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. JpaRepository.saveAndFlush(S)(3 usages)  (org.springframework.data.jpa.repository)
+24. Account.getLanguageVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+25. LanguageDict.getLanguage()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+26. EmailService.sendComebackEmailAddressLink(String, String, String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+27. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Listing 22.1.10.4. Sekwencja wywołań dla confirmEmailChange.
+
+![Rys. 22.10.1.](img/mok10_1.png) //uzupelnic
+*Rys. 22.10.1. .*
+
+![Rys. 22.10.2.](img/mok10_2.png)
+*Rys. 22.10.2. .*
+
+![Rys. 22.10.3.](img/mok10_3.png)
+*Rys. 22.10.2. .*
+
 ### MOK.12 Edytuj dane własnego konta
 
 Role które mają dostęp: prowadzący, administrator, student.
@@ -427,6 +951,8 @@ Rysunek 22.1.12.4. Interfejs graficzny użytkownika przedstawiający stronę edy
 ![1.12.5](3koncowy/img/22.1.12.5.png)
 
 Rysunek 22.1.12.5. Interfejs graficzny użytkownika przedstawiający stronę edycji swoich danych z komunikatem o pomyślnej zmianie. 
+
+
 
 ### MOK.13 Edytuj dane konta innego użytkownika
 
