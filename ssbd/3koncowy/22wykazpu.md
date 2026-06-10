@@ -567,7 +567,7 @@ Listing 22.1.5.2. Sekwencja wywołań dla unblockUserAccount.
 ![Rys. 22.5.2.](img/mok5_2.png)
 *Rys. 22.5.2. Widok potwierdzenia akcji odblokowania konta.*
 
-![Rys. 22.5.3.](img/mok5_3.png) //uzupelnic
+![Rys. 22.5.3.](img/mok5_3.png)
 *Rys. 22.5.2. Widok danego konta po akcji odblokowania konta.*
 
 
@@ -792,14 +792,23 @@ Listing 22.1.10.3. Sekwencja wywołań dla requestEmailChange.
 
 Listing 22.1.10.4. Sekwencja wywołań dla confirmEmailChange.
 
-![Rys. 22.10.1.](img/mok10_1.png) //uzupelnic
-*Rys. 22.10.1. .*
+![Rys. 22.10.1.](img/mok10_1.png)
+*Rys. 22.10.1. Widok edycji swojego konta wraz z guzikiem do zmiany adresu e-mail.*
 
 ![Rys. 22.10.2.](img/mok10_2.png)
-*Rys. 22.10.2. .*
+*Rys. 22.10.2. Widok po naciśnięciu guzika do zmiany adresu e-mail.*
 
 ![Rys. 22.10.3.](img/mok10_3.png)
-*Rys. 22.10.2. .*
+*Rys. 22.10.3. Widok wiadomości z linkiem do zmiany adresu e-mail.*
+
+![Rys. 22.10.4.](img/mok10_4.png)
+*Rys. 22.10.4. Widok po naciśnięciu opcji do wysłania wiadomości z linkiem ponownie.*
+
+![Rys. 22.10.5.](img/mok10_5.png)
+*Rys. 22.10.5. Widok po wejściu w link do zmiany adresu e-mail.*
+
+![Rys. 22.10.6.](img/mok10_6.png)
+*Rys. 22.10.6. Widok zatwierdzania nowego adresu e-mail oraz wprowadzeniu obecnego hasła.*
 
 ### MOK.12 Edytuj dane własnego konta
 
