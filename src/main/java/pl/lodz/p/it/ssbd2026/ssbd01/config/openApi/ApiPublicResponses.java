@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
         @ApiResponse(responseCode = "500", description = "Wewnętrzny błąd serwera",
                 content = @Content(mediaType = "text/plain", examples = @ExampleObject("Exception: Wystąpił nieoczekiwany błąd serwera"))),
         @ApiResponse(responseCode = "503", description = "Niedostępność usługi bazy danych",
-                content = @Content(mediaType = "text/plain", examples = @ExampleObject("could not execute statement; SQL [n/a]; constraint [null]")))
+                content = @Content(mediaType = "text/plain", examples = @ExampleObject("Service is temporarily unavailable. Please try again later.")))
 })
 public @interface ApiPublicResponses {
 }

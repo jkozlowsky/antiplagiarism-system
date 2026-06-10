@@ -48,6 +48,7 @@ services:
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,loggers
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GITEA_URL=http://gitea:3000
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_credentials
     secrets:
       - pg_password
       - mok_password
@@ -56,8 +57,11 @@ services:
       - jwt_secret
       - frontend_url
       - gitea_token
+      - google_credentials
     volumes:
       - ../logs:/app/logs
+      - ../repos:/app/repos
+      - ../reports:/app/reports
     networks:
       - proxy-backend
       - backend-db
@@ -265,3 +269,5 @@ secrets:
     file: ./secrets/gitea_db_password.txt
   gitea_token:
     file: ./secrets/gitea_token.txt
+  google_credentials:
+    file: ./secrets/google_credentials.json

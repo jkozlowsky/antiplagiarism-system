@@ -1,0 +1,1 @@
+ALTER TABLE repository DROP COLUMN ticket_count;

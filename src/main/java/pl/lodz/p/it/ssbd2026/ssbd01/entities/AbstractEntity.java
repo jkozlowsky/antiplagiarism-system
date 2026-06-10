@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -22,18 +23,22 @@ public abstract class AbstractEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @DiffIgnore
     @Version
     @Column(name = "version", nullable = false)
     private Integer version;
 
+    @DiffIgnore
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @DiffIgnore
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @DiffIgnore
     @CreatedBy
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -41,6 +46,7 @@ public abstract class AbstractEntity {
     @JoinColumn(name = "created_by", updatable = false)
     private Account createdBy;
 
+    @DiffIgnore
     @LastModifiedBy
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

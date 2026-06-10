@@ -82,7 +82,7 @@ public class PasswordResetService {
         tokenRepository.saveAndFlush(token);
 
         emailService.sendResetPasswordEmail(email, rawToken, accountOpt.get().getLanguageVersion().getLanguage());
-    } //TODO: i18n
+    }
 
     /**
      * @param passwordHash: skrót nowego hasła użtkownika
@@ -100,7 +100,7 @@ public class PasswordResetService {
         //to występuje optimisticLockException którego nie mogę obejść.
         //Na razie zostawię je tutaj zakomentowane, ale muszę zapytać kogoś z doktorów co tu się
         // dzieje, bo prawie zwariowałem zanim naprawiłem
-//        tokenRepository.save(tokenEntity);
+        tokenRepository.saveAndFlush(tokenEntity);
 
         Account account = accountRepository.findByEmail(tokenEntity.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Account associated with that email is not found"));
@@ -119,8 +119,7 @@ public class PasswordResetService {
         account.setPasswordHash(newHash);
         account.getPasswordHistoryList().add(new PasswordHistory(account, newHash));
 
-//        account.setTokenVersion(account.getTokenVersion() + 1);
-//        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
     }
 
     private String hashToken(String token) {

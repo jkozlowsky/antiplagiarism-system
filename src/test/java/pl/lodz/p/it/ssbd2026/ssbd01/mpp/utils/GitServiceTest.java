@@ -3,7 +3,6 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JGitException;
 
 import java.io.File;
 
@@ -47,7 +45,7 @@ class GitServiceTest {
 
             when(cloneCommand.call()).thenReturn(gitMock);
 
-            assertDoesNotThrow(() -> GitService.cloneTag(repoUrl, tagName, localPath));
+            assertDoesNotThrow(() -> GitService.cloneTag(repoUrl, tagName, localPath, ""));
 
             verify(cloneCommand).setURI(repoUrl);
             verify(cloneCommand).setDirectory(localPath);
@@ -74,7 +72,7 @@ class GitServiceTest {
             when(cloneCommand.call()).thenThrow(new InvalidRemoteException("Remote not found"));
 
             assertThrows(GitCloneException.class, () ->
-                    GitService.cloneTag(repoUrl, tagName, localPath)
+                    GitService.cloneTag(repoUrl, tagName, localPath, "")
             );
         }
     }

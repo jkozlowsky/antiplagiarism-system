@@ -27,6 +27,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -115,20 +118,42 @@ public class AccountController {
     }
 
     @Operation(summary = "Pobierz wszystkie konta", description = "Pobiera stronicowaną listę wszystkich kont, opcjonalnie filtrowaną po frazie.")
-    @ApiResponse(responseCode = "200", description = "Poprawnie pobrano listę kont")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Poprawnie pobrano stronicowaną listę kont z hiperłączami"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Nie znaleziono zasobu",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Nie znaleziono konta administratora wykonującego zapytanie.")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Błąd blokady optymistycznej",
+                    content = @Content(
+                            mediaType = "text/plain",
+                            examples = @ExampleObject(value = "Konto zostało zmodyfikowane w międzyczasie, spróbuj ponownie.")
+                    )
+            )
+    })
     @GetMapping
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @ResponseStatus(HttpStatus.OK)
-    public Page<AccountWithAccessLevelsDTO> getAllAccounts(
+    public PagedModel<EntityModel<AccountWithAccessLevelsDTO>> getAllAccounts(
             @RequestParam(required = false, name = "page") Integer page,
             @RequestParam(required = false, name = "size") Integer size,
             @RequestParam(required = false, name = "sortBy") String sortBy,
             @RequestParam(required = false, name = "sortDesc") Boolean sortDesc,
             @RequestParam(required = false, name = "phrase") String phrase,
-            Principal principal) {
+            Principal principal,
+            PagedResourcesAssembler<AccountWithAccessLevelsDTO> pagedResourcesAssembler) {
 
         String username = principal.getName();
-        Page<Account> accountPage;
+        Page<AccountWithAccessLevelsDTO> accountPage;
 
         if (phrase == null || phrase.trim().isEmpty()) {
             accountPage = accountService.getAllAccounts(page, size, sortBy, sortDesc, username);
@@ -136,10 +161,7 @@ public class AccountController {
             accountPage = accountService.searchAccounts(phrase, page, size, sortBy, sortDesc, username);
         }
 
-        return accountPage.map(account -> accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                account,
-                versionHashService.hashObjectVersion(account.getId(), account.getVersion())
-        ));
+        return pagedResourcesAssembler.toModel(accountPage);
     }
 
     @Operation(summary = "Zarejestruj konto", description = "Tworzy nowe konto w systemie na podstawie przesłanych danych.")
@@ -411,6 +433,20 @@ public class AccountController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> unblockAccountViaToken(@RequestParam String token) {
         accountService.unblockAccountViaEmailToken(token);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Zmień język konta", description = "Umożliwia zmianę języka w encji konta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Język został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono konta", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono użytkownika."))),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanej wersji językowej", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono słownika językowego.")))
+    })
+    @PostMapping("/language")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Void> changeLanguage(@RequestParam String language, Principal principal) {
+        accountService.changeAccountLanguage(language, principal.getName());
         return ResponseEntity.noContent().build();
     }
 }

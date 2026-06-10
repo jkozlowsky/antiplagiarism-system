@@ -47,7 +47,6 @@ public class JPlagService {
             throw new ReportFileException(e);
         } catch (ExitException e) {
             log.error("JPlag Exit Reason: {}", e.getMessage());
-            log.error("JPlag Exit Reason: {}", absoluteSubmissionDir.getPath());
             throw new JplagScanException(e);
         }
 

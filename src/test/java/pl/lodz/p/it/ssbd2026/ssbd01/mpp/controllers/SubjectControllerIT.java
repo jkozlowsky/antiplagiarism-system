@@ -88,10 +88,10 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void createSubjectManual_Success() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org-manual", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/io",
+                "Opis przedmiotu",
                 rules, null
         );
 
@@ -109,7 +109,7 @@ class SubjectControllerIT extends BaseTestSetup {
     void createSubjectTemplate_Success() {
         CreateSubjectTemplateDTO validTemplateDto = new CreateSubjectTemplateDTO(
                 "Bazy Danych", "bd-org-template", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/bd",
+                "Opis przedmiotu",
                 templateId, "PEŁNY_WGLĄD", null
         );
 
@@ -137,10 +137,10 @@ class SubjectControllerIT extends BaseTestSetup {
 
     @Test
     void createSubject_ForbiddenForStudent() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, "hash123");
         CreateSubjectManualDTO validDto = new CreateSubjectManualDTO(
                 "Inżynieria Oprogramowania", "io-org", "2026",
-                "Opis przedmiotu", "https://gitea.example.com/io",
+                "Opis przedmiotu",
                 rules, null
         );
 
@@ -238,7 +238,6 @@ class SubjectControllerIT extends BaseTestSetup {
                 targetRepo = new Repository();
                 targetRepo.setRepositoryName("test-repo");
                 targetRepo.setSubject(subject);
-                targetRepo.setTicketCount(10);
                 targetRepo.setStudentList(new ArrayList<>());
             } else {
                 targetRepo = repos.get(0);

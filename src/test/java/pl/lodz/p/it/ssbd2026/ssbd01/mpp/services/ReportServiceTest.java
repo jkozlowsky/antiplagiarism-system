@@ -53,7 +53,7 @@ public class ReportServiceTest {
         repo.setStudentList(List.of(student));
 
         ReportLevelDict levelDict = new ReportLevelDict();
-        levelDict.setName("FULL_VIEW");
+        levelDict.setName("ONLY_PERCENTAGES");
 
         RulePreset preset = new RulePreset();
         preset.setRaportLevel(levelDict);
@@ -72,20 +72,27 @@ public class ReportServiceTest {
     }
 
     @Test
-    @DisplayName("Pobranie pełnych detali (FULL_VIEW) i anonimizacja drugiego studenta")
+    @DisplayName("Pobranie pełnych detali i anonimizacja drugiego studenta")
     void getStudentReportDetails_FullView_Success() {
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
-        StudentReportDetailsDTO result = reportService.getStudentReportDetails(testReport.getId(), STUDENT_LOGIN);
+        List<TeacherComparisonDTO> mockComparisons = List.of(
+                new TeacherComparisonDTO("Repo_jkowalski", "Repo_Innego_Studenta", 85.5, 40.2, 120.0, null, null, null, null, List.of(), List.of(), List.of())
+        );
 
-        assertNotNull(result);
-        assertEquals(1, result.matches().size());
+        try (var mockedParser = mockStatic(JplagReportParser.class)) {
+            mockedParser.when(() -> JplagReportParser.parseFullTeacherReport(anyString())).thenReturn(mockComparisons);
 
-        FilteredComparisonDTO match = result.matches().get(0);
-        assertEquals("Repozytorium Innego Studenta", match.matchedWith());
-        assertEquals(85.5, match.maxSimilarity());
-        assertEquals(40.2, match.averageSimilarity());
-        assertEquals(120.0, match.longestMatch());
+            StudentReportDetailsDTO result = reportService.getStudentReportDetails(testReport.getId(), STUDENT_LOGIN);
+
+            assertNotNull(result);
+            assertEquals(1, result.matches().size());
+
+            FilteredComparisonDTO match = result.matches().get(0);
+            assertEquals("ANONYMIZED", match.getMatchedWith());
+            assertEquals(85.5, match.getStudentSimilarity());
+            assertEquals(40.2, match.getAverageSimilarity());
+        }
     }
 
     @Test
@@ -99,30 +106,28 @@ public class ReportServiceTest {
         assertEquals(1, result.matches().size());
         FilteredComparisonDTO match = result.matches().get(0);
 
-        assertNotNull(match.maxSimilarity());
-        assertNull(match.averageSimilarity());
-        assertNull(match.longestMatch());
+        assertNotNull(match.getStudentSimilarity());
+        assertNull(match.getAverageSimilarity());
     }
 
     @Test
-    @DisplayName("Rzucenie wyjątku w przypadku braku dostępu do repozytorium w tym raporcie")
+    @DisplayName("Rzucenie wyjątku w przypadku braku dostępu do repozytorium")
     void getStudentReportDetails_ThrowsAccessDenied_WhenNoRepositoryMatch() {
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
-
-        assertThrows(SubjectAccessDeniedException.class, () -> {
-            reportService.getStudentReportDetails(testReport.getId(), "obcy_student");
-        });
+        assertThrows(SubjectAccessDeniedException.class, () -> reportService.getStudentReportDetails(testReport.getId(), "obcy_student"));
     }
 
     @Test
-    @DisplayName("Rzucenie wyjątku gdy poziom to HIDDEN")
-    void getStudentReportDetails_ThrowsAccessDenied_WhenLevelIsNothing() {
-        testReport.getSubject().getRulePreset().getRaportLevel().setName("HIDDEN");
+    @DisplayName("Sprawdzenie, czy przy poziomie NOTHING lista jest pusta")
+    void getStudentReportDetails_ReturnsEmptyList_WhenLevelIsNothing() {
+        testReport.getSubject().getRulePreset().getRaportLevel().setName("NOTHING");
         when(reportsRepository.findById(testReport.getId())).thenReturn(Optional.of(testReport));
 
-        assertThrows(SubjectAccessDeniedException.class, () -> {
-            reportService.getStudentReportDetails(testReport.getId(), STUDENT_LOGIN);
-        });
+        StudentReportDetailsDTO result = reportService.getStudentReportDetails(testReport.getId(), STUDENT_LOGIN);
+
+        assertNotNull(result);
+        assertTrue(result.matches().isEmpty());
+        assertEquals("NOTHING", result.raportLevel());
     }
 
     @Test

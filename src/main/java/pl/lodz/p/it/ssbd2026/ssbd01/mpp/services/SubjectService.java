@@ -17,14 +17,15 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RepositoryMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.SubjectListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ConcurrentUpdateException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GiteaIntegrationException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.raportLevel.RaportLevelDictNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset.RulePresetTemplateNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAlreadyExistsException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectAssignmentNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectMustHaveOwnerException;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
@@ -34,7 +35,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -55,10 +58,14 @@ public class SubjectService {
     private final RuleRepository ruleRepository;
     private final StudentRepository studentRepository;
     private final RepositoryMapper repositoryMapper;
+    private final ScheduleRepository scheduleRepository;
 
 
     private final SubjectMapper subjectMapper;
     private final RuleMapper ruleMapper;
+    private final LanguageDictRepositoryMPP languageDictRepository;
+    private final SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
+    private final ReportsRepository reportsRepository;
 
     private void internalSyncWithGitea(Subject subject) {
         List<GiteaRepoDTO> giteaRepos = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
@@ -74,12 +81,6 @@ public class SubjectService {
                 repository.setRepositoryName(giteaRepo.name());
                 repository.setSubject(subject);
                 repository.setStudentList(new ArrayList<>());
-
-                int tickets = subject.getRulePreset() != null
-                        ? subject.getRulePreset().getStudentTicketCount()
-                        : 0;
-                repository.setTicketCount(tickets);
-
                 subject.getRepositoryList().add(repository);
             }
 
@@ -89,9 +90,8 @@ public class SubjectService {
 
             for (GiteaUserDTO collaborator : collaborators) {
                 String email = collaborator.email() != null ? collaborator.email() : "";
-                String login = collaborator.login() != null ? collaborator.login() : "";
 
-                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase(email, login);
+                Optional<Student> studentOpt = studentRepository.findByAccountEmailIgnoreCase(email);
 
                 if (studentOpt.isPresent()) {
                     Student student = studentOpt.get();
@@ -103,24 +103,55 @@ public class SubjectService {
         }
     }
 
+    private void checkIfNotArchived(Subject subject) {
+        if (subject.getArchived()) {
+            throw new SubjectArchivedException();
+        }
+    }
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void toggleArchiveSubject(UUID subjectId, String versionHash) {
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        String currentHash = versionHashService.hashObjectVersion(subjectId, subject.getVersion());
+        if (versionHash == null || !versionHash.equals(currentHash)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isOwner = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(authentication.getName()) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+
+        if (!isOwner) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        subject.setArchived(subject.getArchived() == null || !subject.getArchived());
+        subjectRepository.saveAndFlush(subject);
+    }
+
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
     public void syncSubjectWithGitea(UUID subjectId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
 
+        checkIfNotArchived(subject);
+
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         boolean isOwnerOrEditor = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) &&
                         (a.getSubjectRole() == TeacherSubjectRole.OWNER || a.getSubjectRole() == TeacherSubjectRole.EDITOR));
 
-        if (!isAdmin && !isOwnerOrEditor) {
+        if (!isOwnerOrEditor) {
             throw new SubjectAccessDeniedException();
         }
 
@@ -129,50 +160,95 @@ public class SubjectService {
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    public List<SubjectDTO> getAllSubjects() {
+    public List<SubjectDTO> getTeacherSubjects() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String login = authentication.getName();
-        var authorities = authentication.getAuthorities();
-
-        boolean isAdmin = hasRole(authorities, AccountConsts.ROLE_ADMIN);
-        boolean isTeacher = hasRole(authorities, AccountConsts.ROLE_TEACHER);
-        boolean isStudent = hasRole(authorities, AccountConsts.ROLE_STUDENT);
-
         List<SubjectDTO> result = new ArrayList<>();
 
-        if (isAdmin) {
-            List<Subject> subjects = subjectRepository.findAll();
-            for (Subject subject : subjects) {
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null));
-            }
-        } else if (isTeacher) {
-            List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
-            for (SubjectAssignment assignment : assignments) {
-                Subject subject = assignment.getSubject();
-                TeacherSubjectRole role = assignment.getSubjectRole();
-                boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
-                boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null));
-            }
-        } else if (isStudent) {
-            List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
-            for (Subject subject : subjects) {
-                String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-                result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null));
-            }
-        } else {
-            throw new SubjectAccessDeniedException();
+        List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
+        List<UUID> subjectIds = assignments.stream()
+                .map(assignment -> assignment.getSubject().getId())
+                .toList();
+
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
+        for (SubjectAssignment assignment : assignments) {
+            Subject subject = assignment.getSubject();
+            TeacherSubjectRole role = assignment.getSubjectRole();
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+
+            boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
+            boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+            result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
         }
 
         return result;
     }
 
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getStudentSubjects() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+
+        List<SubjectDTO> result = new ArrayList<>();
+        List<SubjectListProjectionDTO> subjects = subjectRepository.findAllProjectedByStudentLogin(login);
+
+        List<UUID> subjectIds = subjects.stream()
+                .map(SubjectListProjectionDTO::id)
+                .toList();
+
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        translation -> translation.getSubject().getId(),
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
+        for (SubjectListProjectionDTO subject : subjects) {
+            String originalDescription = descriptionMap.getOrDefault(subject.id(), "");
+            String hash = versionHashService.hashObjectVersion(subject.id(), subject.version());
+            LocalDateTime nextScan = nextScanMap.get(subject.id());
+
+            result.add(subjectMapper.projectionToSubjectDTO(subject, hash, false, false, false, null, null, originalDescription, nextScan));
+        }
+
+        return result;
+    }
+
+
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public SubjectDTO getSubjectDetails(UUID subjectId) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -181,6 +257,10 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.map(SubjectDescriptionTranslation::getTranslatedDescription).orElse("");
+
 
         UUID templateId = null;
         RulePresetDTO manualRules = null;
@@ -195,10 +275,8 @@ public class SubjectService {
         }
 
         String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        LocalDateTime nextScan = scheduleRepository.findNextScanTimeBySubjectId(subjectId).orElse(null);
 
-        if (hasRole(authorities, AccountConsts.ROLE_ADMIN)) {
-            return subjectMapper.toSubjectDTO(subject, hash, true, true, true, templateId, manualRules);
-        }
 
         if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
             TeacherSubjectRole role = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(login, subjectId)
@@ -214,7 +292,9 @@ public class SubjectService {
                     role == TeacherSubjectRole.OWNER,
                     true,
                     templateId,
-                    manualRules
+                    manualRules,
+                    originalDescription,
+                    nextScan
             );
         }
 
@@ -231,6 +311,9 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.isPresent() ? originalDescriptionE.get().getTranslatedDescription() : "";
 
         if (!subjectRepository.isStudentAssignedToSubject(subjectId, login)) {
             throw new SubjectAccessDeniedException();
@@ -242,19 +325,19 @@ public class SubjectService {
                 .findFirst()
                 .orElse(null);
 
-        String visibilityLevel = "HIDDEN";
+        String visibilityLevel = "NOTHING";
         if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
             visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }
-
+        int usedTickets = studentRepo != null? reportsRepository.countReportsByInitiatedId(studentRepo.getId()) : 0;
         return new StudentSubjectDetailsDTO(
                 subject.getId(),
                 subject.getName(),
                 subject.getOrganizationName(),
                 subject.getEdition(),
-                subject.getSubjectDescription(),
+                originalDescription,
                 subject.getGiteaURL(),
-                studentRepo != null ? repositoryMapper.toDto(studentRepo) : null,
+                studentRepo != null ? repositoryMapper.toDto(studentRepo , usedTickets ) : null,
                 visibilityLevel
         );
     }
@@ -271,15 +354,19 @@ public class SubjectService {
                         .orElseThrow(RaportLevelDictNotFoundException::new));
     }
 
-    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url) {
+    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url, String originalLanguage) {
+
         Subject subject = new Subject();
         subject.setName(name);
         subject.setOrganizationName(orgName);
         subject.setEdition(edition);
-        subject.setSubjectDescription(desc);
         subject.setGiteaURL(url);
         subject.setArchived(false);
         subject.setSubjectAssignmentList(new ArrayList<>());
+        SubjectStatistics subjectStatistics = new SubjectStatistics();
+        subjectStatistics.setAverageSimilarity(0D);
+        subjectStatistics.setSubject(subject);
+        subject.setSubjectStatistics(subjectStatistics);
         return subject;
     }
 
@@ -309,11 +396,24 @@ public class SubjectService {
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin) {
+    public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin, String originalLanguage) {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+        if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+            throw new SubjectAlreadyExistsException();
+        }
+
+        String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+
+        Subject subject = createBaseSubject(
+                dto.name(),
+                dto.organizationName(),
+                dto.edition(),
+                dto.subjectDescription(),
+                generatedGiteaUrl,
+                originalLanguage
+        );
 
         RulePreset preset = new RulePreset();
         preset.setRaportLevel(fetchRaportLevel(dto.manualRules().raportLevelName()));
@@ -326,19 +426,42 @@ public class SubjectService {
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         internalSyncWithGitea(subject);
-        subjectRepository.saveAndFlush(subject);
+//        subjectRepository.saveAndFlush(subject);
+        Subject savedSubject = subjectRepository.saveAndFlush(subject);
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setLanguageDict(
+                languageDictRepository.findByLanguage(originalLanguage)
+                        .orElseThrow(LanguageDictNotFoundException::new)
+        );
+        subjectDescriptionTranslation.setIsOriginal(true);
+        subjectDescriptionTranslation.setSubject(savedSubject);
+        savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
     }
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin) {
+    public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin, String originalLanguage) {
         Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
                 .orElseThrow(AccessLevelNotAssignedException::new);
 
-        Subject subject = createBaseSubject(dto.name(), dto.organizationName(), dto.edition(), dto.subjectDescription(), dto.giteaURL());
+        if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+            throw new SubjectAlreadyExistsException();
+        }
 
+        String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+
+        Subject subject = createBaseSubject(
+                dto.name(),
+                dto.organizationName(),
+                dto.edition(),
+                dto.subjectDescription(),
+                generatedGiteaUrl,
+                originalLanguage
+        );
         RulePreset template = ruleRepository.findById(dto.templateId())
                 .orElseThrow(RulePresetTemplateNotFoundException::new);
 
@@ -353,17 +476,29 @@ public class SubjectService {
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         internalSyncWithGitea(subject);
-        subjectRepository.saveAndFlush(subject);
+        Subject savedSubject = subjectRepository.saveAndFlush(subject);
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setLanguageDict(
+                languageDictRepository.findByLanguage(originalLanguage)
+                        .orElseThrow(LanguageDictNotFoundException::new)
+        );
+        subjectDescriptionTranslation.setIsOriginal(true);
+        subjectDescriptionTranslation.setSubject(savedSubject);
+        savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
     }
 
 
     @MethodCallLogged
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
-    public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash) {
-        Subject subject = subjectRepository.findById(subjectId)
+    public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash, String originalLanguage) {
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -371,20 +506,30 @@ public class SubjectService {
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        boolean isAdmin = hasRole(authentication.getAuthorities(), AccountConsts.ROLE_ADMIN);
 
         boolean isOwner = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
         boolean isEditor = subject.getSubjectAssignmentList().stream()
                 .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.EDITOR);
 
-        if (!isAdmin && !isOwner && !isEditor) {
+        if (!isOwner && !isEditor) {
             throw new SubjectAccessDeniedException();
         }
 
+        subjectDescriptionTranslationRepository.deleteAllBySubjectId(subject.getId());
+
+        SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+        subjectDescriptionTranslation.setSubject(subject);
+        subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+        subjectDescriptionTranslation.setIsOriginal(true);
+        LanguageDict languageDict = languageDictRepository.findByLanguage(originalLanguage)
+                .orElseThrow(LanguageDictNotFoundException::new);
+        subjectDescriptionTranslation.setLanguageDict(languageDict);
+
         subject.setName(dto.name());
-        subject.setSubjectDescription(dto.subjectDescription());
-        subject.setGiteaURL(dto.giteaURL());
+        subject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+
+        subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
 
         if (dto.rules() != null) {
             RulePreset preset = subject.getRulePreset();
@@ -394,8 +539,31 @@ public class SubjectService {
             preset.setEnableNormalization(dto.rules().enableNormalization());
             preset.setIsPreset(false);
         }
+        if (!isOwner && isEditor) {
+            boolean isTeacherListModified = false;
 
-        if (isAdmin || isOwner) {
+            if (dto.teachers() != null) {
+                if (dto.teachers().size() != subject.getSubjectAssignmentList().size()) {
+                    isTeacherListModified = true;
+                } else {
+                    for (TeacherAssignmentDTO incoming : dto.teachers()) {
+                        boolean match = subject.getSubjectAssignmentList().stream()
+                                .anyMatch(existing -> existing.getTeacher().getAccount().getLogin().equals(incoming.login()) &&
+                                        existing.getSubjectRole() == incoming.role());
+                        if (!match) {
+                            isTeacherListModified = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isTeacherListModified) {
+                throw new SubjectAccessDeniedException();
+            }
+        }
+
+        if (isOwner) {
             List<SubjectAssignment> currentAssignments = subject.getSubjectAssignmentList();
 
             List<SubjectAssignment> assignmentsToRemove = currentAssignments.stream()
@@ -443,6 +611,8 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
 
         if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
             throw new ConcurrentUpdateException();
@@ -494,19 +664,34 @@ public class SubjectService {
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
     @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public void changeSubjectManager(UUID subjectId, String newManagerLogin) {
-        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId).orElseThrow(SubjectNotFoundException::new);
-        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId).orElseThrow(SubjectNotFoundException::new);
-        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin).orElseThrow(AccessLevelNotAssignedException::new);
+    public void changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash) {
+
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId).orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+
+        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
         SubjectAssignment newOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newOwner.getAccount().getLogin(), subjectId)
                 .orElseGet(
                         () -> {
                             SubjectAssignment assignment = new SubjectAssignment();
-                            assignment.setSubject(subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new));
+                            assignment.setSubject(subject);
                             assignment.setTeacher(newOwner);
                             return assignment;
                         }
                 );
+
         oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
         newOwnerAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
 
@@ -514,8 +699,47 @@ public class SubjectService {
         subjectAssignmentRepository.saveAndFlush(newOwnerAssignment);
     }
 
+
     @MethodCallLogged
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getAllSubjects() {
+        List<SubjectDTO> result = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findAll();
+
+        List<UUID> subjectIds = subjects.stream()
+                .map(Subject::getId)
+                .toList();
+
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
+        for (Subject subject : subjects) {
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+            result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription, nextScan));
+        }
+
+        return result;
+    }
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER) or hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
     public List<TeacherAssignmentDTO> getSubjectUsers(UUID subjectId) {
         Subject subject = subjectRepository.findById(subjectId)

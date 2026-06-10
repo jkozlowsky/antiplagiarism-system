@@ -59,8 +59,11 @@ services:
       - mail_password
       - jwt_secret
       - frontend_url
+      - google_credentials
     volumes:
       - ../logs:/app/logs
+      - ../repos:/app/repos
+      - ../reports:/app/reports
     networks:
       - proxy-backend
       - backend-db
@@ -261,3 +264,5 @@ secrets:
     file: ./secrets/frontend_url.txt
   version_hash_secret:
     file: ./secrets/version_hash_secret.txt
+  google_credentials:
+    file: ./secrets/google_credentials.json

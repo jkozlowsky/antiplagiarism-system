@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.rest.handlers;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +27,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AppBaseException;
  */
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
     private final Translator translator;
@@ -68,7 +70,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(JpaSystemException.class)
     public ResponseEntity<String> handleJpaSystemException(JpaSystemException jse) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(jse.getMessage());
+        log.error("A critical database error occurred: ", jse);
+        String translatedMessage = translator.translate("error.database");
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(translatedMessage);
     }
 
     /**
@@ -131,12 +137,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AuthorizationDeniedException.class, org.springframework.security.access.AccessDeniedException.class})
     public ResponseEntity<Object> handleAuthorizationException(RuntimeException exception, WebRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: " + exception.getMessage());
+            String unauthorizedMessage = translator.translate("error.unauthorized");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauthorizedMessage);
         }
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body("No access: " + exception.getMessage());
+
+        String forbiddenMessage = translator.translate("error.forbidden");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbiddenMessage);
     }
 
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
@@ -162,6 +170,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleAllUncaughtException(RuntimeException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Exception: " + exception.getMessage());
+        String internalServerErrorMessage = translator.translate("error.internal");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(internalServerErrorMessage);
     }
 }
