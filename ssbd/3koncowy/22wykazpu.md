@@ -1124,1005 +1124,6 @@ Rysunek 22.1.13.3. Interfejs graficzny użytkownika przedstawiający stronę edy
 Rysunek 22.1.13.4. Interfejs graficzny użytkownika przedstawiający stronę edycji danych innego użytkownika z komunikatem o pomyślnej zmianie. 
 
 
-
-
-
-### MPP.2 Generowanie raportu na żądanie.
-
-Role które mają dostęp: prowadzący, prowadzący dodatkowy.
-
-```json
-"/reports/demand/{subjectId}": {
-      "post": {
-        "tags": [
-          "report-controller"
-        ],
-        "summary": "Wykonaj skanowanie",
-        "description": "Uruchom skanowanie repozytoriów za etykietą w przedmiocie",
-        "operationId": "generateReportOnDemand",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Skanowanie ukończone pomyślnie",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportDTO"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Nie znaleziono tag",
-            "content": {
-              "text/plain": {
-                "example": "Podany tag nie znaleziono w żadnym z repozytoriów."
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.2.1. Dokumentacja OpenApi dla metody POST `/reports/demand/{subjectId}`.
-
-Wywoływane metody.
-
-1. ReportController.generateReportOnDemand(UUID, String, Principal)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-3. ReportService.generateReportOnDemand(UUID, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-4. ReportDatabaseService.verifyAccessAndGetConfig(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-5. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-6. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-7. SubjectRepository.isTeacherAssignedToSubject(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-8. SubjectAccessDeniedException.SubjectAccessDeniedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-9. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-10. Subject.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-11. Subject.getOrganizationName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-12. RulePreset.getMinimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-13. RulePreset.getEnableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-14. SubjectConfigDTO.SubjectConfigDTO(String, Integer, Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-15. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-16. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-17. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-18. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
-19. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-20. SubjectConfigDTO.organizationName()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-21. GiteaService.getRepositoriesFromOrganization(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-22. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-23. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-24. GiteaRepoDTO.template()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-25. GiteaRepoDTO.name()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-26. GiteaRepoDTO.clone_url()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-27. GitService.cloneTag(String, String, File, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
-28. GitCloneException.GitCloneException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-29. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-30. SubjectConfigDTO.minimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-31. SubjectConfigDTO.enableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-32. JPlagService.runPlagiarismScanOnOrganisation(String, String, Integer, Boolean, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
-33. ReportFileException.ReportFileException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-34. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-35. JplagScanException.JplagScanException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-36. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-37. ReportDatabaseService.saveGeneratedReport(UUID, String, long, String, Double)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-38. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-39. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-40. GiteaRepositoryRepository.getAllBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-41. Report.Report()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-42. Report.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-43. Report.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-44. Report.setIsStudentReport(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-45. Report.setScannedRepositories(Long)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-46. Report.setPathToReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-47. Report.setRepositoryList(List\<Repository>)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-48. Report.setAverageSimilarity(Double)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-49. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
-50. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)  SubjectStatisticsService.recalculateAndUpdateStatistics(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-51. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-52. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-53. ReportsRepository.calculateAggregatedAverageForSubject(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-54. Subject.getSubjectStatistics()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-55. SubjectStatistics.SubjectStatistics()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-56. SubjectStatistics.setAverageSimilarity(Double)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-57. SubjectStatistics.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-58. Subject.setSubjectStatistics(SubjectStatistics)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-59. SubjectStatistics.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-60. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
-61. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
-62. ReportMapper.toDto(Report)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
-
-Widoki użytkownika.
-
-![2.2.1](3koncowy/img/22.2.2.1.png)
-
-Rysunek 22.2.2.1. Interfejs graficzny użytkownika przedstawiający stronę uruchomienia skanowania.
-
-![2.2.2](3koncowy/img/22.2.2.2.png)
-
-Rysunek 22.2.2.2. Interfejs graficzny użytkownika przedstawiający stronę uruchomienia skanowania z komunikatem błędu który powstał po stronie warstwy logiki.
-
-![2.2.3](3koncowy/img/22.2.2.3.png)
-
-Rysunek 22.2.2.3. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z komunikatem o sukcesie po pomyślnym wykonaniu skanowania.
-
-
-
-### MPP.3 Wyświetl listę raportów
-
-Role które mają dostęp: prowadzący, prowadzący dodatkowy.
-
-```json
-"/reports/teacher": {
-      "get": {
-        "tags": [
-          "report-controller"
-        ],
-        "summary": "Pobierz swoje raporty",
-        "description": "Pobierz listę raportów dla swojego konta użytkownika",
-        "operationId": "getAllReportsForTeacher",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "minimum": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "minimum": 1
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Zwrócono listę raportów",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageReportDTO"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.3.1. Dokumentacja OpenApi dla metody GET `/reports/teacher`.
-
-Wywoływane metody.
-
-1. ReportController.getAllReportsForTeacher(Principal, Pageable)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-3. ReportService.getAllReportsForTeacher(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-4. ReportsRepository.findAllReportsForAssignedTeacherByLogin(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-5. ReportMapper.toDto(Report)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
-
-Widoki użytkownika.
-
-![2.3.1](3koncowy/img/22.2.3.1.png)
-
-Rysunek 22.2.3.1. Interfejs graficzny użytkownika przedstawiający stronę z listą raportów.
-
-![2.3.2](3koncowy/img/22.2.3.2.png)
-
-Rysunek 22.2.3.2. Interfejs graficzny użytkownika przedstawiający stronę z pustą listą raportów.
-
-### MPP.5 Usuwanie raportów
-
-Role które mają dostęp: prowadzący, prowadzący dodatkowy.
-
-```json
-"/reports/{reportId}": {
-	"delete": {
-        "tags": [
-          "report-controller"
-        ],
-        "summary": "Usuń raport",
-        "description": "Usuwa raporty z bazy oraz pliki z maszyny",
-        "operationId": "deleteReport",
-        "parameters": [
-          {
-            "name": "reportId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Usunięto raport"
-          },
-          "404": {
-            "description": "Nie znaleziono raportu",
-            "content": {
-              "text/plain": {
-                "example": "Podany raport nie istnieje."
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.5.1. Dokumentacja OpenApi dla metody GET `/reports/{reportId}`.
-
-Wywoływane metody.
-
-1. ReportController.deleteReport(UUID)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-3. ReportController.deleteReport(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-4. ReportService.deleteReport(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-5. ReportNotFoundException.ReportNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-6. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-7. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-8. Report.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-9. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-10. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
-11. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-12. SubjectRepository.findByReportId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-13. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-14. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-15. AbstractEntity.getId()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-16. SubjectStatisticsService.recalculateAndUpdateStatistics(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-17. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-18. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-19. ReportsRepository.calculateAggregatedAverageForSubject(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-20. Subject.getSubjectStatistics()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-21. SubjectStatistics.SubjectStatistics()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-22. SubjectStatistics.setAverageSimilarity(Double)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-23. SubjectStatistics.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-24. Subject.setSubjectStatistics(SubjectStatistics)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-25. SubjectStatistics.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-26. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
-27. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
-
-Widoki użytkownika.
-
-![2.5.1](3koncowy/img/22.2.5.1.png)
-
-Rysunek 22.2.5.1. Interfejs graficzny użytkownika przedstawiający stronę z listą raportów i opcją usuwania raportu.
-
-![2.5.2](3koncowy/img/22.2.5.2.png)
-
-Rysunek 22.2.5.2. Interfejs graficzny użytkownika przedstawiający stronę z prośbą o potwierdzenia zamiaru dokonania czynności usuwania raportu.
-
-![2.5.3](3koncowy/img/22.2.5.3.png)
-
-Rysunek 22.2.5.3. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o pomyślnym usuwaniu raportu.
-
-![2.5.4](3koncowy/img/22.2.5.4.png)
-
-Rysunek 22.2.5.4. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o błędzie usuwania raportu.
-
-### MPP.16 Edycja harmonogramu
-
-**Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
-
-```json
-"/schedules/{scheduleId}": {
-      "put": {
-        "tags": [
-          "schedule-controller"
-        ],
-        "summary": "Edycja harmonogramu",
-        "description": "Prowadzący może zmianić date skanowania repozytoriów.",
-        "operationId": "updateSchedule",
-        "parameters": [
-          {
-            "name": "scheduleId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Harmonogram został pomyślnie zaktualizowany"
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "404": {
-            "description": "Nie znaleziono harmonogramu"
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-```
-
-Listing 22.2.16.1. Dokumentacja OpenApi dla metody PUT `/schedules/{scheduleId}`.
-
-**Sekwencja wywołań:**
-1. ScheduleController.updateSchedule(UUID, UpdateScheduleDTO, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. ScheduleService.updateSchedule(UUID, UpdateScheduleDTO, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-3. ScheduleNotFoundException.ScheduleNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-5. UpdateScheduleDTO.getVersionHash()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
-6. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-7. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
-8. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
-9. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-10. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-11. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-12. Schedule.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-13. RulePreset.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-14. SubjectAssignmentRepository.hasEditPermissions(Subject, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-15. ScheduleService.checkIfNotArchived(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-16. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-17. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
-18. NoPermissionToEditScheduleException.NoPermissionToEditScheduleException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-19. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-20. UpdateScheduleDTO.getScheduleDateTime()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
-21. Schedule.setScheduleDateTime(LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-22. UpdateScheduleDTO.getTag()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
-23. Schedule.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-
-Listing 22.2.16.2. Sekwencja wywołań dla updateSchedule.
-
-![Rys. 22.2.16.1.](img/mpp16_1.png)
-*Rys. 22.2.16.1. Widok dostępnych harmonogramów w wybranym przdmiocie.*
-
-![Rys. 22.2.16.2.](img/mpp16_2.png)
-*Rys. 22.2.16.2. Widok edycji harmonogramu.*
-
-![Rys. 22.2.16.3.](img/mpp16_3.png)
-*Rys. 22.2.16.3. Widok po wybraniu w kalendarzu nowej daty skanowania i zatwierdzeniu akcji.*
-
-### MPP.18 Przeglądanie repozytoriów
-
-Role które mają dostęp: prowadzący, prowadzący dodatkowy.
-
-```json
-"/repositories/subject/{subjectId}": {
-      "get": {
-        "tags": [
-          "repository-controller"
-        ],
-        "summary": "Przeglądanie repozytoriów",
-        "description": "Pobiera listę repozytoriów razem z uczestnikami w danym przedmiocie",
-        "operationId": "getRepositories",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Poprawnie pobrano listę repozytoriów w danym przedmiocie",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RepositoryWithStudentDTO"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.18.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectId}`.
-
-Wywoływane metody.
-
-1. RepositoryController.getRepositories(UUID)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-3. RepositoryController.getReportDetails(UUID Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-4. RepositoryService.getRepositories(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-5. GiteaRepositoryRepository.findBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-6. RepositoryMapper.toDto(Repository, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
-
-Listing 22.2.18.2. Sekwencja wywoływanych metod dla metody kontrolera `RepositoryController.getRepositories(UUID)`.
-
-Widoki użytkownika.
-
-![2.18.1](3koncowy/img/22.2.18.1.png)
-
-Rysunek 22.2.18.1. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z listą repozytoriów przypisanych do tego przedmiotu.
-
-![2.18.2](3koncowy/img/22.2.18.2.png)
-
-Rysunek 22.2.18.2. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z pustą listą repozytoriów.
-
-
-W rozdziale należy wymienić, w formie tabeli lub listy, wszystkie przypadki użycia dostępne jako akcje dla użytkownika końcowego aplikacji internetowej.
-
-Dla każdego przypadku należy przedstawić:
-* kolejny numer przypadku w numeracji jednolitej od numeru 1 (np. poprzez użycie listy numerowanej)
-* używane w projekcie oznaczenie przypadku (np. MOK.3)
-* role mające prawo do uruchamiania akcji dla tego przypadku zgodnie z konfiguracją dostępu w warstwie prezentacji
-* kontekst URI oraz typ metody HTTP dla wywołania usługi sieciowej REST wraz z wartością liczbową statusu odpowiedzi (kod odpowiedzi HTTP) dla poszczególnych scenariuszy przypadku użycia (dla każdego ze scenariuszy błędu należy również podać klucz internacjonalizacji).
-* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
-* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
-
-Alternatywną formą prezentacji może być opis interfejsu aplikacji sieciowej zgodny z OpenAPI, przekształcony do postaci czytelnej i uzupełniony o informacje, których nie można udostępnić przez OpenAPI, tj:
-* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
-* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
-
-W takim przypadku opis może być zapisany w języku angielskim, o ile ten język został użyty w projekcie do tworzenia dokumentacji kodu źródłowego.
-
-### MPP.19 Przeglądanie kont użytkowników
-
-**Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
-
-```json
-"/repositories/subject/{subjectName}/users": {
-      "get": {
-        "tags": [
-          "repository-controller"
-        ],
-        "summary": "Przeglądanie kont użytkowników",
-        "description": "Pobiera listę kont studentów w danym przedmiocie",
-        "operationId": "getUserAccounts",
-        "parameters": [
-          {
-            "name": "subjectName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Poprawnie pobrano listę kont studentów w danym przedmiocie",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubjectStudentStatsDTO"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    }
-```
-
-Listing 22.2.19.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectName}/users`.
-
-**Sekwencja wywołań:**
-1. RepositoryController.getUserAccounts(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. RepositoryService.getUserAccounts(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-3. GiteaRepositoryRepository.findBySubject_Name(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-4. Repository.getStudentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-5. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-6. AbstractEntity.getId()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-7. Account.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-8. Account.getSurname()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-9. Repository.getRepositoryName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-10. SubjectStudentStatsDTO.SubjectStudentStatsDTO(UUID, String, String, UUID, String, Double)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.subject)
-
-Listing 22.2.19.2. Sekwencja wywołań dla getUserAccounts.
-
-![Rys. 22.2.19.1.](img/mpp19_1.png) // dodac pozniej
-*Rys. 22.2.19.1. Widok dostępnych kont użytkowników w systemie.*
-
-### MPP.20 Sprawdzenie swojego kodu
-
-**Role uprawnione:** Student.
-
-```json
-"/reports/student-scan/{repositoryId}": {
-      "post": {
-        "tags": [
-          "report-controller"
-        ],
-        "summary": "Sprawdzenie swojego kodu",
-        "description": "Student może sprawdzić swój kod zgodnie z ustawioną obecnie regułą. Warunkiem skanowania jest posiadanie odpowiedniej liczby dostępnych skanowań.",
-        "operationId": "generateStudentReport",
-        "parameters": [
-          {
-            "name": "repositoryId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "studentTag",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taskTag",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Skanowanie kodu ukończone pomyślnie.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "404": {
-            "description": "Nie znaleziono danego repozytorium.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Błąd blokady optymistycznej.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    }
-```
-Listing 22.2.20.1. Dokumentacja OpenApi dla metody POST `/reports/student-scan/{repositoryId}`.
-
-**Sekwencja wywołań:**
-1. ReportController.generateStudentReport(UUID, String, String, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. ReportService.generateStudentReport(UUID, String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-3. GiteaRepositoryRepository.findByIdWithLock(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-4. RepositoryNotFoundException.RepositoryNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport)
-5. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-6. Repository.getStudentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-7. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-8. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-9. SubjectAccessDeniedException.SubjectAccessDeniedException()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-11. Repository.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-12. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-13. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
-14. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-15. Subject.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-16. RulePreset.getRaportLevel()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-17. ReportLevelDict.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-18. ReportsRepository.countReportsByIdAndCreatedByLogin(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-19. RulePreset.getStudentTicketCount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-20. NoTicketsLeftException.NoTicketsLeftException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport)
-21. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-22. Subject.getOrganizationName()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-23. GiteaService.getRepositoriesFromOrganization(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-24. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-25. GiteaRepoDTO.template()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-26. GiteaRepoDTO.name()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-27. Repository.getRepositoryName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-28. GiteaRepoDTO.clone_url()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
-29. GitService.cloneTag(String, String, File, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
-30. AbstractEntity.getId()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-31. GiteaRepositoryRepository.getAllBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-32. Report.Report()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-33. Report.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-34. Report.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-35. Report.setPathToReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-36. Report.setScannedRepositories(Long)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-37. Report.setIsStudentReport(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-38. Report.setRepositoryList(List<Repository>)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-39. RulePreset.getMinimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-40. RulePreset.getEnableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-41. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-42. JPlagService.runPlagiarismScanOnOrganisation(String, String, Integer, Boolean, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
-43. Report.setAverageSimilarity(Double)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-44. JpaRepository.saveAndFlush(S)(2 usages)  (org.springframework.data.jpa.repository)
-45. ReportService.getStudentReportDetails(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-
-Listing 22.2.20.2. Sekwencja wywołań dla generateStudentReport.
-
-![Rys. 22.2.20.1.](img/mpp20_1.png)
-*Rys. 22.2.20.1. Widok ekranu skanowania kodu przez studenta.*
-
-![Rys. 22.2.20.2.](img/mpp20_2.png)
-*Rys. 22.2.20.2. Widok ekranu skanowania kodu przez studenta w przypadku braku dostępnych tokenów.*
-
-![Rys. 22.2.20.3.](img/mpp20_3.png)
-*Rys. 22.2.20.3. Widok ekranu skanowania kodu przez studenta po wypełnieniu danych.*
-
-![Rys. 22.2.20.4.](img/mpp20_4.png)
-*Rys. 22.2.20.4. Widok ekranu skanowania kodu przez studenta po wykonaniu skanowania kodu.*
-
-![Rys. 22.2.20.5.](img/mpp20_5.png)
-*Rys. 22.2.20.5. Widok wygenerowanego raportu przy widocznych wszystkich statystykach.*
-
-* pozostałe widoki raportów zostaną zaprezentowane w innym przypadku użycia - MPP.21
-
 ### MOK.6 - Dołącz poziom dostępu do konta
 
 **Role uprawnione:** Administrator (`ADMIN`)
@@ -2564,9 +1565,9 @@ TODO (rysunki):
       }
     },
 ```
-Listing 22.1.8.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `/account/security/password`.
+Listing 22.1.8.1 Dokumentacja OpenApi dla metody POST `/account/security/password`.
 
-**Sekwencja wywołań:**
+**Sekwencja wywoływanych metod** dla metody kontrolera `AccountController.changeOwnPassword(ChangeOwnPasswordDto, String, Principal)`.
 
 1. AccountController.changeOwnPassword(ChangeOwnPasswordDto, String, Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
 2. ChangeOwnPasswordDto.getOldPassword()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
@@ -2600,7 +1601,17 @@ Listing 22.1.8.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `/
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-[//]: # (TODO mchodulski)
+![Rys. 22.1.8.1](3koncowy/img/22.1.8.1.png)
+*Rys. 22.1.8.1. Fragment graficznego interfejsu użytkownika przedstawiający widok kont z rolami użytkowników.*
+
+![Rys. 22.1.8.2](3koncowy/img/22.1.8.2.png)
+*Rys. 22.1.8.2. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z aktywnymi poziomami dostępu.*
+
+![Rys. 22.1.8.3](3koncowy/img/22.1.8.3.png)
+*Rys. 22.1.8.3. Fragment graficznego interfejsu użytkownika przedstawiający widok okno potwierdzające odebranie poziomu dostępu.*
+
+![Rys. 22.1.8.4](3koncowy/img/22.1.8.4.png)
+*Rys. 22.1.8.4. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym odebraniu poziomu dostępu.*
 
 
 
@@ -3055,6 +2066,455 @@ Listing 22.2.1.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `/
 **Fragmenty graficznego interfejsu użytkownika:**
 
 [//]: # (TODO mchodulski)
+
+
+
+### MPP.2 Generowanie raportu na żądanie.
+
+Role które mają dostęp: prowadzący, prowadzący dodatkowy.
+
+```json
+"/reports/demand/{subjectId}": {
+      "post": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Wykonaj skanowanie",
+        "description": "Uruchom skanowanie repozytoriów za etykietą w przedmiocie",
+        "operationId": "generateReportOnDemand",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Skanowanie ukończone pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono tag",
+            "content": {
+              "text/plain": {
+                "example": "Podany tag nie znaleziono w żadnym z repozytoriów."
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.2.1. Dokumentacja OpenApi dla metody POST `/reports/demand/{subjectId}`.
+
+Wywoływane metody.
+
+1. ReportController.generateReportOnDemand(UUID, String, Principal)
+2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+3. ReportService.generateReportOnDemand(UUID, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+4. ReportDatabaseService.verifyAccessAndGetConfig(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+5. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+7. SubjectRepository.isTeacherAssignedToSubject(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+8. SubjectAccessDeniedException.SubjectAccessDeniedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+9. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. Subject.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. Subject.getOrganizationName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. RulePreset.getMinimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. RulePreset.getEnableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. SubjectConfigDTO.SubjectConfigDTO(String, Integer, Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+15. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+16. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+17. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+18. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
+19. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+20. SubjectConfigDTO.organizationName()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+21. GiteaService.getRepositoriesFromOrganization(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+22. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+23. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+24. GiteaRepoDTO.template()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+25. GiteaRepoDTO.name()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+26. GiteaRepoDTO.clone_url()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+27. GitService.cloneTag(String, String, File, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+28. GitCloneException.GitCloneException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+29. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+30. SubjectConfigDTO.minimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+31. SubjectConfigDTO.enableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+32. JPlagService.runPlagiarismScanOnOrganisation(String, String, Integer, Boolean, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+33. ReportFileException.ReportFileException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+34. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+35. JplagScanException.JplagScanException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+36. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+37. ReportDatabaseService.saveGeneratedReport(UUID, String, long, String, Double)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+38. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+39. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+40. GiteaRepositoryRepository.getAllBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+41. Report.Report()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+42. Report.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+43. Report.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+44. Report.setIsStudentReport(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+45. Report.setScannedRepositories(Long)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+46. Report.setPathToReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+47. Report.setRepositoryList(List\<Repository>)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+48. Report.setAverageSimilarity(Double)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+49. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+50. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)  SubjectStatisticsService.recalculateAndUpdateStatistics(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+51. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+52. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+53. ReportsRepository.calculateAggregatedAverageForSubject(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+54. Subject.getSubjectStatistics()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+55. SubjectStatistics.SubjectStatistics()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+56. SubjectStatistics.setAverageSimilarity(Double)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+57. SubjectStatistics.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+58. Subject.setSubjectStatistics(SubjectStatistics)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+59. SubjectStatistics.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+60. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+61. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
+62. ReportMapper.toDto(Report)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+
+Widoki użytkownika.
+
+![2.2.1](3koncowy/img/22.2.2.1.png)
+
+Rysunek 22.2.2.1. Interfejs graficzny użytkownika przedstawiający stronę uruchomienia skanowania.
+
+![2.2.2](3koncowy/img/22.2.2.2.png)
+
+Rysunek 22.2.2.2. Interfejs graficzny użytkownika przedstawiający stronę uruchomienia skanowania z komunikatem błędu który powstał po stronie warstwy logiki.
+
+![2.2.3](3koncowy/img/22.2.2.3.png)
+
+Rysunek 22.2.2.3. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z komunikatem o sukcesie po pomyślnym wykonaniu skanowania.
+
+
+
+### MPP.3 Wyświetl listę raportów
+
+Role które mają dostęp: prowadzący, prowadzący dodatkowy.
+
+```json
+"/reports/teacher": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Pobierz swoje raporty",
+        "description": "Pobierz listę raportów dla swojego konta użytkownika",
+        "operationId": "getAllReportsForTeacher",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Zwrócono listę raportów",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageReportDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.3.1. Dokumentacja OpenApi dla metody GET `/reports/teacher`.
+
+Wywoływane metody.
+
+1. ReportController.getAllReportsForTeacher(Principal, Pageable)
+2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+3. ReportService.getAllReportsForTeacher(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+4. ReportsRepository.findAllReportsForAssignedTeacherByLogin(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+5. ReportMapper.toDto(Report)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+
+Widoki użytkownika.
+
+![2.3.1](3koncowy/img/22.2.3.1.png)
+
+Rysunek 22.2.3.1. Interfejs graficzny użytkownika przedstawiający stronę z listą raportów.
+
+![2.3.2](3koncowy/img/22.2.3.2.png)
+
+Rysunek 22.2.3.2. Interfejs graficzny użytkownika przedstawiający stronę z pustą listą raportów.
+
+### MPP.5 Usuwanie raportów
+
+Role które mają dostęp: prowadzący, prowadzący dodatkowy.
+
+```json
+"/reports/{reportId}": {
+	"delete": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Usuń raport",
+        "description": "Usuwa raporty z bazy oraz pliki z maszyny",
+        "operationId": "deleteReport",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Usunięto raport"
+          },
+          "404": {
+            "description": "Nie znaleziono raportu",
+            "content": {
+              "text/plain": {
+                "example": "Podany raport nie istnieje."
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.5.1. Dokumentacja OpenApi dla metody GET `/reports/{reportId}`.
+
+Wywoływane metody.
+
+1. ReportController.deleteReport(UUID)
+2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+3. ReportController.deleteReport(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+4. ReportService.deleteReport(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+5. ReportNotFoundException.ReportNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+7. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Report.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
+11. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+12. SubjectRepository.findByReportId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+13. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+14. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+15. AbstractEntity.getId()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. SubjectStatisticsService.recalculateAndUpdateStatistics(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+17. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+18. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+19. ReportsRepository.calculateAggregatedAverageForSubject(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+20. Subject.getSubjectStatistics()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. SubjectStatistics.SubjectStatistics()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. SubjectStatistics.setAverageSimilarity(Double)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. SubjectStatistics.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+24. Subject.setSubjectStatistics(SubjectStatistics)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+25. SubjectStatistics.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+26. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+27. SimpleJpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository.support)
+
+Widoki użytkownika.
+
+![2.5.1](3koncowy/img/22.2.5.1.png)
+
+Rysunek 22.2.5.1. Interfejs graficzny użytkownika przedstawiający stronę z listą raportów i opcją usuwania raportu.
+
+![2.5.2](3koncowy/img/22.2.5.2.png)
+
+Rysunek 22.2.5.2. Interfejs graficzny użytkownika przedstawiający stronę z prośbą o potwierdzenia zamiaru dokonania czynności usuwania raportu.
+
+![2.5.3](3koncowy/img/22.2.5.3.png)
+
+Rysunek 22.2.5.3. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o pomyślnym usuwaniu raportu.
+
+![2.5.4](3koncowy/img/22.2.5.4.png)
+
+Rysunek 22.2.5.4. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o błędzie usuwania raportu.
 
 
 ### MOK.6 - Pobierz liste przedmiotów
@@ -4244,6 +3704,135 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
 ![Rys. 22.2.12.3](3koncowy/img/mpp12_edit_rule_invalid.png)
 *Rys. 22.2.12.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza edycji szablonu reguł.*
 
+### MPP.16 Edycja harmonogramu
+
+**Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
+
+```json
+"/schedules/{scheduleId}": {
+      "put": {
+        "tags": [
+          "schedule-controller"
+        ],
+        "summary": "Edycja harmonogramu",
+        "description": "Prowadzący może zmianić date skanowania repozytoriów.",
+        "operationId": "updateSchedule",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Harmonogram został pomyślnie zaktualizowany"
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono harmonogramu"
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+```
+
+Listing 22.2.16.1. Dokumentacja OpenApi dla metody PUT `/schedules/{scheduleId}`.
+
+**Sekwencja wywołań:**
+1. ScheduleController.updateSchedule(UUID, UpdateScheduleDTO, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ScheduleService.updateSchedule(UUID, UpdateScheduleDTO, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. ScheduleNotFoundException.ScheduleNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. UpdateScheduleDTO.getVersionHash()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
+6. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+8. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+9. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+12. Schedule.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. RulePreset.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. SubjectAssignmentRepository.hasEditPermissions(Subject, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+15. ScheduleService.checkIfNotArchived(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+16. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
+18. NoPermissionToEditScheduleException.NoPermissionToEditScheduleException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+19. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+20. UpdateScheduleDTO.getScheduleDateTime()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
+21. Schedule.setScheduleDateTime(LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. UpdateScheduleDTO.getTag()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule)
+23. Schedule.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+
+Listing 22.2.16.2. Sekwencja wywołań dla updateSchedule.
+
+![Rys. 22.2.16.1.](img/mpp16_1.png)
+*Rys. 22.2.16.1. Widok dostępnych harmonogramów w wybranym przdmiocie.*
+
+![Rys. 22.2.16.2.](img/mpp16_2.png)
+*Rys. 22.2.16.2. Widok edycji harmonogramu.*
+
+![Rys. 22.2.16.3.](img/mpp16_3.png)
+*Rys. 22.2.16.3. Widok po wybraniu w kalendarzu nowej daty skanowania i zatwierdzeniu akcji.*
+
+
 ### MPP.17 - Usuwanie harmonogramu
 
 **Role uprawnione:** Nauczyciel (`TEACHER`)
@@ -4373,7 +3962,430 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
 ![Rys. 22.2.17.3](3koncowy/img/mpp17_delete_success.png)
 *Rys. 22.2.17.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym usunięciu harmonogramu.*
 
-### MOK.25 - Przeglądaj szczegóły przedmiotu
+
+### MPP.18 Przeglądanie repozytoriów
+
+Role które mają dostęp: prowadzący, prowadzący dodatkowy.
+
+```json
+"/repositories/subject/{subjectId}": {
+      "get": {
+        "tags": [
+          "repository-controller"
+        ],
+        "summary": "Przeglądanie repozytoriów",
+        "description": "Pobiera listę repozytoriów razem z uczestnikami w danym przedmiocie",
+        "operationId": "getRepositories",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Poprawnie pobrano listę repozytoriów w danym przedmiocie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RepositoryWithStudentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.18.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectId}`.
+
+Wywoływane metody.
+
+1. RepositoryController.getRepositories(UUID)
+2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+3. RepositoryController.getReportDetails(UUID Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+4. RepositoryService.getRepositories(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+5. GiteaRepositoryRepository.findBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+6. RepositoryMapper.toDto(Repository, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+
+Listing 22.2.18.2. Sekwencja wywoływanych metod dla metody kontrolera `RepositoryController.getRepositories(UUID)`.
+
+Widoki użytkownika.
+
+![2.18.1](3koncowy/img/22.2.18.1.png)
+
+Rysunek 22.2.18.1. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z listą repozytoriów przypisanych do tego przedmiotu.
+
+![2.18.2](3koncowy/img/22.2.18.2.png)
+
+Rysunek 22.2.18.2. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z pustą listą repozytoriów.
+
+
+W rozdziale należy wymienić, w formie tabeli lub listy, wszystkie przypadki użycia dostępne jako akcje dla użytkownika końcowego aplikacji internetowej.
+
+Dla każdego przypadku należy przedstawić:
+* kolejny numer przypadku w numeracji jednolitej od numeru 1 (np. poprzez użycie listy numerowanej)
+* używane w projekcie oznaczenie przypadku (np. MOK.3)
+* role mające prawo do uruchamiania akcji dla tego przypadku zgodnie z konfiguracją dostępu w warstwie prezentacji
+* kontekst URI oraz typ metody HTTP dla wywołania usługi sieciowej REST wraz z wartością liczbową statusu odpowiedzi (kod odpowiedzi HTTP) dla poszczególnych scenariuszy przypadku użycia (dla każdego ze scenariuszy błędu należy również podać klucz internacjonalizacji).
+* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
+* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
+
+Alternatywną formą prezentacji może być opis interfejsu aplikacji sieciowej zgodny z OpenAPI, przekształcony do postaci czytelnej i uzupełniony o informacje, których nie można udostępnić przez OpenAPI, tj:
+* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
+* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
+
+W takim przypadku opis może być zapisany w języku angielskim, o ile ten język został użyty w projekcie do tworzenia dokumentacji kodu źródłowego.
+
+### MPP.19 Przeglądanie kont użytkowników
+
+**Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
+
+```json
+"/repositories/subject/{subjectName}/users": {
+      "get": {
+        "tags": [
+          "repository-controller"
+        ],
+        "summary": "Przeglądanie kont użytkowników",
+        "description": "Pobiera listę kont studentów w danym przedmiocie",
+        "operationId": "getUserAccounts",
+        "parameters": [
+          {
+            "name": "subjectName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Poprawnie pobrano listę kont studentów w danym przedmiocie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectStudentStatsDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    }
+```
+
+Listing 22.2.19.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectName}/users`.
+
+**Sekwencja wywołań:**
+1. RepositoryController.getUserAccounts(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. RepositoryService.getUserAccounts(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. GiteaRepositoryRepository.findBySubject_Name(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+4. Repository.getStudentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+5. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. AbstractEntity.getId()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. Account.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Account.getSurname()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. Repository.getRepositoryName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. SubjectStudentStatsDTO.SubjectStudentStatsDTO(UUID, String, String, UUID, String, Double)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.subject)
+
+Listing 22.2.19.2. Sekwencja wywołań dla getUserAccounts.
+
+![Rys. 22.2.19.1.](img/mpp19_1.png) // dodac pozniej
+*Rys. 22.2.19.1. Widok dostępnych kont użytkowników w systemie.*
+
+### MPP.20 Sprawdzenie swojego kodu
+
+**Role uprawnione:** Student.
+
+```json
+"/reports/student-scan/{repositoryId}": {
+      "post": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Sprawdzenie swojego kodu",
+        "description": "Student może sprawdzić swój kod zgodnie z ustawioną obecnie regułą. Warunkiem skanowania jest posiadanie odpowiedniej liczby dostępnych skanowań.",
+        "operationId": "generateStudentReport",
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "studentTag",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskTag",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Skanowanie kodu ukończone pomyślnie.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono danego repozytorium.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Błąd blokady optymistycznej.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    }
+```
+Listing 22.2.20.1. Dokumentacja OpenApi dla metody POST `/reports/student-scan/{repositoryId}`.
+
+**Sekwencja wywołań:**
+1. ReportController.generateStudentReport(UUID, String, String, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ReportService.generateStudentReport(UUID, String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. GiteaRepositoryRepository.findByIdWithLock(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+4. RepositoryNotFoundException.RepositoryNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport)
+5. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. Repository.getStudentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. SubjectAccessDeniedException.SubjectAccessDeniedException()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. Repository.getSubject()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. Subject.getArchived()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. SubjectArchivedException.SubjectArchivedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject)
+14. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+15. Subject.getRulePreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. RulePreset.getRaportLevel()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. ReportLevelDict.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+18. ReportsRepository.countReportsByIdAndCreatedByLogin(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+19. RulePreset.getStudentTicketCount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+20. NoTicketsLeftException.NoTicketsLeftException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport)
+21. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+22. Subject.getOrganizationName()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. GiteaService.getRepositoriesFromOrganization(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+24. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+25. GiteaRepoDTO.template()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+26. GiteaRepoDTO.name()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+27. Repository.getRepositoryName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+28. GiteaRepoDTO.clone_url()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+29. GitService.cloneTag(String, String, File, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+30. AbstractEntity.getId()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+31. GiteaRepositoryRepository.getAllBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+32. Report.Report()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+33. Report.setSubject(Subject)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+34. Report.setTag(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+35. Report.setPathToReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+36. Report.setScannedRepositories(Long)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+37. Report.setIsStudentReport(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+38. Report.setRepositoryList(List<Repository>)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+39. RulePreset.getMinimumTokensMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+40. RulePreset.getEnableNormalization()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+41. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+42. JPlagService.runPlagiarismScanOnOrganisation(String, String, Integer, Boolean, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+43. Report.setAverageSimilarity(Double)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+44. JpaRepository.saveAndFlush(S)(2 usages)  (org.springframework.data.jpa.repository)
+45. ReportService.getStudentReportDetails(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+Listing 22.2.20.2. Sekwencja wywołań dla generateStudentReport.
+
+![Rys. 22.2.20.1.](img/mpp20_1.png)
+*Rys. 22.2.20.1. Widok ekranu skanowania kodu przez studenta.*
+
+![Rys. 22.2.20.2.](img/mpp20_2.png)
+*Rys. 22.2.20.2. Widok ekranu skanowania kodu przez studenta w przypadku braku dostępnych tokenów.*
+
+![Rys. 22.2.20.3.](img/mpp20_3.png)
+*Rys. 22.2.20.3. Widok ekranu skanowania kodu przez studenta po wypełnieniu danych.*
+
+![Rys. 22.2.20.4.](img/mpp20_4.png)
+*Rys. 22.2.20.4. Widok ekranu skanowania kodu przez studenta po wykonaniu skanowania kodu.*
+
+![Rys. 22.2.20.5.](img/mpp20_5.png)
+*Rys. 22.2.20.5. Widok wygenerowanego raportu przy widocznych wszystkich statystykach.*
+
+* pozostałe widoki raportów zostaną zaprezentowane w innym przypadku użycia - MPP.21
+
+
+### MPP.25 - Przeglądaj szczegóły przedmiotu
 
 **Role uprawnione:** Prowadzący, Student
 
@@ -4614,7 +4626,7 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody `GET` dla metody kontrolera `ge
 
 
 
-### MOK.26 - Zarchiwizuj przedmiot
+### MPP.26 - Zarchiwizuj przedmiot
 
 **Role uprawnione:** Prowadzący (Owner)
 
