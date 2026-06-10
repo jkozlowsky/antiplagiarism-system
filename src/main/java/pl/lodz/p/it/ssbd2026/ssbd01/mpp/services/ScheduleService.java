@@ -43,9 +43,6 @@ public class ScheduleService  {
     private final ScheduleMapper scheduleMapper;
     private final VersionHashService versionHashService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<ScheduleDTO> getSchedules(UUID subjectId) {
         String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
@@ -54,18 +51,15 @@ public class ScheduleService  {
             throw new NoPermissionForThisSubjectException();
         }
 
-        return scheduleRepository.findAllBySubjectId(subjectId).stream()
-                .map(schedule -> {
-                    ScheduleDTO dto = scheduleMapper.toScheduleDTO(schedule);
-                    return new ScheduleDTO(
-                            dto.id(),
-                            dto.scheduleDateTime(),
-                            dto.tag(),
-                            versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()),
-                            dto.isExecuted(),
-                            dto.hasFailed()
-                    );
-                })
+        return scheduleRepository.findAllProjectedBySubjectId(subjectId).stream()
+                .map(schedule -> new ScheduleDTO(
+                        schedule.id(),
+                        schedule.scheduleDateTime(),
+                        schedule.tag(),
+                        versionHashService.hashObjectVersion(schedule.id(), schedule.version()),
+                        schedule.isExecuted(),
+                        schedule.isHasFailed()
+                ))
                 .toList();
     }
 
