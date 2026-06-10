@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.TagConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.AbstractEntity;
 
 
 import java.time.LocalDateTime;
@@ -31,6 +30,9 @@ public class Schedule extends AbstractEntity {
 
     @Column(name = "has_failed", nullable = false)
     private boolean hasFailed = false;
+
+    @Column(name = "modifiable_until", nullable = false)
+    private LocalDateTime modifiableUntil;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_preset_id")

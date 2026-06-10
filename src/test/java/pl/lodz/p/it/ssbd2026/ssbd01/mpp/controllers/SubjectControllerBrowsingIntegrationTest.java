@@ -86,7 +86,7 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @DisplayName("POS01: Admin pobiera listę wszystkich przedmiotów")
     public void POS01_AdminShouldGetAllSubjects() throws JsonProcessingException {
         String response = requestFunctions.sendGetRequest(
-                HttpStatus.OK.value(), "/api/subjects", adminHeaders);
+                HttpStatus.OK.value(), "/api/subjects/all", adminHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
 

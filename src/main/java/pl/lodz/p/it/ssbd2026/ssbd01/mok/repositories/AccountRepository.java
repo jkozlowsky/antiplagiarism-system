@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.AccountListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 import java.time.LocalDateTime;
@@ -70,6 +71,14 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @Query("SELECT a FROM Account a WHERE a.login = :login")
     @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
     Optional<Account> findAuditorByLogin(@Param("login") String login);
+
+    @Query("""  
+            SELECT new pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.AccountListProjectionDTO(                a.id, a.login, a.name, a.surname, a.email, a.lastLoginSuccessDateTime, a.version            )            FROM Account a        """)
+    Page<AccountListProjectionDTO> findAllProjected(Pageable pageable);
+
+    @Query("""  
+            SELECT new pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.AccountListProjectionDTO(                a.id, a.login, a.name, a.surname, a.email, a.lastLoginSuccessDateTime, a.version            )            FROM Account a            WHERE lower(a.name) LIKE lower(concat('%', :phrase, '%'))               OR lower(a.surname) LIKE lower(concat('%', :phrase, '%'))        """)
+    Page<AccountListProjectionDTO> searchAccountsProjected(@Param("phrase") String phrase, Pageable pageable);
 
     @Query("SELECT a FROM Account a WHERE a.isBlocked = false AND " +
             "((a.lastLoginSuccessDateTime IS NOT NULL AND a.lastLoginSuccessDateTime < :lastTimeLogged) OR " +

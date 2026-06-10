@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.SubjectListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 
 import java.util.List;
@@ -44,4 +45,8 @@ public interface SubjectRepository extends AbstractRepository<Subject> {
 
     @Query("SELECT r.subject FROM Report r WHERE r.id = :reportId")
     Optional<Subject> findByReportId(@Param("reportId") UUID reportId);
+
+    @Query("""  
+    SELECT DISTINCT new pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.SubjectListProjectionDTO(        s.id, s.version, s.name, s.edition, s.archived    )    FROM Subject s JOIN s.repositoryList r JOIN r.studentList st    WHERE st.account.login = :login""")
+    List<SubjectListProjectionDTO> findAllProjectedByStudentLogin(@Param("login") String login);
 }
