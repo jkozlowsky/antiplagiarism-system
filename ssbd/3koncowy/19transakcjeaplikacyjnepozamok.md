@@ -19,6 +19,53 @@ w module MOK posiadają adnotację na poziomie klasy, która narzuca propagację
 i odczytujących stan bazy danych. Metody te nie mogą samodzielnie otworzyć nowej transakcji i muszą dołączyć do transakcji 
 nadrzędnej.
 
+### MPP.1 - Synchronizacja przedmiotu z Gitea
+
+Na powyższy przypadek użycia składa się jedna transakcja aplikacyjna. 
+Jest ona odpowiedzialna za komunikację z instancją platformy Gitea w celu pobrania aktualnej listy repozytoriów powiązanych z organizacją przypisaną do wybranego przedmiotu, zweryfikowanie ich współtwórców oraz zaktualizowanie powiązań i stanu encji w bazie danych aplikacji.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void syncSubjectWithGitea(UUID subjectId) {
+    Subject subject = subjectRepository.findById(subjectId)
+            .orElseThrow(SubjectNotFoundException::new);
+
+    checkIfNotArchived(subject);
+
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String currentUsername = authentication.getName();
+
+    boolean isOwnerOrEditor = subject.getSubjectAssignmentList().stream()
+            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) &&
+                    (a.getSubjectRole() == TeacherSubjectRole.OWNER || a.getSubjectRole() == TeacherSubjectRole.EDITOR));
+
+    if (!isOwnerOrEditor) {
+        throw new SubjectAccessDeniedException();
+    }
+
+    internalSyncWithGitea(subject);
+    subjectRepository.saveAndFlush(subject);
+}
+```
+Listing 19.1.1 Metoda synchronizująca przedmioty z platformą Gitea i inicjująca transakcję aplikacyjną dla przypadku MPP.1.
+
+Transakcja jest inicjowana przez metodę `syncSubjectWithGitea(UUID)` z komponentu `SubjectService`, przedstawioną na listingu 19.1.1 W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+
+- `SubjectRepository.findById(UUID)`
+- `StudentRepository.findByAccountEmailIgnoreCase(String)` – wywoływana wielokrotnie w ramach metody pomocniczej `internalSyncWithGitea` w celu odszukania kont studenckich na podstawie adresów e-mail współtwórców pobranych z platformy Gitea,
+- `SubjectRepository.saveAndFlush(Subject)`
+
+Operacje te wykonywane se w granicach transakcji na następujących obiektach encji JPA:
+- Subject
+- Repository
+- Student
+
+
 ### MPP.2 - Generowanie raportu na żądanie
 W tym przypadku użycia zastosowano trzy transakcje aplikacyjne.
 
@@ -347,6 +394,478 @@ Są to:
 Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
 - `Subject`
 - `Report`
+
+### MPP. 6 Przeglądanie przedmiotów
+
+Na powyższy przypadek użycia składają się trzy transakcje aplikacyjne o charakterze wyłącznie odczytowym. 
+
+Pierwsza z nich realizuje odczyt listy przedmiotów, do których przypisany jest dany prowadzący, druga odpowiada za odczyt listy przedmiotów powiązanych z zalogowanym studentem, a trzecia pobiera wszystkie przedmioty w systemie na potrzeby widoku administratora.
+
+```java
+    @MethodCallLogged
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+public List<SubjectDTO> getTeacherSubjects() {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String login = authentication.getName();
+    List<SubjectDTO> result = new ArrayList<>();
+
+    List<SubjectAssignment> assignments = subjectAssignmentRepository.findAllByTeacherLogin(login);
+    List<UUID> subjectIds = assignments.stream()
+            .map(assignment -> assignment.getSubject().getId())
+            .toList();
+
+    List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+            .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+    Map<UUID, String> descriptionMap = translations.stream()
+            .collect(Collectors.toMap(
+                    SubjectDescriptionTranslation::getId,
+                    SubjectDescriptionTranslation::getTranslatedDescription
+            ));
+
+    Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+            .stream()
+            .collect(Collectors.toMap(
+                    ScheduleRepository.SubjectNextScan::getSubjectId,
+                    ScheduleRepository.SubjectNextScan::getNextScanTime
+            ));
+
+    for (SubjectAssignment assignment : assignments) {
+        Subject subject = assignment.getSubject();
+        TeacherSubjectRole role = assignment.getSubjectRole();
+        String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+
+        boolean canEdit = (role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR);
+        boolean canManageTeachers = (role == TeacherSubjectRole.OWNER);
+        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+        result.add(subjectMapper.toSubjectDTO(subject, hash, canEdit, canManageTeachers, true, null, null, originalDescription, nextScan));
+    }
+
+    return result;
+}
+```
+Listing 19.6.1. Metoda pobierająca przedmioty prowadzącego i rozpoczynająca pierwszą transakcję aplikacyjną dla przypadku MPP.6.
+
+Transakcja jest inicjowana przez metodę `getTeacherSubjects()` z `SubjectService`, którą przedstawiono na listingu 19.6.1. W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+- `SubjectAssignmentRepository.findAllByTeacherLogin(String)`
+- `SubjectDescriptionTranslationRepository.findBySubjectIdInAndIsOriginalTrue(List<UUID>)`
+- `ScheduleRepository.findNextScanTimesForSubjects(List<UUID>)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+- `SubjectAssignment`
+- `Subject`
+- `SubjectDescriptionTranslation`
+- `Schedule`
+
+Druga transakcja z kolei realizuje odczyt wszystkich przedmiotów, do których przypisany jest dany student.
+
+```java
+@MethodCallLogged
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+public List<SubjectDTO> getStudentSubjects() {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String login = authentication.getName();
+
+    List<SubjectDTO> result = new ArrayList<>();
+    List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
+
+    List<UUID> subjectIds = subjects.stream()
+            .map(Subject::getId)
+            .toList();
+
+    List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+            .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+    Map<UUID, String> descriptionMap = translations.stream()
+            .collect(Collectors.toMap(
+                    SubjectDescriptionTranslation::getId,
+                    SubjectDescriptionTranslation::getTranslatedDescription
+            ));
+
+    Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+            .stream()
+            .collect(Collectors.toMap(
+                    ScheduleRepository.SubjectNextScan::getSubjectId,
+                    ScheduleRepository.SubjectNextScan::getNextScanTime
+            ));
+
+    for (Subject subject : subjects) {
+        String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+        result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null, originalDescription, nextScan));
+    }
+
+    return result;
+}
+```
+Listing 19.6.2. Metoda inicjująca drugą transakcję aplikacyjną w ramach przypadku MPP.6 oraz pobierająca przedmioty studenta.
+
+Druga transakcja w ramach MPP.6 jest inicjowana przez metodę `getStudentSubjects`() z `SubjectService`, przedstawioną na listingu 19.6.2. W ramach tej transakcji wywoływane są metody komponentów dostępowych z propagacją `MANDATORY`:
+- `SubjectRepository.findAllByStudentLogin(String)`
+- `SubjectDescriptionTranslationRepository.findBySubjectIdInAndIsOriginalTrue(List<UUID>)`
+- `ScheduleRepository.findNextScanTimesForSubjects(List<UUID>)`
+
+Operacje te wykonywane są na encjach JPA:
+- `Subject`
+- `SubjectDescriptionTranslation`
+- `Schedule`
+
+```java
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public List<SubjectDTO> getAllSubjects() {
+        List<SubjectDTO> result = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findAll();
+
+        List<UUID> subjectIds = subjects.stream()
+                .map(Subject::getId)
+                .toList();
+
+        List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
+                .findBySubjectIdInAndIsOriginalTrue(subjectIds);
+
+        Map<UUID, String> descriptionMap = translations.stream()
+                .collect(Collectors.toMap(
+                        SubjectDescriptionTranslation::getId,
+                        SubjectDescriptionTranslation::getTranslatedDescription
+                ));
+
+        Map<UUID, LocalDateTime> nextScanMap = scheduleRepository.findNextScanTimesForSubjects(subjectIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ScheduleRepository.SubjectNextScan::getSubjectId,
+                        ScheduleRepository.SubjectNextScan::getNextScanTime
+                ));
+
+        for (Subject subject : subjects) {
+            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
+            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+
+            result.add(subjectMapper.toSubjectDTO(subject, hash, true, true, true, null, null, originalDescription, nextScan));
+        }
+
+        return result;
+    }
+```
+Listing 19.6.3. Metoda pobierająca wszystkie przedmioty dla administratora i inicjująca trzecią transakcję aplikacyjną dla przypadku MPP.6.
+
+Trzecia transakcja jest inicjowana przez metodę `getAllSubjects()` z komponentu `SubjectService`, którą przedstawiono na listingu 19.6.3. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są to kolejno:
+`SubjectRepository.findAll()`
+`SubjectDescriptionTranslationRepository.findBySubjectIdInAndIsOriginalTrue(List<UUID>)`
+`ScheduleRepository.findNextScanTimesForSubjects(List<UUID>)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+`Subject`
+`SubjectDescriptionTranslation`
+`Schedule`
+
+### MPP.7 Tworzenie przedmiotów
+
+Na powyższy przypadek użycia składają się dwie transakcje aplikacyjne.
+
+Pierwsza z nich realizuje utworzenie przedmiotu na podstawie ręcznej konfiguracji reguł wprowadzanej przez prowadzącego.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void createSubjectManual(CreateSubjectManualDTO dto, String creatorLogin, String originalLanguage) {
+    Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
+            .orElseThrow(AccessLevelNotAssignedException::new);
+
+    if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+        throw new SubjectAlreadyExistsException();
+    }
+
+    String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+
+    Subject subject = createBaseSubject(
+            dto.name(),
+            dto.organizationName(),
+            dto.edition(),
+            dto.subjectDescription(),
+            generatedGiteaUrl,
+            originalLanguage
+    );
+
+    RulePreset preset = new RulePreset();
+    preset.setRaportLevel(fetchRaportLevel(dto.manualRules().raportLevelName()));
+    preset.setStudentTicketCount(dto.manualRules().studentTicketCount());
+    preset.setMinimumTokensMatch(dto.manualRules().minimumTokensMatch());
+    preset.setEnableNormalization(dto.manualRules().enableNormalization());
+    preset.setIsPreset(false);
+    preset.setSubject(subject);
+    subject.setRulePreset(preset);
+
+    assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+    internalSyncWithGitea(subject);
+//        subjectRepository.saveAndFlush(subject);
+    Subject savedSubject = subjectRepository.saveAndFlush(subject);
+    SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+    subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+    subjectDescriptionTranslation.setLanguageDict(
+            languageDictRepository.findByLanguage(originalLanguage)
+                    .orElseThrow(LanguageDictNotFoundException::new)
+    );
+    subjectDescriptionTranslation.setIsOriginal(true);
+    subjectDescriptionTranslation.setSubject(savedSubject);
+    savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+    subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
+}
+```
+Listing 19.7.1. Metoda tworząca przedmiot z ręczną konfiguracją reguł i rozpoczynająca pierwszą transakcję aplikacyjną dla przypadku MPP.7.
+
+Pierwsza transakcja jest inicjowana przez metodę `createSubjectManual(CreateSubjectManualDTO, String, String)` z `SubjectService`, którą przedstawiono na listingu 19.7.1. W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+- `TeacherRepository.findActiveTeacherByLogin(String)`
+- `SubjectRepository.existsByOrganizationNameIgnoreCase(String)`
+- `RaportLevelRepository.findByName(String)`
+- `StudentRepository.findByAccountEmailIgnoreCase(String)`
+- `SubjectRepository.saveAndFlush(Subject)`
+- `LanguageDictRepositoryMPP.findByLanguage(String)`
+- `SubjectDescriptionTranslationRepository.saveAndFlush(SubjectDescriptionTranslation)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+- `Teacher`
+- `Subject`
+- `ReportLevelDict`
+- `Student`
+- `RulePreset`
+- `SubjectAssignment`
+- `Repository`
+- `LanguageDict`
+- `SubjectDescriptionTranslation`
+
+Druga transakcja z kolei realizuje utworzenie przedmiotu z wykorzystaniem gotowego szablonu reguł skanowania zapisanego w systemie.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void createSubjectFromTemplate(CreateSubjectTemplateDTO dto, String creatorLogin, String originalLanguage) {
+    Teacher teacher = teacherRepository.findActiveTeacherByLogin(creatorLogin)
+            .orElseThrow(AccessLevelNotAssignedException::new);
+
+    if (subjectRepository.existsByOrganizationNameIgnoreCase(dto.organizationName())) {
+        throw new SubjectAlreadyExistsException();
+    }
+
+    String generatedGiteaUrl = "https://team-1.proj-sum.it.p.lodz.pl/git/" + dto.organizationName();
+
+    Subject subject = createBaseSubject(
+            dto.name(),
+            dto.organizationName(),
+            dto.edition(),
+            dto.subjectDescription(),
+            generatedGiteaUrl,
+            originalLanguage
+    );
+    RulePreset template = ruleRepository.findById(dto.templateId())
+            .orElseThrow(RulePresetTemplateNotFoundException::new);
+
+    RulePreset preset = new RulePreset();
+    preset.setRaportLevel(fetchRaportLevel(dto.raportLevelName()));
+    preset.setStudentTicketCount(template.getStudentTicketCount());
+    preset.setMinimumTokensMatch(template.getMinimumTokensMatch());
+    preset.setEnableNormalization(template.getEnableNormalization());
+    preset.setIsPreset(false);
+    preset.setSubject(subject);
+    subject.setRulePreset(preset);
+
+    assignTeachers(subject, teacher, creatorLogin, dto.teachers());
+    internalSyncWithGitea(subject);
+    Subject savedSubject = subjectRepository.saveAndFlush(subject);
+    SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+    subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+    subjectDescriptionTranslation.setLanguageDict(
+            languageDictRepository.findByLanguage(originalLanguage)
+                    .orElseThrow(LanguageDictNotFoundException::new)
+    );
+    subjectDescriptionTranslation.setIsOriginal(true);
+    subjectDescriptionTranslation.setSubject(savedSubject);
+    savedSubject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+    subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
+}
+```
+Listing 19.7.2. Metoda tworząca przedmiot na podstawie szablonu i inicjująca drugą transakcję aplikacyjną dla przypadku MPP.7.
+
+Druga transakcja w ramach MPP.7 jest inicjowana przez metodę `createSubjectFromTemplate(CreateSubjectTemplateDTO, String, String)` z `SubjectService`, przedstawioną na listingu 19.7.2. W ramach tej transakcji wywoływane są metody komponentów dostępowych z propagacją `MANDATORY`:
+
+`TeacherRepository.findActiveTeacherByLogin(String)`
+`SubjectRepository.existsByOrganizationNameIgnoreCase(String)`
+`RuleRepository.findById(UUID)`
+`RaportLevelRepository.findByName(String)`
+`StudentRepository.findByAccountEmailIgnoreCase(String)`
+`SubjectRepository.saveAndFlush(Subject)`
+`LanguageDictRepositoryMPP.findByLanguage(String)`
+`SubjectDescriptionTranslationRepository.saveAndFlush(SubjectDescriptionTranslation)`
+
+Operacje te wykonywane są na encjach JPA:
+`Teacher`
+`Subject`
+`RulePreset`
+`ReportLevelDict`
+`Student`
+`SubjectAssignment`
+`Repository`
+`LanguageDict`
+`SubjectDescriptionTranslation`
+
+### MPP.8 Edycja przedmiotu
+
+Na powyższy przypadek użycia składa się jedna transakcja aplikacyjna. Realizuje ona modyfikację ustawień istniejącego przedmiotu (w tym jego nazwy, opisu, reguł skanowania oraz przypisanych prowadzących), z jednoczesnym wymuszeniem podbicia wersji encji na poziomie bazy danych w celu ochrony przed współbieżnymi modyfikacjami.
+
+```java
+@MethodCallLogged
+@Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+public void updateSubject(UUID subjectId, UpdateSubjectDTO dto, String versionHash, String originalLanguage) {
+    Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
+            .orElseThrow(SubjectNotFoundException::new);
+
+    checkIfNotArchived(subject);
+
+    if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
+        throw new ConcurrentUpdateException();
+    }
+
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String currentUsername = authentication.getName();
+
+    boolean isOwner = subject.getSubjectAssignmentList().stream()
+            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+    boolean isEditor = subject.getSubjectAssignmentList().stream()
+            .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(currentUsername) && a.getSubjectRole() == TeacherSubjectRole.EDITOR);
+
+    if (!isOwner && !isEditor) {
+        throw new SubjectAccessDeniedException();
+    }
+
+    subjectDescriptionTranslationRepository.deleteAllBySubjectId(subject.getId());
+
+    SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
+    subjectDescriptionTranslation.setSubject(subject);
+    subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
+    subjectDescriptionTranslation.setIsOriginal(true);
+    LanguageDict languageDict = languageDictRepository.findByLanguage(originalLanguage)
+            .orElseThrow(LanguageDictNotFoundException::new);
+    subjectDescriptionTranslation.setLanguageDict(languageDict);
+
+    subject.setName(dto.name());
+    subject.getSubjectDescriptionTranslationList().add(subjectDescriptionTranslation);
+
+    subjectDescriptionTranslationRepository.saveAndFlush(subjectDescriptionTranslation);
+
+    if (dto.rules() != null) {
+        RulePreset preset = subject.getRulePreset();
+        preset.setRaportLevel(fetchRaportLevel(dto.rules().raportLevelName()));
+        preset.setStudentTicketCount(dto.rules().studentTicketCount());
+        preset.setMinimumTokensMatch(dto.rules().minimumTokensMatch());
+        preset.setEnableNormalization(dto.rules().enableNormalization());
+        preset.setIsPreset(false);
+    }
+    if (!isOwner && isEditor) {
+        boolean isTeacherListModified = false;
+
+        if (dto.teachers() != null) {
+            if (dto.teachers().size() != subject.getSubjectAssignmentList().size()) {
+                isTeacherListModified = true;
+            } else {
+                for (TeacherAssignmentDTO incoming : dto.teachers()) {
+                    boolean match = subject.getSubjectAssignmentList().stream()
+                            .anyMatch(existing -> existing.getTeacher().getAccount().getLogin().equals(incoming.login()) &&
+                                    existing.getSubjectRole() == incoming.role());
+                    if (!match) {
+                        isTeacherListModified = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (isTeacherListModified) {
+            throw new SubjectAccessDeniedException();
+        }
+    }
+
+    if (isOwner) {
+        List<SubjectAssignment> currentAssignments = subject.getSubjectAssignmentList();
+
+        List<SubjectAssignment> assignmentsToRemove = currentAssignments.stream()
+                .filter(assignment -> dto.teachers().stream()
+                        .noneMatch(t -> t.login().equals(assignment.getTeacher().getAccount().getLogin())))
+                .toList();
+
+        currentAssignments.removeAll(assignmentsToRemove);
+        subjectAssignmentRepository.deleteAll(assignmentsToRemove);
+
+        for (TeacherAssignmentDTO teacherDto : dto.teachers()) {
+            Optional<SubjectAssignment> existing = currentAssignments.stream()
+                    .filter(a -> a.getTeacher().getAccount().getLogin().equals(teacherDto.login()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                existing.get().setSubjectRole(teacherDto.role());
+            } else {
+                Teacher teacher = teacherRepository.findActiveTeacherByLogin(teacherDto.login())
+                        .orElseThrow(AccessLevelNotAssignedException::new);
+
+                SubjectAssignment newAssignment = new SubjectAssignment();
+                newAssignment.setSubject(subject);
+                newAssignment.setTeacher(teacher);
+                newAssignment.setSubjectRole(teacherDto.role());
+                currentAssignments.add(newAssignment);
+            }
+        }
+
+        boolean hasOwner = currentAssignments.stream()
+                .anyMatch(a -> a.getSubjectRole() == TeacherSubjectRole.OWNER);
+        if (!hasOwner) {
+            throw new SubjectMustHaveOwnerException();
+        }
+    }
+
+    subjectRepository.saveAndFlush(subject);
+}
+```
+Listing 19.8.1. Metoda modyfikująca przedmiot i rozpoczynająca transakcję aplikacyjną dla przypadku MPP.8.
+
+Transakcja jest inicjowana przez metodę `updateSubject(UUID, UpdateSubjectDTO, String, String)` z `SubjectService`, którą przedstawiono na listingu 19.8.1. W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+- `SubjectRepository.findByIdForceIncrement(UUID)`
+- `SubjectDescriptionTranslationRepository.deleteAllBySubjectId(UUID)`
+- `LanguageDictRepositoryMPP.findByLanguage(String)`
+- `SubjectDescriptionTranslationRepository.saveAndFlush(SubjectDescriptionTranslation)`
+- `RaportLevelRepository.findByName(String)`
+- `SubjectAssignmentRepository.deleteAll(Iterable)`
+- `TeacherRepository.findActiveTeacherByLogin(String)`
+- `SubjectRepository.saveAndFlush(Subject)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+- `Subject`
+- `SubjectDescriptionTranslation`
+- `LanguageDict`
+- `ReportLevelDict`
+- `SubjectAssignment`
+- `Teacher`
+- `RulePreset`
 
 ### MPP.9 Usuwanie przedmiotu
 
@@ -793,3 +1312,180 @@ Operacja ta wykonywana jest w granicach transakcji na następujących obiektach 
 * `Subject`
 * `RulePreset`
 * `RaportLevel`
+
+### MPP.25 Przeglądanie szczegółów przedmiotu
+
+Na powyższy przypadek użycia składają się dwie transakcje aplikacyjne o charakterze wyłącznie odczytowym.
+
+Pierwsza z nich realizuje odczyt szczegółowych informacji o przedmiocie (w tym konfiguracji reguł skanowania antyplagiatowego oraz przypisanego harmonogramu) na potrzeby widoku prowadzącego, natomiast druga odpowiada za weryfikację dostępu oraz pobranie szczegółów przedmiotu dla zalogowanego studenta wraz ze statystykami wykorzystania biletów.
+
+```java
+
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public SubjectDTO getSubjectDetails(UUID subjectId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+        var authorities = authentication.getAuthorities();
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.map(SubjectDescriptionTranslation::getTranslatedDescription).orElse("");
+
+
+        UUID templateId = null;
+        RulePresetDTO manualRules = null;
+        RulePreset preset = subject.getRulePreset();
+
+        if (preset != null) {
+            if (preset.getIsPreset()) {
+                templateId = preset.getId();
+            } else {
+                manualRules = ruleMapper.toRuleDTO(preset);
+            }
+        }
+
+        String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
+        LocalDateTime nextScan = scheduleRepository.findNextScanTimeBySubjectId(subjectId).orElse(null);
+
+
+        if (hasRole(authorities, AccountConsts.ROLE_TEACHER)) {
+            TeacherSubjectRole role = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(login, subjectId)
+                    .stream()
+                    .findFirst()
+                    .map(SubjectAssignment::getSubjectRole)
+                    .orElseThrow(SubjectAccessDeniedException::new);
+
+            return subjectMapper.toSubjectDTO(
+                    subject,
+                    hash,
+                    role == TeacherSubjectRole.OWNER || role == TeacherSubjectRole.EDITOR,
+                    role == TeacherSubjectRole.OWNER,
+                    true,
+                    templateId,
+                    manualRules,
+                    originalDescription,
+                    nextScan
+            );
+        }
+
+        throw new SubjectAccessDeniedException();
+    }
+```
+Listing 19.25.1. Metoda pobierająca szczegóły przedmiotu dla prowadzącego i inicjująca pierwszą transakcję aplikacyjną dla przypadku MPP.25.
+
+Transakcja jest inicjowana przez metodę `getSubjectDetails(UUID)` z komponentu `SubjectService`, którą przedstawiono na listingu 19.25.1. W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+- `SubjectRepository.findById(UUID)`
+- `SubjectDescriptionTranslationRepository.findBySubjectIdAndIsOriginalTrue(UUID)`
+- `ScheduleRepository.findNextScanTimeBySubjectId(UUID)`
+- `SubjectAssignmentRepository.findByTeacherLoginAndSubjectId(String, UUID)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+- `Subject`
+- `SubjectDescriptionTranslation`
+- `Schedule`
+- `SubjectAssignment`
+- `RulePreset`
+
+```java
+    @MethodCallLogged
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    public StudentSubjectDetailsDTO getStudentSubjectDetails(UUID subjectId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String login = authentication.getName();
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+        Optional<SubjectDescriptionTranslation> originalDescriptionE = subjectDescriptionTranslationRepository
+                .findBySubjectIdAndIsOriginalTrue(subjectId);
+        String originalDescription = originalDescriptionE.isPresent() ? originalDescriptionE.get().getTranslatedDescription() : "";
+
+        if (!subjectRepository.isStudentAssignedToSubject(subjectId, login)) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        Repository studentRepo = subject.getRepositoryList().stream()
+                .filter(repo -> repo.getStudentList().stream()
+                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
+                .findFirst()
+                .orElse(null);
+
+        String visibilityLevel = "NOTHING";
+        if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
+            visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
+        }
+        int usedTickets = studentRepo != null? reportsRepository.countReportsByIdAndCreatedByLogin(studentRepo.getId(), login) : 0;
+        return new StudentSubjectDetailsDTO(
+                subject.getId(),
+                subject.getName(),
+                subject.getOrganizationName(),
+                subject.getEdition(),
+                originalDescription,
+                subject.getGiteaURL(),
+                studentRepo != null ? repositoryMapper.toDto(studentRepo , usedTickets ) : null,
+                visibilityLevel
+        );
+    }
+```
+Listing 19.25.2. Metoda pobierająca szczegóły przedmiotu dla studenta i inicjująca drugą transakcję aplikacyjną dla przypadku MPP.25.
+
+Druga transakcja w ramach MPP.25 jest inicjowana przez metodę `getStudentSubjectDetails(UUID)` z komponentu `SubjectService`, przedstawioną na listingu 19.25.2. W ramach tej transakcji wywoływane są metody komponentów dostępowych z propagacją `MANDATORY`:
+- `SubjectRepository.findById(UUID)`
+- `SubjectDescriptionTranslationRepository.findBySubjectIdAndIsOriginalTrue(UUID)`
+- `SubjectRepository.isStudentAssignedToSubject(UUID, String)`
+- `ReportsRepository.countReportsByIdAndCreatedByLogin(Long, String)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+- `Subject`
+- `SubjectDescriptionTranslation`
+- `Repository`
+- `Report`
+
+### MPP.26 Zarchiwizuj przedmiot
+Na powyższy przypadek użycia składa się jedna transakcja aplikacyjna. 
+
+Realizuje ona operację zmiany statusu archiwizacji istniejącego przedmiotu, z jednoczesnym wymuszeniem podbicia wersji encji na poziomie bazy danych, co chroni przed współbieżnymi modyfikacjami.
+
+```java
+    @MethodCallLogged
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mppTransactionManager")
+    public void toggleArchiveSubject(UUID subjectId, String versionHash) {
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId)
+                .orElseThrow(SubjectNotFoundException::new);
+
+        String currentHash = versionHashService.hashObjectVersion(subjectId, subject.getVersion());
+        if (versionHash == null || !versionHash.equals(currentHash)) {
+            throw new ConcurrentUpdateException();
+        }
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isOwner = subject.getSubjectAssignmentList().stream()
+                .anyMatch(a -> a.getTeacher().getAccount().getLogin().equals(authentication.getName()) && a.getSubjectRole() == TeacherSubjectRole.OWNER);
+
+        if (!isOwner) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        subject.setArchived(subject.getArchived() == null || !subject.getArchived());
+        subjectRepository.saveAndFlush(subject);
+    }
+```
+Listing 19.26.1. Metoda archiwizująca przedmiot i inicjująca transakcję aplikacyjną dla przypadku MPP.26.
+
+Transakcja jest inicjowana przez metodę `toggleArchiveSubject(UUID, String)` z komponentu `SubjectService`, którą przedstawiono na listingu 19.26.1. W ramach tej transakcji wywoływana jest sekwencja metod komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+
+- `SubjectRepository.findByIdForceIncrement(UUID)`
+- `SubjectRepository.saveAndFlush(Subject)`
+
+Operacje te wykonywane są w granicach transakcji na następującym obiekcie encji JPA:
+- `Subject`
