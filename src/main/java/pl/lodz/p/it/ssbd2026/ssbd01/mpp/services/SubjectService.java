@@ -17,6 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RepositoryMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.RuleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.SubjectMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.SubjectListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssignedException;
@@ -211,10 +212,10 @@ public class SubjectService {
         String login = authentication.getName();
 
         List<SubjectDTO> result = new ArrayList<>();
-        List<Subject> subjects = subjectRepository.findAllByStudentLogin(login);
+        List<SubjectListProjectionDTO> subjects = subjectRepository.findAllProjectedByStudentLogin(login);
 
         List<UUID> subjectIds = subjects.stream()
-                .map(Subject::getId)
+                .map(SubjectListProjectionDTO::id)
                 .toList();
 
         List<SubjectDescriptionTranslation> translations = subjectDescriptionTranslationRepository
@@ -222,7 +223,7 @@ public class SubjectService {
 
         Map<UUID, String> descriptionMap = translations.stream()
                 .collect(Collectors.toMap(
-                        SubjectDescriptionTranslation::getId,
+                        translation -> translation.getSubject().getId(),
                         SubjectDescriptionTranslation::getTranslatedDescription
                 ));
 
@@ -233,16 +234,18 @@ public class SubjectService {
                         ScheduleRepository.SubjectNextScan::getNextScanTime
                 ));
 
-        for (Subject subject : subjects) {
-            String originalDescription = descriptionMap.getOrDefault(subject.getId(), "");
-            String hash = versionHashService.hashObjectVersion(subject.getId(), subject.getVersion());
-            LocalDateTime nextScan = nextScanMap.get(subject.getId());
+        for (SubjectListProjectionDTO subject : subjects) {
+            String originalDescription = descriptionMap.getOrDefault(subject.id(), "");
+            String hash = versionHashService.hashObjectVersion(subject.id(), subject.version());
+            LocalDateTime nextScan = nextScanMap.get(subject.id());
 
-            result.add(subjectMapper.toSubjectDTO(subject, hash, false, false, false, null, null, originalDescription, nextScan));
+            result.add(subjectMapper.projectionToSubjectDTO(subject, hash, false, false, false, null, null, originalDescription, nextScan));
         }
 
         return result;
     }
+
+
 
     @MethodCallLogged
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -326,7 +329,7 @@ public class SubjectService {
         if (subject.getRulePreset() != null && subject.getRulePreset().getRaportLevel() != null) {
             visibilityLevel = subject.getRulePreset().getRaportLevel().getName();
         }
-        int usedTickets = studentRepo != null? reportsRepository.countReportsByIdAndCreatedByLogin(studentRepo.getId(), login) : 0;
+        int usedTickets = studentRepo != null? reportsRepository.countReportsByInitiatedId(studentRepo.getId()) : 0;
         return new StudentSubjectDetailsDTO(
                 subject.getId(),
                 subject.getName(),

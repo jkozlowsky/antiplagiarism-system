@@ -26,13 +26,13 @@ public class TeacherService {
             return List.of();
         }
 
-        return teacherRepository.findActiveTeachersByQuery(query)
+        return teacherRepository.findProjectedActiveTeachersByQuery(query)
                 .stream()
                 .map(t -> new TeacherSearchDTO(
-                        t.getAccount().getLogin(),
-                        t.getAccount().getName(),
-                        t.getAccount().getSurname(),
-                        t.getAccount().getEmail()
+                        t.login(),
+                        t.name(),
+                        t.surname(),
+                        t.email()
                 ))
                 .toList();
     }

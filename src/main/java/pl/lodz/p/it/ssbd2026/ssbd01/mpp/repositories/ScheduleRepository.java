@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.common.AbstractRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ScheduleProjectionListDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 
 import java.time.LocalDateTime;
@@ -46,5 +47,9 @@ public interface ScheduleRepository extends AbstractRepository<Schedule> {
 
     @Query("SELECT MIN(s.scheduleDateTime) FROM Schedule s JOIN s.rulePreset rp JOIN rp.subject sub WHERE sub.id = :subjectId AND s.isExecuted = false AND s.scheduleDateTime > CURRENT_TIMESTAMP")
     Optional<LocalDateTime> findNextScanTimeBySubjectId(@Param("subjectId") UUID subjectId);
+
+    @Query("""  
+    SELECT new pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ScheduleProjectionListDTO(s.id, s.scheduleDateTime, s.tag, s.version, s.isExecuted, s.hasFailed) FROM Schedule s JOIN s.rulePreset rp JOIN rp.subject sub WHERE sub.id = :subjectId""")
+    List<ScheduleProjectionListDTO> findAllProjectedBySubjectId(@Param("subjectId") UUID subjectId);
 
 }

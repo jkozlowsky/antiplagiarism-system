@@ -62,18 +62,15 @@ public class ScheduleService  {
             throw new NoPermissionForThisSubjectException();
         }
 
-        return scheduleRepository.findAllBySubjectId(subjectId).stream()
-                .map(schedule -> {
-                    ScheduleDTO dto = scheduleMapper.toScheduleDTO(schedule);
-                    return new ScheduleDTO(
-                            dto.id(),
-                            dto.scheduleDateTime(),
-                            dto.tag(),
-                            versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()),
-                            dto.isExecuted(),
-                            dto.hasFailed()
-                    );
-                })
+        return scheduleRepository.findAllProjectedBySubjectId(subjectId).stream()
+                .map(schedule -> new ScheduleDTO(
+                        schedule.id(),
+                        schedule.scheduleDateTime(),
+                        schedule.tag(),
+                        versionHashService.hashObjectVersion(schedule.id(), schedule.version()),
+                        schedule.isExecuted(),
+                        schedule.isHasFailed()
+                ))
                 .toList();
     }
 

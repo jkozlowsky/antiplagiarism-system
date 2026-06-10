@@ -2,10 +2,13 @@ package pl.lodz.p.it.ssbd2026.ssbd01.dto.converters;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.RepositorySimpleProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.repository.RepositoryWithStudentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.repository.StudentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface RepositoryMapper {
@@ -17,4 +20,9 @@ public interface RepositoryMapper {
     @Mapping(source = "account.name", target = "name")
     @Mapping(source = "account.surname", target = "surname")
     StudentDTO toStudentDto(Student student);
+
+    @Mapping(target = "repositoryName", source = "repo.repositoryName")
+    @Mapping(target = "ticketCount", source = "repo.ticketCount")
+    @Mapping(target = "students", source = "students")
+    RepositoryWithStudentDTO projectionToWithStudentDto(RepositorySimpleProjectionDTO repo, List<StudentDTO> students);
 }

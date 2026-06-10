@@ -33,7 +33,7 @@ public class RepositoryController {
     @GetMapping("/subject/{subjectId}")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<RepositoryWithStudentDTO> getRepositories(@PathVariable UUID subjectId) {
-        return repositoryService.getRepositories(subjectId).stream().map((repository)->repositoryMapper.toDto(repository, 0)).toList();
+        return repositoryService.getRepositories(subjectId);
     }
 
     @GetMapping("/subject/{subjectName}/users")
