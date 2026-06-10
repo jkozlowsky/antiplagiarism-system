@@ -1119,6 +1119,109 @@ Operacja ta wykonywana jest w granicach transakcji na następującym obiekcie en
 
 W tej metodzie zastosowano mechanizm blokady optymistycznej oraz ponawiania odwołanych transakcji. Integralność danych weryfikowana jest za pomocą porównania zahaszowanej wartości wersji przysłanej z frontu (versionHash) z aktualną wersją w bazie. Niezgodność skutkuje wyrzuceniem wyjątku ConcurrentUpdateException. Adnotacja @Retryable definiuje, że w przypadku wystąpienia tego błędu (związanego ze współbieżną modyfikacją) lub błędu infrastrukturalnego bazy (JpaSystemException), aplikacja automatycznie, na poziomie serwisu, ponowi próbę wykonania całej transakcji zgodnie ze zdefiniowaną polityką prób (maxAttemptsExpression) i opóźnień (backoff).
 
+### MPP.14 Przeglądanie harmonogramu
+Na powyższy przypadek użycia składa się jedna transakcja odczytowa.
+
+Dana transakcja realizuje odczyt listy harmonogramów powiązanych z danym przedmiotem wraz z weryfikacją uprawnień 
+zalogowanego prowadzącego do tego przedmiotu.
+
+```java //todo zmienić
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+@Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+@PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+public List<ScheduleDTO> getSchedules(UUID subjectId) {
+    String teacherLogin = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+    Optional<SubjectAssignment> subjectAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(teacherLogin, subjectId);
+
+    if (subjectAssignment.isEmpty()) {
+        throw new NoPermissionForThisSubjectException();
+    }
+
+    return scheduleRepository.findAllBySubjectId(subjectId).stream()
+            .map(schedule -> {
+                ScheduleDTO dto = scheduleMapper.toScheduleDTO(schedule);
+                return new ScheduleDTO(
+                        dto.id(),
+                        dto.scheduleDateTime(),
+                        dto.tag(),
+                        versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()),
+                        dto.isExecuted(),
+                        dto.hasFailed()
+                );
+            })
+            .toList();
+}
+```
+Listing 19.14.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.14.
+
+Transakcja jest inicjowana przez metodę `getSchedules(UUID subjectId)` z klasy `ScheduleService`, którą przedstawiono 
+na listingu 19.14.1. W ramach tej transakcji wywoływane są metody komponentów dostępowych, które dołączają do niej 
+z propagacją `MANDATORY`.
+
+Są to:
+* `SubjectAssignmentRepository.findByTeacherLoginAndSubjectId(String, UUID)`
+* `ScheduleRepository.findAllBySubjectId(UUID)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+* `SubjectAssignment`
+* `Schedule`
+
+### MPP.15 Tworzenie harmonogramu
+Powyższy przypadek użycia sklada się z jednej transakcji aplikacyjnej.
+
+Dana transakcja realizuje utworzenie nowego harmonogramu automatycznego skanowania antyplagiatowego dla danego przedmiotu, 
+po uprzedniej weryfikacji uprawnień prowadzącego oraz sprawdzeniu, czy przedmiot posiada przypisany zestaw reguł.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public ScheduleDTO createSchedule(UUID subjectId, Schedule schedule, String teacherLogin) {
+        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
+
+        if (!subjectAssignmentRepository.hasEditPermissions(subject, teacherLogin)) {
+            throw new NoPermissionForThisSubjectException();
+        }
+
+        if (subject.getRulePreset() == null) {
+            throw new RulePresetNotSetForSubjectException("error.rulePresetNotSetForSubject");
+        }
+
+        schedule.setRulePreset(subject.getRulePreset());
+        schedule.setModifiableUntil(schedule.getScheduleDateTime());
+        Schedule savedSchedule = scheduleRepository.saveAndFlush(schedule);
+
+        ScheduleDTO dto = scheduleMapper.toScheduleDTO(savedSchedule);
+
+        return new ScheduleDTO(
+                dto.id(),
+                dto.scheduleDateTime(),
+                dto.tag(),
+                versionHashService.hashObjectVersion(savedSchedule.getId(), savedSchedule.getVersion()),
+                dto.isExecuted(),
+                dto.hasFailed()
+        );
+    }
+```
+Listing 19.15.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.15.
+
+Transakcja jest inicjowana przez metodę `createSchedule(UUID subjectId, Schedule schedule, String teacherLogin)` 
+z klasy `ScheduleService`, którą przedstawiono na listingu 19.15.1. W ramach tej transakcji wywoływane są metody 
+komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są to:
+* `SubjectRepository.findById(UUID)`
+* `SubjectAssignmentRepository.hasEditPermissions(Subject, String)`
+* `ScheduleRepository.saveAndFlush(Schedule)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+* `Subject`
+* `SubjectAssignment`
+* `RulePreset`
+* `Schedule`
+
 ### MPP.17 Usuwanie harmonogramu
 
 W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
@@ -1313,6 +1416,231 @@ Operacja ta wykonywana jest w granicach transakcji na następujących obiektach 
 * `RulePreset`
 * `RaportLevel`
 
+### MPP.22 Wygeneruj raport według harmonogramu
+
+W tym przypadku użycia zastosowano cztery transakcje aplikacyjne. Przypadek użycia jest wyzwalany cyklicznie (co minutę) 
+przez mechanizm schedulera poprzez adnotację @Scheduled, a nie przez bezpośrednie żądanie użytkownika.
+
+Główna metoda serwisu posiada propagację NOT_SUPPORTED i nie inicjuje własnej transakcji, ponieważ wykonuje 
+czasochłonne operacje zewnętrzne (klonowanie repozytoriów Git z usługi Gitea, skanowanie antyplagiatowe za pomocą 
+biblioteki JPlag).
+
+```java
+@Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    public boolean generateReportBySchedule() {
+        ScheduleConfigDTO config = reportDatabaseService.fetchNextScheduleToExecute();
+        if (config == null) return false;
+        
+        try {
+            Subject subject = subjectRepository.findById(config.subjectId()).orElseThrow(SubjectNotFoundException::new);
+            if (subject.getArchived()) {
+                throw new SubjectArchivedException();
+            }
+
+            List<GiteaRepoDTO> giteaRepoList = giteaService.getRepositoriesFromOrganization(config.organizationName());
+
+            long successfulClonesCount = giteaRepoList.stream()
+                    .filter(repo -> !repo.template())
+                    .map(repo -> {
+                        File targetDir = new File("repos/submissions/" + config.organizationName() + "/" + config.giteaTag() + "/" + repo.name());
+                        return GitService.cloneTag(repo.clone_url(), config.giteaTag(), targetDir, giteaToken);
+                    })
+                    .filter(success -> success)
+                    .count();
+
+            if (successfulClonesCount == 0) {
+                throw new GitCloneException();
+            }
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+            String reportPath = "reports/" + config.organizationName() + "/" + config.giteaTag() + "/" + timestamp + ".jplag";
+            
+            JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
+                    config.organizationName(),
+                    config.giteaTag(),
+                    config.minimumTokensMatch(),
+                    config.enableNormalization(),
+                    reportPath
+            );
+
+            Double avg = result.getAllComparisons().stream()
+                    .mapToDouble(JPlagComparison::similarity)
+                    .average()
+                    .orElse(0.0);
+
+            reportDatabaseService.saveScheduleSuccess(config, successfulClonesCount, reportPath, avg);
+
+            subjectStatisticsService.recalculateAndUpdateStatistics(config.subjectId());
+            
+        } catch (Exception e) {
+            reportDatabaseService.saveScheduleFailure(config.scheduleId());
+        }
+        return true;
+    }
+```
+Listing 19.22.1. Metoda orkiestrująca generowanie raportu według harmonogramu, nierozpoczynająca własnej transakcji 
+w ramach przypadku MPP.22.
+
+Pierwsza transakcja w ramach MPP.22 jest inicjowana przez metodę fetchNextScheduleToExecute() z ReportDatabaseService. 
+Jej zadaniem jest pobranie kolejnego harmonogramu do wykonania (pesymistycznie blokując wiersz) oraz zmapowanie 
+jego danych do obiektu ScheduleConfigDTO.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    public ScheduleConfigDTO fetchNextScheduleToExecute() {
+        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute(PageRequest.of(0, 1));
+        if (schedules.isEmpty()) return null;
+    
+        Schedule schedule = schedules.getFirst();
+        RulePreset settings = schedule.getRulePreset();
+        Subject subject = settings.getSubject();
+    
+        return new ScheduleConfigDTO(
+                schedule.getId(),
+                subject.getId(),
+                subject.getOrganizationName(),
+                schedule.getTag(),
+                settings.getMinimumTokensMatch(),
+                settings.getEnableNormalization()
+        );
+    }
+```
+Listing 19.22.2. Metoda inicjująca pierwszą transakcję aplikacyjną w ramach MPP.22.
+
+W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propagacją MANDATORY:
+* ScheduleRepository.findSchedulesToExecute(Pageable)
+
+Operacja ta wykonywana jest w granicach transakcji na następujących obiektach encji JPA:
+* `Schedule`
+* `RulePreset`
+* `Subject`
+
+Druga transakcja – w ścieżce sukcesu – inicjowana jest przez metodę saveScheduleSuccess(...) z ReportDatabaseService 
+i realizuje utrwalenie wygenerowanego raportu oraz oznaczenie harmonogramu jako wykonanego.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    public void saveScheduleSuccess(ScheduleConfigDTO config, long scannedCount, String reportPath, Double avgSimilarity) {
+        Subject subject = subjectRepository.findById(config.subjectId()).orElseThrow(SubjectNotFoundException::new);
+        List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(config.subjectId());
+
+        Report report = new Report();
+        report.setSubject(subject);
+        report.setTag(config.giteaTag());
+        report.setScannedRepositories(scannedCount);
+        report.setIsStudentReport(false);
+        report.setPathToReport(reportPath);
+        report.setRepositoryList(repositoryList);
+        report.setAverageSimilarity(avgSimilarity);
+
+        reportsRepository.saveAndFlush(report);
+
+        Schedule schedule = scheduleRepository.findById(config.scheduleId()).orElseThrow();
+        schedule.setExecuted(true);
+        scheduleRepository.saveAndFlush(schedule);
+    }
+```
+Listing 19.22.3. Metoda inicjująca drugą transakcję aplikacyjną w ramach MPP.22.
+
+W ramach tej transakcji wywoływane są metody komponentów dostępowych z propagacją MANDATORY:
+* `SubjectRepository.findById(UUID)`
+* `GiteaRepositoryRepository.getAllBySubjectId(UUID)`
+* `ReportsRepository.saveAndFlush(Report)`
+* `ScheduleRepository.findById(UUID)`
+* `ScheduleRepository.saveAndFlush(Schedule)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+* `Subject`
+* `Repository`
+* `Report`
+* `Schedule`
+
+Trzecia transakcja realizuje przeliczenie zagregowanej wartości średniego podobieństwa dla przedmiotu 
+(identyczna metoda jak w MPP.2 – listing 19.2.4).
+
+W przypadku wystąpienia błędu w trakcie generowania raportu inicjowana jest czwarta transakcja przez metodę 
+`saveScheduleFailure(UUID scheduleId)` z `ReportDatabaseService`, oznaczająca harmonogram jako wykonany z błędem.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    public void saveScheduleFailure(UUID scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
+        schedule.setExecuted(true);
+        schedule.setHasFailed(true);
+        scheduleRepository.saveAndFlush(schedule);
+    }
+```
+Listing 19.22.4. Metoda inicjująca czwartą transakcję aplikacyjną w ramach MPP.22
+
+W ramach tej transakcji wywoływane są metody komponentu dostępowego z propagacją `MANDATORY`:
+* `ScheduleRepository.findById(UUID)`
+* `ScheduleRepository.saveAndFlush(Schedule)`
+
+Operacja ta wykonywana jest w granicach transakcji na encji JPA `Schedule`.
+### MPP.24 Zmiana kierownika przedmiotu
+W tym przypadku użycia zastosowano jedną transakcję o charakterze zapisu z zastosowaniem mechanizmu blokad optymistycznych.
+
+Dana transakcja realizuje przekazanie roli właściciela `OWNER` przedmiotu innemu prowadzącemu. 
+Dotychczasowy właściciel otrzymuje rolę `VIEWER`, a nowy prowadzący, o ile nie był jeszcze przypisany do przedmiotu, 
+zostanie automatycznie dodany z rolą `OWNER`. Operacja zabezpieczona jest weryfikacją wersji encji przed zapisem.
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
+    @Retryable(retryFor = {JpaSystemException.class, ConcurrentUpdateException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public void changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash) {
+
+        Subject subject = subjectRepository.findByIdForceIncrement(subjectId).orElseThrow(SubjectNotFoundException::new);
+
+        checkIfNotArchived(subject);
+
+        if (!versionHash.equals(versionHashService.hashObjectVersion(subjectId, subject.getVersion()))) {
+            throw new ConcurrentUpdateException();
+        }
+
+        Teacher oldOwner = teacherRepository.findSubjectOwnerBySubjectId(subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+        SubjectAssignment oldOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(oldOwner.getAccount().getLogin(), subjectId)
+                .orElseThrow(SubjectAssignmentNotFoundException::new);
+
+        Teacher newOwner = teacherRepository.findActiveTeacherByLogin(newManagerLogin)
+                .orElseThrow(AccessLevelNotAssignedException::new);
+
+        SubjectAssignment newOwnerAssignment = subjectAssignmentRepository.findByTeacherLoginAndSubjectId(newOwner.getAccount().getLogin(), subjectId)
+                .orElseGet(
+                        () -> {
+                            SubjectAssignment assignment = new SubjectAssignment();
+                            assignment.setSubject(subject);
+                            assignment.setTeacher(newOwner);
+                            return assignment;
+                        }
+                );
+
+        oldOwnerAssignment.setSubjectRole(TeacherSubjectRole.VIEWER);
+        newOwnerAssignment.setSubjectRole(TeacherSubjectRole.OWNER);
+
+        subjectAssignmentRepository.saveAndFlush(oldOwnerAssignment);
+        subjectAssignmentRepository.saveAndFlush(newOwnerAssignment);
+    }
+```
+Listing 19.24.1. Metoda inicjująca transakcję aplikacyjną w ramach przypadku MPP.24.
+
+Transakcja jest inicjowana przez metodę `changeSubjectManager(UUID subjectId, String newManagerLogin, String versionHash)` 
+z klasy `SubjectService`, którą przedstawiono na listingu 19.24.1. W ramach tej transakcji wywoływana jest sekwencja metod 
+komponentów dostępowych, które dołączają do niej z propagacją `MANDATORY`.
+
+Są nimi kolejno:
+* `SubjectRepository.findByIdForceIncrement(UUID)`
+* `TeacherRepository.findSubjectOwnerBySubjectId(UUID)`
+* `SubjectAssignmentRepository.findByTeacherLoginAndSubjectId(String, UUID)`
+* `TeacherRepository.findActiveTeacherByLogin(String)`
+* `SubjectAssignmentRepository.saveAndFlush(SubjectAssignment)`
+
+Operacje te wykonywane są w granicach transakcji na następujących obiektach encji JPA:
+* `Subject`
+* `Teacher`
+* `SubjectAssignment`
 ### MPP.25 Przeglądanie szczegółów przedmiotu
 
 Na powyższy przypadek użycia składają się dwie transakcje aplikacyjne o charakterze wyłącznie odczytowym.
