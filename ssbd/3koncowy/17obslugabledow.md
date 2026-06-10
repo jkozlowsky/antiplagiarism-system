@@ -129,7 +129,7 @@ W przypadku jeśli użytkownik wprowadzi w przeglądarce adres, który nie istni
 
 Rys. 17.4. Strona nieistniejącego zasobu.
 
-Jeżeli użytkownik dokona próby przejścia na zasób którego nie istnieje i będzie wysłane żądanie, a w odpowiedzi otrzyma kod HTTP 404, to zostanie powiadomiony za pomocą zunifikowanej obsługi błędów.
+Jeżeli użytkownik dokona próby przejścia na zasób, który nie istnieje i będzie wysłane żądanie, a w odpowiedzi otrzyma kod HTTP 404, to zostanie powiadomiony za pomocą zunifikowanej obsługi błędów.
 
 ![17.5](3koncowy/img/17.5.png)
 
@@ -157,10 +157,10 @@ W przypadku jeżeli użytkownik spróbuje wykonać akcję niemożliwą ze wzglę
 
 Rys. 17.8. Przykład próby Naruszenia warunków logiki biznesowej.
 
-### Nie przewidziany uprzednio błąd
+### Nieprzewidziany uprzednio błąd
 
-W przypadku jeżeli użytkownik wykona akcje które doprowadzą do nie przewidzianego uprzednio błędu, to zostanie o tym powiadomiony za pomocą zunifikowanej obsługi błędów.
+W przypadku jeżeli użytkownik wykona akcje które doprowadzą do nieprzewidzianego uprzednio błędu, to zostanie o tym powiadomiony za pomocą zunifikowanej obsługi błędów.
 
 ![17.9](3koncowy/img/17.9.png)
 
-Rys. 17.9. Przykład symulacji wystąpienia nie przewidzianego uprzednio błędu.
+Rys. 17.9. Przykład symulacji wystąpienia nieprzewidzianego uprzednio błędu.
