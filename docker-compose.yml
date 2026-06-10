@@ -91,6 +91,97 @@ services:
       db-replica-2:
         condition: service_healthy
 
+  db-primary:
+    image: postgres:18.3
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_DB: ${PG_DATABASE}
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+      MOK_USER: ${MOK_USER}
+      MPP_USER: ${MPP_USER}
+    secrets:
+      - pg_password
+      - mok_password
+      - mpp_password
+      - jwt_secret
+    volumes:
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - db_primary_data:/var/lib/postgresql/data
+    networks:
+      - backend-db
+    command: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-replica-1:
+    image: postgres:18.3
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    secrets:
+      - pg_password
+    volumes:
+      - db_replica_1_data:/var/lib/postgresql/data
+    networks:
+      - backend-db
+    command: |
+      bash -c "
+      if [ ! -s /var/lib/postgresql/data/pgdata/PG_VERSION ]; then
+        until pg_isready -h db-primary -p 5432 -U ${PG_USERNAME} -d ${PG_DATABASE}; do sleep 2; done
+        rm -rf /var/lib/postgresql/data/pgdata/*
+        pg_basebackup -h db-primary -p 5432 -D /var/lib/postgresql/data/pgdata -U repuser -vP
+        touch /var/lib/postgresql/data/pgdata/standby.signal
+        echo \"primary_conninfo = 'host=db-primary port=5432 user=repuser application_name=db-replica-1'\" >> /var/lib/postgresql/data/pgdata/postgresql.auto.conf
+      fi
+      exec docker-entrypoint.sh postgres
+      "
+    depends_on:
+      db-primary:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-replica-2:
+    image: postgres:18.3
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    secrets:
+      - pg_password
+    volumes:
+      - db_replica_2_data:/var/lib/postgresql/data
+    networks:
+      - backend-db
+    command: |
+      bash -c "
+      if [ ! -s /var/lib/postgresql/data/pgdata/PG_VERSION ]; then
+        until pg_isready -h db-primary -p 5432 -U ${PG_USERNAME} -d ${PG_DATABASE}; do sleep 2; done
+        rm -rf /var/lib/postgresql/data/pgdata/*
+        pg_basebackup -h db-primary -p 5432 -D /var/lib/postgresql/data/pgdata -U repuser -vP
+        touch /var/lib/postgresql/data/pgdata/standby.signal
+        echo \"primary_conninfo = 'host=db-primary port=5432 user=repuser application_name=db-replica-2'\" >> /var/lib/postgresql/data/pgdata/postgresql.auto.conf
+      fi
+      exec docker-entrypoint.sh postgres
+      "
+    depends_on:
+      db-primary:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME} -d ${PG_DATABASE}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   gitea:
     image: docker.gitea.com/gitea:1.25.2-rootless
     hostname: gitea
@@ -150,7 +241,9 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  db_primary_data:
+  db_replica_1_data:
+  db_replica_2_data:
   gitea_db_data_local:
 
 secrets:
