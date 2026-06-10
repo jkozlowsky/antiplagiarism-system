@@ -1,5 +1,15 @@
-
 ## 19 Identyfikacja transakcji aplikacyjnych w pozostałych modułach 3 pkt
+
+[//]: # (Dla każdego przypadku użycia _w ramach modułów innych niż MOK_ należy przedstawić wszystkie transakcje aplikacyjne z udziałem metod komponentów aplikacji sieciowej.)
+
+[//]: # (Zawartość rozdziału należy utworzyć zachowując wszystkie zasady opisane w analogicznym rozdziale projektu szczegółowego.)
+
+[//]: # (Dodatkowo wymagane jest zaprezentowanie mechanizmu ponawiania odwołanych transakcji aplikacyjnych także w przypadku, gdy odwołanie transakcji nastąpiło na skutek zdarzenia innego niż wystąpienie wyjątku. W ramach prezentacji rozwiązania należy zacytować fragment kodu wybranego *przykładowego* komponentu obrazujący zastosowanie rozwiązania.)
+
+[//]: # (_Realizacja: Wszystkie metody biznesowe wszystkich komponentów *we wszystkich modułach funkcjonalnych aplikacji* muszą być opatrzone stosownymi adnotacjami
+konfigurującymi propagację transakcji aplikacyjnych.
+Przedstawione rozwiązanie ustalania granic transakcji aplikacyjnych w strategii CMT i zastosowania mechanizmu blokad optymistycznych musi być zaimplementowane i
+zastosowane do wszystkich klas / metod komponentów biorących udział w realizacji transakcji._)
 
 W module MPP zarządzanie transakcjami realizowane jest w oparciu o strategię CMT z wykorzystaniem adnotacji `@Transactional`. 
 Metody warstwy biznesowej (tzn. serwisy) rozpoczynają prawie zawsze nowe transakcje aplikacyjne przy użyciu propagacji `REQUIRES_NEW`.
@@ -199,8 +209,9 @@ W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propag
 
 Operacja ta wykonywana jest na encji JPA **Report**.
 
-### MPP.4 ...
+### MPP.4 Przeglądanie jednego raportu
 
+TODO
 
 ### MPP.5 Usuwanie raportów.
 W tym przypadku użycia zastosowano dwie transakcje.
@@ -285,6 +296,14 @@ Operacja ta wykonywana jest w granicach transakcji na następujących obiektach 
 - `Subject`
 - `Report`
 
+### MPP.9 Usuwanie przedmiotu
+
+TODO
+
+### MPP 13: Usuwanie reguł
+
+TODO
+
 ### MPP.18 Przeglądanie repozytoriów
 
 W tym przypadku użycia zastosowano jedną transakcję o charakterze wyłącznie odczytowym.
@@ -308,22 +327,6 @@ W ramach tej transakcji wywoływana jest metoda komponentu dostępowego z propag
 
 Operacja ta wykonywana jest na encji JPA **Repository**.
 
+### MPP 21: Przeglądanie listy swoich raportów
 
-
-
-
-
-
-
-
-
-Dla każdego przypadku użycia _w ramach modułów innych niż MOK_ należy przedstawić wszystkie transakcje aplikacyjne z udziałem metod komponentów aplikacji sieciowej. 
-
-Zawartość rozdziału należy utworzyć zachowując wszystkie zasady opisane w analogicznym rozdziale projektu szczegółowego. 
-
-Dodatkowo wymagane jest zaprezentowanie mechanizmu ponawiania odwołanych transakcji aplikacyjnych także w przypadku, gdy odwołanie transakcji nastąpiło na skutek zdarzenia innego niż wystąpienie wyjątku. W ramach prezentacji rozwiązania należy zacytować fragment kodu wybranego (przykładowego) komponentu obrazujący zastosowanie rozwiązania.
-
-_Realizacja: Wszystkie metody biznesowe wszystkich komponentów (we wszystkich modułach funkcjonalnych aplikacji) muszą być opatrzone stosownymi adnotacjami
-konfigurującymi propagację transakcji aplikacyjnych.
-Przedstawione rozwiązanie ustalania granic transakcji aplikacyjnych w strategii CMT i zastosowania mechanizmu blokad optymistycznych musi być zaimplementowane i
-zastosowane do wszystkich klas / metod komponentów biorących udział w realizacji transakcji._
+TODO
