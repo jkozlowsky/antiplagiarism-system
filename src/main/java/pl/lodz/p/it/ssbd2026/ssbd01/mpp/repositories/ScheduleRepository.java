@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories;
 
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@JaversSpringDataAuditable
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface ScheduleRepository extends AbstractRepository<Schedule> {

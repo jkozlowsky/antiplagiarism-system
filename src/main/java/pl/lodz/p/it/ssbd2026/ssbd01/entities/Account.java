@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.javers.core.metamodel.annotation.DiffIgnore;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 
 import java.time.LocalDateTime;
@@ -33,15 +34,19 @@ public class Account extends AbstractEntity {
     @Column(name = "email", nullable = false, unique = true, length = AccountConsts.EMAIL_LENGTH)
     private String email;
 
+    @DiffIgnore
     @Column(name = "last_login_success_date_time")
     private LocalDateTime lastLoginSuccessDateTime;
 
+    @DiffIgnore
     @Column(name = "last_login_failure_date_time")
     private LocalDateTime lastLoginFailureDateTime;
 
+    @DiffIgnore
     @Column(name = "last_successful_login_ip", length = AccountConsts.IP_LENGTH)
     private String lastSuccessfulLoginIp;
 
+    @DiffIgnore
     @Column(name = "last_failed_login_ip", length = AccountConsts.IP_LENGTH)
     private String lastFailedLoginIp;
 
@@ -49,6 +54,7 @@ public class Account extends AbstractEntity {
     @JoinColumn(name = "language_version_id",  nullable = false)
     private LanguageDict languageVersion;
 
+    @DiffIgnore
     @Column(name = "failed_attempts")
     private Integer failedAttempts;
 
@@ -58,11 +64,13 @@ public class Account extends AbstractEntity {
     @Column(name = "is_verified", nullable = false)
     private Boolean isVerified = false;
 
+    @DiffIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<AccessLevel> accessLevelList = new ArrayList<>();
 
+    @DiffIgnore
     @OneToMany(mappedBy = "account", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<PasswordHistory> passwordHistoryList = new ArrayList<>();
 
@@ -72,6 +80,7 @@ public class Account extends AbstractEntity {
     @Column(name = "surname", nullable = false, length = AccountConsts.SURNAME_LENGTH)
     private String surname;
 
+    @DiffIgnore
     @Column(name = "activation_token", unique = true)
     private String activationToken;
 

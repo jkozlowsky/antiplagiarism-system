@@ -3,10 +3,12 @@ package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ShallowReference;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 
 import java.time.LocalDateTime;
 
+@ShallowReference
 @Entity
 @Table(name = "one_time_token")
 @Getter

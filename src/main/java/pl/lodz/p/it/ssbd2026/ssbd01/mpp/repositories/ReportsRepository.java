@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories;
 
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -14,6 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import java.util.List;
 import java.util.UUID;
 
+@JaversSpringDataAuditable
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface ReportsRepository extends AbstractRepository<Report> {

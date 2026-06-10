@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories;
 
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@JaversSpringDataAuditable
 @Repository
 @Transactional(propagation = Propagation.MANDATORY, transactionManager = "mppTransactionManager")
 public interface TeacherRepository extends AbstractRepository<Teacher> {
