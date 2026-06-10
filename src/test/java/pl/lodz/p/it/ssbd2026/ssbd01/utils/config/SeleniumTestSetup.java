@@ -34,9 +34,11 @@ public abstract class SeleniumTestSetup {
         driver.get(FRONTEND_URL + "/login");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("login"))).sendKeys("test_admin");
         driver.findElement(By.name("password")).sendKeys("adminssbd");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        WebElement submitBtn = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']")));
+        submitBtn.click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("auth2F"))).sendKeys("00000000");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        WebElement mfaSubmitBtn = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@type='submit']")));
+        mfaSubmitBtn.click();
         wait.until(ExpectedConditions.urlContains("/users"));
     }
 
