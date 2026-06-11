@@ -830,7 +830,7 @@ Listing 22.1.5.2. Sekwencja wywołań dla unblockUserAccount.
 
 
 
-### MOK.6 - Dołącz poziom dostępu do konta
+6. ### MOK.6 - Dołącz poziom dostępu do konta
 
 **Role uprawnione:** Administrator (`ADMIN`)
 
@@ -1009,7 +1009,7 @@ TODO (rysunki):
 ![Rys. 22.1.6.4](3koncowy/img/mok6_grant_success.png)
 *Rys. 22.1.6.4. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym nadaniu poziomu dostępu.*
 
-### MOK.7 - Odłącz poziom dostępu od konta
+7. ### MOK.7 - Odłącz poziom dostępu od konta
 
 ```json
     "/account/{id}/access-levels/{accessLevelName}/revoke": {
@@ -1181,7 +1181,7 @@ TODO (rysunki):
 ![Rys. 22.1.7.3](3koncowy/img/mok7_revoke_success.png)
 *Rys. 22.1.7.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym odebraniu poziomu dostępu.*
 
-### MOK.8 - Zmień własne hasło
+8. ### MOK.8 - Zmień własne hasło
 
 **Role uprawnione:** Student, Prowadzący, Administrator
 
@@ -1326,7 +1326,7 @@ Listing 22.1.8.1 Dokumentacja OpenApi dla metody POST `/account/security/passwor
 
 
 
-### MOK.9 - Zmiana hasła innego użytkownika
+9. ### MOK.9 - Zmiana hasła innego użytkownika
 
 **Role uprawnione:** Administrator 
 
@@ -1489,7 +1489,7 @@ Listing 22.1.9.1 Dokumentacja OpenApi dla metody POST `changeOtherPassword`.
 *Rys. 22.1.9.6. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnej zmianie hasła.*
 
 
-### MOK.10 - Zmień adres e-mail własnego konta
+10. ### MOK.10 - Zmień adres e-mail własnego konta
 
 **Role uprawnione:** Administrator, Prowadzący, Prowadzący dodatkowy, Student
 
@@ -1719,7 +1719,7 @@ Listing 22.1.10.4. Sekwencja wywołań dla confirmEmailChange.
 ![Rys. 22.1.10.3.](3koncowy/img/mok10_3.png)
 *Rys. 22.3.10.2. Mok 10 rysunek 3 .*
 
-### MOK.11 Zmień adres e-mail innego konta
+11. ### MOK.11 Zmień adres e-mail innego konta
 *Role uprawnione:** Administrator (`ADMIN`)
 
 ```json
@@ -1860,7 +1860,7 @@ Rys.22.1.11.1. Strona zawierająca listę wszystkich użytkowników systemu, udo
 ![Rys.22.1.11.2](3koncowy/img/22.1.14.1.png)
 Rys.22.1.11.2. Fragment strony edycji użytkownika przedstawiający pole tekstowe służące do edycji adresu e-mail innego użytkownika.
 
-### MOK.12 Edytuj dane własnego konta
+12. ### MOK.12 Edytuj dane własnego konta
 
 Role które mają dostęp: prowadzący, administrator, student.
 
@@ -2013,7 +2013,7 @@ Rysunek 22.1.12.5. Interfejs graficzny użytkownika przedstawiający stronę edy
 
 
 
-### MOK.13 Edytuj dane konta innego użytkownika
+13. ### MOK.13 Edytuj dane konta innego użytkownika
 
 Role które mają dostęp: administrator.
 
@@ -2175,7 +2175,7 @@ Rysunek 22.1.13.4. Interfejs graficzny użytkownika przedstawiający stronę edy
 
 
 
-### MOK.14 Wyloguj
+14. ### MOK.14 Wyloguj
 **Role uprawnione:** Administrator, Prowadzący, Prowadzący dodatkowy, Student
 
 Proces wylogowania użytkownika w prezentowanym systemie opiera się o mechanizmy bezstanowe (tzn. tokeny JWT). 
@@ -2191,7 +2191,7 @@ z punktów końcowych REST API backendu.
 Rysunek 2.1.14.1. Fragment interfejsu użytkownika przedstawiający czerwony przycisk służący do wylogowania się.
 
 
-### MOK.15 - Wyświetl listę użytkowników
+15. ### MOK.15 - Wyświetl listę użytkowników
 
 **Role uprawnione:** Administrator (`ADMIN`)
 
@@ -2371,7 +2371,7 @@ TODO (rysunki):
 *Rys. 22.1.15.3. Fragment graficznego interfejsu użytkownika przedstawiający widok listy użytkowników z zastosowanym sortowaniem po nazwisku.*
 
 
-### MPP.1 - Synchronizacja przedmiotu z Gitea
+16. ### MPP.1 - Synchronizacja przedmiotu z Gitea
 
 **Role uprawnione:** Prowadzący (Owner, Editor)
 
@@ -2501,8 +2501,7 @@ Listing 22.2.1.1 Dokumentacja OpenApi dla metody POST  `/subjects/{subjectId}/sy
 *Rys. 22.2.1.2. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym synchronizowaniu przedmiotu z Gitea (po kliknięciu przycisku Refresh from Gitea).*
 
 
-
-### MPP.2 Generowanie raportu na żądanie.
+17. ### MPP.2 Generowanie raportu na żądanie.
 
 Role które mają dostęp: prowadzący, prowadzący dodatkowy.
 
@@ -2685,7 +2684,7 @@ Rysunek 22.2.2.3. Interfejs graficzny użytkownika przedstawiający stronę prze
 
 
 
-### MPP.3 Wyświetl listę raportów
+18. ### MPP.3 Wyświetl listę raportów
 
 Role które mają dostęp: prowadzący, prowadzący dodatkowy.
 
@@ -2798,8 +2797,7 @@ Listing 22.2.3.1. Dokumentacja OpenApi dla metody GET `/reports/teacher`.
 
 Wywoływane metody.
 
-1. ReportController.getAllReportsForTeacher(Principal, Pageable)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+1. ReportController.getAllReportsForTeacher(Principal, Pageable) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
 3. ReportService.getAllReportsForTeacher(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
 4. ReportsRepository.findAllReportsForAssignedTeacherByLogin(String, Pageable)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
 5. ReportMapper.toDto(Report)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
@@ -2814,7 +2812,7 @@ Rysunek 22.2.3.1. Interfejs graficzny użytkownika przedstawiający stronę z li
 
 Rysunek 22.2.3.2. Interfejs graficzny użytkownika przedstawiający stronę z pustą listą raportów.
 
-### MPP.4 - Przeglądanie jednego raportu
+19. ### MPP.4 - Przeglądanie jednego raportu
 
 Przeglądanie jednego raportu
 
@@ -2952,7 +2950,7 @@ Widoki użytkownika.
 Rysunek 22.2.4.1. Interfejs graficzny użytkownika przedstawiający szczegóły wybranego z listy przykładowego raportu ze wszystkimi statystykami m.in.: podobieństwa procentowe, repozytoriów, kodów źródłowych.
 
 
-### MPP.5 Usuwanie raportów
+20. ### MPP.5 Usuwanie raportów
 
 Role które mają dostęp: prowadzący, prowadzący dodatkowy.
 
@@ -3088,7 +3086,7 @@ Rysunek 22.2.5.3. Interfejs graficzny użytkownika przedstawiający stronę list
 Rysunek 22.2.5.4. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o błędzie usuwania raportu.
 
 
-### MPP.6 - Pobierz liste przedmiotów
+21. ### MPP.6 - Pobierz liste przedmiotów
 
 **Role uprawnione:** Administor, Powadzacy, Student
 
@@ -3382,7 +3380,7 @@ Listing 22.2.6.3 Dokumentacja OpenApi dla metody GET dla Administratora `/subjec
 ![22.2.6.5.png](3koncowy/img/22.2.6.5.png)
 *Rys. 22.2.6.4. Fragment graficznego interfejsu użytkownika przedstawiający widok pobranych przedmiotów przez administratora.*
 
-### MPP.7 - Tworzenie przedmiotu
+22. ### MPP.7 - Tworzenie przedmiotu
 
 **Role uprawnione:** Prowadzący
 
@@ -3774,7 +3772,7 @@ Listing 22.2.7.2 Dokumentacja OpenApi dla metody POST `/subjects/manual`.
 
 
 
-### MPP.8 - Edycja przedmiotu
+23. ### MPP.8 - Edycja przedmiotu
 
 **Role uprawnione:** Prowadzący (Owner, Editor)
 
@@ -3969,7 +3967,7 @@ Listing 22.2.8.1 Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
 
 
 
-### MPP.9 - Usuwanie przedmiotu
+24. ### MPP.9 - Usuwanie przedmiotu
 
 Usuwanie przedmiotu
 
@@ -4114,590 +4112,7 @@ Widoki użytkownika.
 
 Rysunek 22.2.9.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia przedmiotu, wraz z możliwością wyboru opcji usunięcia przy tym jednocześnie organizacji na serwerze Gitea.
 
-### MPP.13 - Usuwanie reguł
-
-Usuwanie reguł
-
-Role które mają dostęp: Prowadzący (Owner)
-
-```json
-"/rules/{ruleId}": {
-      "delete": {
-        "tags": [
-          "rule-controller"
-        ],
-        "summary": "Usuwanie globalnego szablonu reguł (MPP.13)",
-        "operationId": "deleteRulePreset",
-        "parameters": [
-          {
-            "name": "ruleId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "If-Match",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Szablon reguł został pomyślnie usunięty"
-          },
-          "404": {
-            "description": "Nie znaleziono podanego szablonu reguł"
-          },
-          "409": {
-            "description": "Dane zostały zmodyfikowane przez innego użytkownika"
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.13.1. Dokumentacja OpenApi dla metody DELETE `/rules/{ruleId}`.
-
-Sekwencja wywoływanych metod dla metody kontrolera `RuleController.deleteRulePreset`.
-
-1. RuleController.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. RuleService.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-3. RulePresetNotFoundException.RulePresetNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
-4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-5. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-6. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
-7. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
-8. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-9. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-11. RulePreset.getIsPreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
-12. RulePresetNoAccessException.RulePresetNoAccessException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
-13. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
-14. JpaRepository.flush()  (org.springframework.data.jpa.repository)
-15. SimpleJpaRepository.flush()  (org.springframework.data.jpa.repository.support)
-
-Widoki użytkownika.
-
-![22.2.13.1](3koncowy/img/22.2.13.1.png)
-
-Rysunek 22.2.13.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia szablonu reguł.
-
-### MPP.14 Przeglądanie harmonogramów
-```json
-"/schedules/subject/{subjectId}": {
-      "get": {
-        "tags": [
-          "schedule-controller"
-        ],
-        "summary": "Pobierz harmonogramy dla przedmiotu",
-        "description": "Zwraca listę harmonogramów dla wybranego przedmiotu",
-        "operationId": "getSchedules",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista harmonogramów została pobrana pomyślnie",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ScheduleDTO"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      },
-```
-Listing 22.2.14.1. Dokumentacja OpenApi dla metody GET `/schedules/subject/{subjectId}`.
-
-**Sekwencja wywołań:**
-1. ScheduleController.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. ScheduleService.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-
-**Fragmenty interfejsu użytkownika:**
-![22.2.14.1](3koncowy/img/22.2.14.1.png)
-Rysunek 22.2.14.1. Lista harmonogramów dla wybranego przedmiotu.
-
-### MPP.15 Tworzenie harmonogramu
-
-**Role upoważnione:** Teacher z odpowiednim poziomem dostępu w przedmiocie (OWNER lub EDITOR).
-
-```json
-"post": {
-        "tags": [
-          "schedule-controller"
-        ],
-        "summary": "Utwórz harmonogram wykonywania analizy porównawczej w ramach przedmiotu",
-        "description": "Zwraca ScheduleDTO z utworzonego obiektu",
-        "operationId": "createSchedule",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScheduleDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Poprawnie utworzono obiekt",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScheduleDTO"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "404": {
-            "description": "Nie znaleziono przedmiotu",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScheduleDTO"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.15.1. Dokumentacja OpenApi dla metody POST `/schedules/subject/{subjectId}`.
-
-**Sekwencja wywołań:**
-1. ScheduleController.createSchedule(UUID, ScheduleDTO, Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. ScheduleMapper.toSchedule(ScheduleDTO) (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
-3. ScheduleService.createSchedule(UUID, Schedule, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-
-**Fragmenty interfejsu użytkownika:**
-![22.2.15.1](3koncowy/img/22.2.15.1.png)
-Rysunek 22.2.15.1. Fragment interfejsu przedstawiającego listę harmonogramów w przedmiocie, zawierający przycisk 
-dodawania nowego harmonogramu.
-
-![22.2.15.2](3koncowy/img/22.2.15.2.png)
-Rysunek 22.2.15.2. Modal służący do tworzenia harmonogramu.
-
-### MPP.18 Przeglądanie repozytoriów
-
-Role które mają dostęp: prowadzący, prowadzący dodatkowy.
-
-```json
-"/repositories/subject/{subjectId}": {
-      "get": {
-        "tags": [
-          "repository-controller"
-        ],
-        "summary": "Przeglądanie repozytoriów",
-        "description": "Pobiera listę repozytoriów razem z uczestnikami w danym przedmiocie",
-        "operationId": "getRepositories",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Poprawnie pobrano listę repozytoriów w danym przedmiocie",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RepositoryWithStudentDTO"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.18.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectId}`.
-
-Wywoływane metody.
-
-1. RepositoryController.getRepositories(UUID)
-2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-3. RepositoryController.getReportDetails(UUID Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-4. RepositoryService.getRepositories(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-5. GiteaRepositoryRepository.findBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
-6. RepositoryMapper.toDto(Repository, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
-
-Listing 22.2.18.2. Sekwencja wywoływanych metod dla metody kontrolera `RepositoryController.getRepositories(UUID)`.
-
-Widoki użytkownika.
-
-![2.18.1](3koncowy/img/22.2.18.1.png)
-
-Rysunek 22.2.18.1. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z listą repozytoriów przypisanych do tego przedmiotu.
-
-![2.18.2](3koncowy/img/22.2.18.2.png)
-
-Rysunek 22.2.18.2. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z pustą listą repozytoriów.
-
-
-W rozdziale należy wymienić, w formie tabeli lub listy, wszystkie przypadki użycia dostępne jako akcje dla użytkownika końcowego aplikacji internetowej.
-
-Dla każdego przypadku należy przedstawić:
-* kolejny numer przypadku w numeracji jednolitej od numeru 1 (np. poprzez użycie listy numerowanej)
-* używane w projekcie oznaczenie przypadku (np. MOK.3)
-* role mające prawo do uruchamiania akcji dla tego przypadku zgodnie z konfiguracją dostępu w warstwie prezentacji
-* kontekst URI oraz typ metody HTTP dla wywołania usługi sieciowej REST wraz z wartością liczbową statusu odpowiedzi (kod odpowiedzi HTTP) dla poszczególnych scenariuszy przypadku użycia (dla każdego ze scenariuszy błędu należy również podać klucz internacjonalizacji).
-* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
-* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
-
-Alternatywną formą prezentacji może być opis interfejsu aplikacji sieciowej zgodny z OpenAPI, przekształcony do postaci czytelnej i uzupełniony o informacje, których nie można udostępnić przez OpenAPI, tj:
-* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
-* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
-
-W takim przypadku opis może być zapisany w języku angielskim, o ile ten język został użyty w projekcie do tworzenia dokumentacji kodu źródłowego.
-
-### MPP.22 Wygeneruj raport według harmonogramu
-**Role uprawnione:** System
-
-Przypadek użycia realizowany jest w pełni w tle i nie posiada interfejsu REST.
-
-**Sekwencja wywołań:**
-1. ReportScheduler.schedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.scheduler)
-2. ReportService.generateReportBySchedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-
-
-### MPP.24 Zmień kierownika przedmiotu
-**Role uprawnione:** Administrator
-
-```json
-"/subjects/{subjectId}/manager": {
-      "patch": {
-        "tags": [
-          "subject-controller"
-        ],
-        "summary": "Zmień kierownika przedmiotu",
-        "description": "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.",
-        "operationId": "changeSubjectManager",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "If-Match",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeManagerRequestDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Kierownik przedmiotu został pomyślnie zmieniony"
-          },
-          "400": {
-            "description": "Błąd walidacji wejścia",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Unauthorized",
-                  "message": "Brak lub niepoprawny token autoryzacyjny."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Odmowa dostępu (brak roli)",
-            "content": {
-              "text/plain": {
-                "example": "No access: Access Denied"
-              }
-            }
-          },
-          "404": {
-            "description": "Nie znaleziono podanego przedmiotu lub nauczyciela",
-            "content": {
-              "text/plain": {
-                "example": "Nie znaleziono podanego przedmiotu"
-              }
-            }
-          },
-          "500": {
-            "description": "Wewnętrzny błąd serwera",
-            "content": {
-              "text/plain": {
-                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
-              }
-            }
-          },
-          "503": {
-            "description": "Niedostępność usługi bazy danych",
-            "content": {
-              "text/plain": {
-                "example": "Service is temporarily unavailable. Please try again later."
-              }
-            }
-          }
-        }
-      }
-    },
-```
-Listing 22.2.24.1. Dokumentacja OpenApi dla metody PATCH `/subjects/{subjectId}/manager`.
-
-**Sekwencja wywołań:**
-1. SubjectController.changeSubjectManager(UUID, String, ChangeManagerRequestDTO) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
-2. ChangeManagerRequestDTO.newManagerLogin() (pl.lodz.p.it.ssbd2026.ssbd01.dto.subject)
-3. SubjectService.changeSubjectManager(UUID, String, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
-
-**Fragmenty interfejsu użytkownika**
-![22.2.24.1](3koncowy/img/22.2.24.1.png)
-Rysunek 22.2.24.1. Panel pozwalający administratorowi na zmienianie kierownika przedmiotu.
-
-![22.2.24.2](3koncowy/img/22.2.24.2.png)
-Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
-
-
-### MPP.10 - Przeglądanie reguł
+25. ### MPP.10 - Przeglądanie reguł
 
 **Role uprawnione:** Nauczyciel (`TEACHER`)
 
@@ -4798,7 +4213,7 @@ Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
 ![Rys. 22.2.10.1](3koncowy/img/mpp10_rules_list.png)
 *Rys. 22.2.10.1. Fragment graficznego interfejsu użytkownika przedstawiający widok listy szablonów reguł.*
 
-### MPP.11 - Tworzenie reguł
+26. ### MPP.11 - Tworzenie reguł
 
 **Role uprawnione:** Nauczyciel (`TEACHER`)
 
@@ -4912,7 +4327,7 @@ Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
 ![Rys. 22.2.11.3](3koncowy/img/mpp11_create_rule_invalid.png)
 *Rys. 22.2.11.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza tworzenia szablonu reguł.*
 
-### MPP.12 - Edycja reguł
+27. ### MPP.12 - Edycja reguł
 
 **Role uprawnione:** Nauczyciel (`TEACHER`)
 
@@ -5061,7 +4476,341 @@ Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
 ![Rys. 22.2.12.3](3koncowy/img/mpp12_edit_rule_invalid.png)
 *Rys. 22.2.12.3. Fragment graficznego interfejsu użytkownika przedstawiający błąd walidacji przy niepoprawnych danych formularza edycji szablonu reguł.*
 
-### MPP.16 Edycja harmonogramu
+
+
+
+28. ### MPP.13 - Usuwanie reguł
+
+Usuwanie reguł
+
+Role które mają dostęp: Prowadzący (Owner)
+
+```json
+"/rules/{ruleId}": {
+      "delete": {
+        "tags": [
+          "rule-controller"
+        ],
+        "summary": "Usuwanie globalnego szablonu reguł (MPP.13)",
+        "operationId": "deleteRulePreset",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Szablon reguł został pomyślnie usunięty"
+          },
+          "404": {
+            "description": "Nie znaleziono podanego szablonu reguł"
+          },
+          "409": {
+            "description": "Dane zostały zmodyfikowane przez innego użytkownika"
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.13.1. Dokumentacja OpenApi dla metody DELETE `/rules/{ruleId}`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `RuleController.deleteRulePreset`.
+
+1. RuleController.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. RuleService.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. RulePresetNotFoundException.RulePresetNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+7. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+8. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+9. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. RulePreset.getIsPreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. RulePresetNoAccessException.RulePresetNoAccessException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
+13. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+14. JpaRepository.flush()  (org.springframework.data.jpa.repository)
+15. SimpleJpaRepository.flush()  (org.springframework.data.jpa.repository.support)
+
+Widoki użytkownika.
+
+![22.2.13.1](3koncowy/img/22.2.13.1.png)
+
+Rysunek 22.2.13.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia szablonu reguł.
+
+29. ### MPP.14 Przeglądanie harmonogramów
+
+```json
+
+"/schedules/subject/{subjectId}": {
+      "get": {
+        "tags": [
+          "schedule-controller"
+        ],
+        "summary": "Pobierz harmonogramy dla przedmiotu",
+        "description": "Zwraca listę harmonogramów dla wybranego przedmiotu",
+        "operationId": "getSchedules",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista harmonogramów została pobrana pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      },
+```
+Listing 22.2.14.1. Dokumentacja OpenApi dla metody GET `/schedules/subject/{subjectId}`.
+
+**Sekwencja wywołań:**
+1. ScheduleController.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ScheduleService.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika:**
+![22.2.14.1](3koncowy/img/22.2.14.1.png)
+Rysunek 22.2.14.1. Lista harmonogramów dla wybranego przedmiotu.
+
+30. ### MPP.15 Tworzenie harmonogramu
+
+**Role upoważnione:** Teacher z odpowiednim poziomem dostępu w przedmiocie (OWNER lub EDITOR).
+
+```json
+"post": {
+        "tags": [
+          "schedule-controller"
+        ],
+        "summary": "Utwórz harmonogram wykonywania analizy porównawczej w ramach przedmiotu",
+        "description": "Zwraca ScheduleDTO z utworzonego obiektu",
+        "operationId": "createSchedule",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Poprawnie utworzono obiekt",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono przedmiotu",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.15.1. Dokumentacja OpenApi dla metody POST `/schedules/subject/{subjectId}`.
+
+**Sekwencja wywołań:**
+1. ScheduleController.createSchedule(UUID, ScheduleDTO, Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ScheduleMapper.toSchedule(ScheduleDTO) (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+3. ScheduleService.createSchedule(UUID, Schedule, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika:**
+![22.2.15.1](3koncowy/img/22.2.15.1.png)
+Rysunek 22.2.15.1. Fragment interfejsu przedstawiającego listę harmonogramów w przedmiocie, zawierający przycisk 
+dodawania nowego harmonogramu.
+
+![22.2.15.2](3koncowy/img/22.2.15.2.png)
+Rysunek 22.2.15.2. Modal służący do tworzenia harmonogramu.
+
+31. ### MPP.16 Edycja harmonogramu
 
 **Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
 
@@ -5180,16 +4929,16 @@ Listing 22.2.16.1. Dokumentacja OpenApi dla metody PUT `/schedules/{scheduleId}`
 
 Listing 22.2.16.2. Sekwencja wywołań dla updateSchedule.
 
-![Rys. 22.2.16.1.](img/mpp16_1.png)
+![Rys. 22.2.16.1.](3koncowy/img/mpp16_1.png)
 *Rys. 22.2.16.1. Widok dostępnych harmonogramów w wybranym przdmiocie.*
 
-![Rys. 22.2.16.2.](img/mpp16_2.png)
+![Rys. 22.2.16.2.](3koncowy/img/mpp16_2.png)
 *Rys. 22.2.16.2. Widok edycji harmonogramu.*
 
-![Rys. 22.2.16.3.](img/mpp16_3.png)
+![Rys. 22.2.16.3.](3koncowy/img/mpp16_3.png)
 *Rys. 22.2.16.3. Widok po wybraniu w kalendarzu nowej daty skanowania i zatwierdzeniu akcji.*
 
-### MPP.17 - Usuwanie harmonogramu
+32. ### MPP.17 - Usuwanie harmonogramu
 
 **Role uprawnione:** Nauczyciel (`TEACHER`)
 
@@ -5318,7 +5067,137 @@ Listing 22.2.16.2. Sekwencja wywołań dla updateSchedule.
 ![Rys. 22.2.17.3](3koncowy/img/mpp17_delete_success.png)
 *Rys. 22.2.17.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym usunięciu harmonogramu.*
 
-### MPP.19 Przeglądanie kont użytkowników
+
+
+33. ### MPP.18 Przeglądanie repozytoriów
+
+Role które mają dostęp: prowadzący, prowadzący dodatkowy.
+
+```json
+"/repositories/subject/{subjectId}": {
+      "get": {
+        "tags": [
+          "repository-controller"
+        ],
+        "summary": "Przeglądanie repozytoriów",
+        "description": "Pobiera listę repozytoriów razem z uczestnikami w danym przedmiocie",
+        "operationId": "getRepositories",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Poprawnie pobrano listę repozytoriów w danym przedmiocie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RepositoryWithStudentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.18.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{subjectId}`.
+
+Wywoływane metody.
+
+1. RepositoryController.getRepositories(UUID)
+2. (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+3. RepositoryController.getReportDetails(UUID Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+4. RepositoryService.getRepositories(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+5. GiteaRepositoryRepository.findBySubjectId(UUID)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+6. RepositoryMapper.toDto(Repository, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+
+Listing 22.2.18.2. Sekwencja wywoływanych metod dla metody kontrolera `RepositoryController.getRepositories(UUID)`.
+
+Widoki użytkownika.
+
+![2.18.1](3koncowy/img/22.2.18.1.png)
+
+Rysunek 22.2.18.1. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z listą repozytoriów przypisanych do tego przedmiotu.
+
+![2.18.2](3koncowy/img/22.2.18.2.png)
+
+Rysunek 22.2.18.2. Interfejs graficzny użytkownika przedstawiający stronę przedmiotu z pustą listą repozytoriów.
+
+
+W rozdziale należy wymienić, w formie tabeli lub listy, wszystkie przypadki użycia dostępne jako akcje dla użytkownika końcowego aplikacji internetowej.
+
+Dla każdego przypadku należy przedstawić:
+* kolejny numer przypadku w numeracji jednolitej od numeru 1 (np. poprzez użycie listy numerowanej)
+* używane w projekcie oznaczenie przypadku (np. MOK.3)
+* role mające prawo do uruchamiania akcji dla tego przypadku zgodnie z konfiguracją dostępu w warstwie prezentacji
+* kontekst URI oraz typ metody HTTP dla wywołania usługi sieciowej REST wraz z wartością liczbową statusu odpowiedzi (kod odpowiedzi HTTP) dla poszczególnych scenariuszy przypadku użycia (dla każdego ze scenariuszy błędu należy również podać klucz internacjonalizacji).
+* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
+* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
+
+Alternatywną formą prezentacji może być opis interfejsu aplikacji sieciowej zgodny z OpenAPI, przekształcony do postaci czytelnej i uzupełniony o informacje, których nie można udostępnić przez OpenAPI, tj:
+* sekwencję nazw wywoływanych metod oraz obiektów (w tym wywoływane metody akcji, wywołania usług, wywołania metod komponentów).
+* wszystkie możliwe zmiany widoku z interfejsu użytkownika w ramach wykonywania przypadku użycia - w formie zrzutów ekranu uwidaczniających kolejne zmiany interfejsu użytkownika dla polskiej wersji językowej.
+
+W takim przypadku opis może być zapisany w języku angielskim, o ile ten język został użyty w projekcie do tworzenia dokumentacji kodu źródłowego.
+
+
+34. ### MPP.19 Przeglądanie kont użytkowników
 
 **Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
 
@@ -5421,16 +5300,16 @@ Listing 22.2.19.1. Dokumentacja OpenApi dla metody GET `/repositories/subject/{s
 
 Listing 22.2.19.2. Sekwencja wywołań dla getUserAccounts.
 
-![Rys. 22.2.19.1.](img/mpp19_1.png)
+![Rys. 22.2.19.1.](3koncowy/img/mpp19_1.png)
 *Rys. 22.2.19.1. Widok przedmiotów wraz z przyciskiem z listą studentów.*
 
-![Rys. 22.2.19.2.](img/mpp19_2.png)
+![Rys. 22.2.19.2.](3koncowy/img/mpp19_2.png)
 *Rys. 22.2.19.2. Widok dostępnych kont użytkowników w systemie.*
 
-![Rys. 22.2.19.3.](img/mpp19_3.png)
+![Rys. 22.2.19.3.](3koncowy/img/mpp19_3.png)
 *Rys. 22.2.19.3. Widok gdy nie ma dostępnych kont użytkowników w systemie.*
 
-### MPP.20 Sprawdzenie swojego kodu
+35. ### MPP.20 Sprawdzenie swojego kodu
 
 **Role uprawnione:** Student.
 
@@ -5601,25 +5480,25 @@ Listing 22.2.20.1. Dokumentacja OpenApi dla metody POST `/reports/student-scan/{
 
 Listing 22.2.20.2. Sekwencja wywołań dla generateStudentReport.
 
-![Rys. 22.2.20.1.](img/mpp20_1.png)
+![Rys. 22.2.20.1.](3koncowy/img/mpp20_1.png)
 *Rys. 22.2.20.1. Widok ekranu skanowania kodu przez studenta.*
 
-![Rys. 22.2.20.2.](img/mpp20_2.png)
+![Rys. 22.2.20.2.](3koncowy/img/mpp20_2.png)
 *Rys. 22.2.20.2. Widok ekranu skanowania kodu przez studenta w przypadku braku dostępnych tokenów.*
 
-![Rys. 22.2.20.3.](img/mpp20_3.png)
+![Rys. 22.2.20.3.](3koncowy/img/mpp20_3.png)
 *Rys. 22.2.20.3. Widok ekranu skanowania kodu przez studenta po wypełnieniu danych.*
 
-![Rys. 22.2.20.4.](img/mpp20_4.png)
+![Rys. 22.2.20.4.](3koncowy/img/mpp20_4.png)
 *Rys. 22.2.20.4. Widok ekranu skanowania kodu przez studenta po wykonaniu skanowania kodu.*
 
-![Rys. 22.2.20.5.](img/mpp20_5.png)
+![Rys. 22.2.20.5.](3koncowy/img/mpp20_5.png)
 *Rys. 22.2.20.5. Widok wygenerowanego raportu przy widocznych wszystkich statystykach.*
 
 
 * pozostałe widoki raportów zostaną zaprezentowane w innym przypadku użycia - MPP.21
 
-### MPP.21 - Przeglądanie swoich raportów
+36. ### MPP.21 - Przeglądanie swoich raportów
 
 Przeglądanie swoich listy swoich raportów
 
@@ -5874,7 +5753,142 @@ Widoki użytkownika.
 Rysunek 22.2.21.2. Interfejs graficzny użytkownika przedstawiający widok szczegółów raportu dostępnych dla studenta w zależności od poziomu raportu wybranego przez prowadzącego przedmiotu. Akurat tutaj mamy wszystkie statystyki. Niezależnie od poziomu raportu, nazwy innych repozytoriów są zawsze zanonimizowane.
 
 
-### MPP.25 - Przeglądaj szczegóły przedmiotu
+
+
+
+37. ### MPP.22 Wygeneruj raport według harmonogramu
+**Role uprawnione:** System
+
+Przypadek użycia realizowany jest w pełni w tle i nie posiada interfejsu REST.
+
+**Sekwencja wywołań:**
+1. ReportScheduler.schedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.scheduler)
+2. ReportService.generateReportBySchedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+
+38. ### MPP.23 
+
+Zrezygnowano z tego przypadku użycia
+
+
+39. ### MPP.24 Zmień kierownika przedmiotu
+**Role uprawnione:** Administrator
+
+```json
+"/subjects/{subjectId}/manager": {
+      "patch": {
+        "tags": [
+          "subject-controller"
+        ],
+        "summary": "Zmień kierownika przedmiotu",
+        "description": "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.",
+        "operationId": "changeSubjectManager",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeManagerRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Kierownik przedmiotu został pomyślnie zmieniony"
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono podanego przedmiotu lub nauczyciela",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono podanego przedmiotu"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.24.1. Dokumentacja OpenApi dla metody PATCH `/subjects/{subjectId}/manager`.
+
+**Sekwencja wywołań:**
+1. SubjectController.changeSubjectManager(UUID, String, ChangeManagerRequestDTO) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ChangeManagerRequestDTO.newManagerLogin() (pl.lodz.p.it.ssbd2026.ssbd01.dto.subject)
+3. SubjectService.changeSubjectManager(UUID, String, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika**
+![22.2.24.1](3koncowy/img/22.2.24.1.png)
+Rysunek 22.2.24.1. Panel pozwalający administratorowi na zmienianie kierownika przedmiotu.
+
+![22.2.24.2](3koncowy/img/22.2.24.2.png)
+Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
+
+
+40. ### MPP.25 - Przeglądaj szczegóły przedmiotu
 
 **Role uprawnione:** Prowadzący, Student
 
@@ -6123,7 +6137,7 @@ Listing 22.2.25.2 Dokumentacja OpenApi dla metody GET dla studenta `getStudentSu
 
 
 
-### MPP.26 - Zarchiwizuj przedmiot
+41. ### MPP.26 - Zarchiwizuj przedmiot
 
 **Role uprawnione:** Prowadzący (Owner)
 
