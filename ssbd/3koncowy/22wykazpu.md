@@ -1858,7 +1858,7 @@ Listing 22.1.11.1 Dokumentacja OpenApi dla metody `PATCH` dla metody kontrolera 
 Rys.22.1.11.1. Strona zawierająca listę wszystkich użytkowników systemu, udostępniająca akcję edycji danych użytkownika.
 
 ![Rys.22.1.11.2](3koncowy/img/22.1.14.1.png)
-Rys.22.1.11.2. Fragment strony edycji użytkownika przedstawiający pole tekstowe służące do edycji adresu e-mail innego użytkownika.
+Rys.22.1.11.2. Strona edycji zawierająca pole edycji adresu email.
 
 12. ### MOK.12 Edytuj dane własnego konta
 
