@@ -810,6 +810,147 @@ Listing 22.1.10.4. Sekwencja wywołań dla confirmEmailChange.
 ![Rys. 22.10.6.](img/mok10_6.png)
 *Rys. 22.10.6. Widok zatwierdzania nowego adresu e-mail oraz wprowadzeniu obecnego hasła.*
 
+### MOK.11 Zmień adres e-mail innego konta
+*Role uprawnione:** Administrator (`ADMIN`)
+
+```json
+"/account/{login}/email": {
+      "patch": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Zmień adres e-mail (Administrator)",
+        "description": "Zmienia adres e-mail dowolnego konta przez administratora. Wymaga nagłówka If-Match.",
+        "operationId": "adminChangeAccountEmail",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Adres e-mail został pomyślnie zmieniony",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Konto nie istnieje",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono konta."
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "text/plain": {
+                "example": "Podany adres e-mail jest już w użyciu."
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.1.14.1 Dokumentacja OpenApi dla metody `PATCH` dla metody kontrolera `adminChangeAccountEmail`.
+
+**Sekwencja wywołań:**
+
+1. AccountController.adminChangeAccountEmail(String, ChangeEmailDTO, String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
+2. ChangeEmailDTO.email() (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+3. AccountService.changeEmailByAdmin(String, String, String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+4. AccountRepository.findByLogin(String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+5. AccountNotFoundException.AccountNotFoundException() (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+6. MokRefreshRepository.refresh(AbstractEntity) (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+7. AbstractEntity.getVersion() (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. VersionHashService.hashObjectVersion(UUID, Integer) (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+9. ConcurrentUpdateException.ConcurrentUpdateException() (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. Account.setEmail(String) (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. JpaRepository.saveAndFlush(S) (org.springframework.data.jpa.repository)
+12. AccountMapper.toAccountDTONoHash(Account) (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+
+**Fragmenty graficznego interfejsu użytkownika:**
+
+![Rys.22.1.14.1](3koncowy/img/22.1.14.2.png)
+Rys.22.1.14.1. Strona zawierająca listę wszystkich użytkowników systemu, udostępniająca akcję edycji danych użytkownika.
+
+![Rys.22.1.14.2](3koncowy/img/22.1.14.1.png)
+Rys.22.1.14.2. Fragment strony edycji użytkownika przedstawiający pole tekstowe służące do edycji adresu e-mail innego użytkownika.
+
 ### MOK.12 Edytuj dane własnego konta
 
 Role które mają dostęp: prowadzący, administrator, student.
@@ -1765,6 +1906,21 @@ Listing 22.1.9.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `c
 **Fragmenty graficznego interfejsu użytkownika:**
 [//]: # (TODO mchodulski)
 
+
+### MOK.14 Wyloguj
+**Role uprawnione:** Administrator, Prowadzący, Prowadzący dodatkowy, Student
+
+Proces wylogowania użytkownika w prezentowanym systemie opiera się o mechanizmy bezstanowe (tzn. tokeny JWT). 
+Z tego względu, wylogowanie realizowane jest wyłącznie po stronie interfejsu klienta poprzez bezpieczne 
+porzucenie pary tokenów.
+
+Z racji braku konieczności unieważniania bezstanowego tokenu na serwerze, proces ten nie wymaga odpytania żadnego 
+z punktów końcowych REST API backendu.
+
+**Fragmenty graficznego interfejsu użytkownika:**
+
+![Rysunek 2.1.14.1](3koncowy/img/2.1.14.1.png)
+Rysunek 2.1.14.1. Fragment interfejsu użytkownika przedstawiający czerwony przycisk służący do wylogowania się.
 
 
 ### MOK.15 - Wyświetl listę użytkowników
