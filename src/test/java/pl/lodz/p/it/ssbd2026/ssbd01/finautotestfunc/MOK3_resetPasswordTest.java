@@ -28,7 +28,7 @@ public class MOK3_resetPasswordTest extends SeleniumTestSetup {
         driver.get(FRONTEND_URL + "/forgot-password");
         driver.findElement(By.id("resetPasswordSubmitBtn")).click();
 
-        WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[contains(@class, 'text-red-500')]")));
+        WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[contains(@class, 'text-danger')]")));
         assertTrue(error.isDisplayed());
     }
 }

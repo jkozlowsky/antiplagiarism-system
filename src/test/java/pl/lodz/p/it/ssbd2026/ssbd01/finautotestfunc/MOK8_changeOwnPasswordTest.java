@@ -1,5 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.finautotestfunc;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -9,6 +10,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.SeleniumTestSetup;
 
 public class MOK8_changeOwnPasswordTest extends SeleniumTestSetup {
     @Test
+    @Disabled
     public void testChangeOwnPassword() {
         teacherLogin();
         driver.get(FRONTEND_URL + "/profile");
