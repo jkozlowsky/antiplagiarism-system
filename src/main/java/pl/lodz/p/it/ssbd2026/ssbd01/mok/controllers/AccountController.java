@@ -153,7 +153,7 @@ public class AccountController {
             PagedResourcesAssembler<AccountWithAccessLevelsDTO> pagedResourcesAssembler) {
 
         String username = principal.getName();
-        Page<Account> accountPage;
+        Page<AccountWithAccessLevelsDTO> accountPage;
 
         if (phrase == null || phrase.trim().isEmpty()) {
             accountPage = accountService.getAllAccounts(page, size, sortBy, sortDesc, username);
@@ -161,14 +161,7 @@ public class AccountController {
             accountPage = accountService.searchAccounts(phrase, page, size, sortBy, sortDesc, username);
         }
 
-        Page<AccountWithAccessLevelsDTO> dtoPage = accountPage.map(account ->
-                accountMapper.toAccountWithAccessLevelsAndVersionHashDTO(
-                        account,
-                        versionHashService.hashObjectVersion(account.getId(), account.getVersion())
-                )
-        );
-
-        return pagedResourcesAssembler.toModel(dtoPage);
+        return pagedResourcesAssembler.toModel(accountPage);
     }
 
     @Operation(summary = "Zarejestruj konto", description = "Tworzy nowe konto w systemie na podstawie przesłanych danych.")

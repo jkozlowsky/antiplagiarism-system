@@ -17,6 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ScheduleRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectAssignmentRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,6 +54,7 @@ public class DeleteScheduleServiceTest {
         Schedule schedule = new Schedule();
         ReflectionTestUtils.setField(schedule, "version", 1);
         schedule.setRulePreset(rulePreset);
+        schedule.setModifiableUntil(LocalDateTime.now().plusDays(1));
 
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
         when(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion())).thenReturn(validHash);
@@ -77,6 +79,7 @@ public class DeleteScheduleServiceTest {
         Schedule schedule = new Schedule();
         ReflectionTestUtils.setField(schedule, "version", 1);
         schedule.setRulePreset(rulePreset);
+        schedule.setModifiableUntil(LocalDateTime.now().plusDays(1));
 
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
         when(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion())).thenReturn("actual-valid-hash");
@@ -120,6 +123,7 @@ public class DeleteScheduleServiceTest {
         Schedule schedule = new Schedule();
         ReflectionTestUtils.setField(schedule, "version", 1);
         schedule.setRulePreset(rulePreset);
+        schedule.setModifiableUntil(LocalDateTime.now().plusDays(1));
 
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
         when(versionHashService.hashObjectVersion(scheduleId, schedule.getVersion())).thenReturn(validHash);

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ReportListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
@@ -201,9 +201,8 @@ public class ReportService {
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
-    public Page<Report> getAllReportsForTeacher(String login, Pageable pageable) {
-        return reportsRepository.findAllReportsForAssignedTeacherByLogin(login, pageable);
+    public Page<ReportListProjectionDTO> getAllReportsForTeacher(String login, Pageable pageable) {
+        return reportsRepository.findProjectedReportsForAssignedTeacher(login, pageable);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
@@ -341,7 +340,7 @@ public class ReportService {
             throw new SubjectAccessDeniedException();
         }
 
-        int usedTickets = reportsRepository.countReportsByIdAndCreatedByLogin(repositoryId, login);
+        int usedTickets = reportsRepository.countReportsByInitiatedId(repositoryId);
 
         if (usedTickets >= preset.getStudentTicketCount()) {
             throw new NoTicketsLeftException();
@@ -365,6 +364,7 @@ public class ReportService {
         report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
         report.setScannedRepositories(0L);
         report.setIsStudentReport(true);
+        report.setInitiatingRepository(repository);
         report.setRepositoryList(repositoryList);
 
         JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(

@@ -65,7 +65,7 @@ public class ReportController {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<ReportDTO> getAllReportsForTeacher(Principal principal, @ParameterObject Pageable pageable) {
         return reportService.getAllReportsForTeacher(principal.getName(), pageable)
-                .map(reportMapper::toDto);
+                .map(reportMapper::projectionToDto);
     }
 
     @Operation(summary = "Pobierz moje raporty", description = "Zwraca listę raportów do których student ma wgląd w oparciu o politykę prywatności.")

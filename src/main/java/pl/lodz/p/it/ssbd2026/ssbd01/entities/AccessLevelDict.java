@@ -3,6 +3,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ShallowReference;
 
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
  * TEACHER,
  * ADMINISTRATOR
  **/
+@ShallowReference
 @Entity
 @Table(name = "access_level_dict")
 @Getter

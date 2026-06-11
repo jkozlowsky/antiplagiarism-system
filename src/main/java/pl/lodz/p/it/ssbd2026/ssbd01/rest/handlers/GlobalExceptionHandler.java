@@ -137,12 +137,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AuthorizationDeniedException.class, org.springframework.security.access.AccessDeniedException.class})
     public ResponseEntity<Object> handleAuthorizationException(RuntimeException exception, WebRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: " + exception.getMessage());
+            String unauthorizedMessage = translator.translate("error.unauthorized");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauthorizedMessage);
         }
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body("No access: " + exception.getMessage());
+
+        String forbiddenMessage = translator.translate("error.forbidden");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(forbiddenMessage);
     }
 
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
@@ -168,6 +170,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleAllUncaughtException(RuntimeException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Exception: " + exception.getMessage());
+        String internalServerErrorMessage = translator.translate("error.internal");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(internalServerErrorMessage);
     }
 }

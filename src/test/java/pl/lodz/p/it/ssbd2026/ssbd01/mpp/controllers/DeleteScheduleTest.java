@@ -102,6 +102,7 @@ public class DeleteScheduleTest extends BaseTestSetup {
             schedule1.setScheduleDateTime(LocalDateTime.now().plusDays(2));
             schedule1.setTag("LAB_" + commonFunctions.generateRandomStringOfLength(4));
             schedule1.setRulePreset(rulePreset1);
+            schedule1.setModifiableUntil(LocalDateTime.now().plusDays(2));
 
             authorizedScheduleId = scheduleRepository.save(schedule1).getId();
 

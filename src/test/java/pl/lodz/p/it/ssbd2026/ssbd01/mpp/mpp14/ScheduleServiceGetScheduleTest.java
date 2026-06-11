@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ScheduleProjectionListDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Schedule;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
@@ -60,21 +61,24 @@ public class ScheduleServiceGetScheduleTest {
 
     @Test
     public void POS01_shouldReturnSchedulesWhenTeacherIsAssignedToSubject() {
-        Schedule schedule = new Schedule();
-        ReflectionTestUtils.setField(schedule, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(schedule, "version", 1);
-        schedule.setScheduleDateTime(LocalDateTime.now().plusDays(1));
-        schedule.setTag("v1.0");
+        UUID scheduleId = UUID.randomUUID();
+        LocalDateTime dateTime = LocalDateTime.now().plusDays(1);
+        String tag = "v1.0";
+        Integer version = 1;
 
-        ScheduleDTO mappedDTO = new ScheduleDTO(schedule.getId(), schedule.getScheduleDateTime(), schedule.getTag(),
-                versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion()), false, false);
+        ScheduleProjectionListDTO projectedSchedule = new ScheduleProjectionListDTO(scheduleId, dateTime, tag, version, false, false);
+
+        ScheduleDTO mappedDTO = new ScheduleDTO(scheduleId, dateTime, tag,
+                "valid-hash-123", false, false);
         String expectedHash = "valid-hash-123";
 
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
                 .thenReturn(Optional.of(new SubjectAssignment()));
-        when(scheduleRepository.findAllBySubjectId(subjectId)).thenReturn(List.of(schedule));
-        when(scheduleMapper.toScheduleDTO(schedule)).thenReturn(mappedDTO);
-        when(versionHashService.hashObjectVersion(schedule.getId(), schedule.getVersion())).thenReturn(expectedHash);
+
+        when(scheduleRepository.findAllProjectedBySubjectId(subjectId)).thenReturn(List.of(projectedSchedule));
+
+        when(versionHashService.hashObjectVersion(scheduleId, version)).thenReturn(expectedHash);
+
 
         List<ScheduleDTO> schedules = scheduleService.getSchedules(subjectId);
 
@@ -82,7 +86,7 @@ public class ScheduleServiceGetScheduleTest {
                 () -> assertNotNull(schedules),
                 () -> assertEquals(1, schedules.size()),
                 () -> assertEquals(expectedHash, schedules.getFirst().versionHash()),
-                () -> verify(scheduleRepository, times(1)).findAllBySubjectId(subjectId)
+                () -> verify(scheduleRepository, times(1)).findAllProjectedBySubjectId(subjectId)
         );
     }
 
@@ -90,14 +94,15 @@ public class ScheduleServiceGetScheduleTest {
     public void POS02_ShouldReturnEmptyListWhenNoSchedules() {
         when(subjectAssignmentRepository.findByTeacherLoginAndSubjectId("teacher1", subjectId))
                 .thenReturn(Optional.of(new SubjectAssignment()));
-        when(scheduleRepository.findAllBySubjectId(subjectId)).thenReturn(List.of());
+
+        when(scheduleRepository.findAllProjectedBySubjectId(subjectId)).thenReturn(List.of());
 
         List<ScheduleDTO> schedules = scheduleService.getSchedules(subjectId);
 
         assertAll(
                 () -> assertNotNull(schedules),
                 () -> assertTrue(schedules.isEmpty()),
-                () -> verify(scheduleRepository, times(1)).findAllBySubjectId(subjectId)
+                () -> verify(scheduleRepository, times(1)).findAllProjectedBySubjectId(subjectId)
         );
     }
 
