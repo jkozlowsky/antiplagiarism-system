@@ -14,6 +14,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ReportListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @JaversSpringDataAuditable
@@ -60,5 +61,5 @@ public interface ReportsRepository extends AbstractRepository<Report> {
             """)
     Page<ReportListProjectionDTO> findProjectedReportsForAssignedTeacher(@Param("login") String login, Pageable pageable);
 
-    List<Report> findByInitiatingRepositoryIdOrderByCreatedAtDesc(UUID repositoryId);
+    Optional<Report> findByInitiatingRepositoryIdOrderByCreatedAtDesc(UUID repositoryId);
 }

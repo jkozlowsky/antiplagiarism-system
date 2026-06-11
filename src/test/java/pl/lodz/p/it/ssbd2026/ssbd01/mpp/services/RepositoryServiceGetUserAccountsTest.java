@@ -9,13 +9,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.SubjectStudentStatsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Student;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.GiteaRepositoryRepository;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -25,6 +28,9 @@ public class RepositoryServiceGetUserAccountsTest {
 
     @Mock
     private GiteaRepositoryRepository giteaRepositoryRepository;
+
+    @Mock
+    private ReportsRepository reportsRepository;
 
     @InjectMocks
     private RepositoryService repositoryService;
@@ -59,6 +65,11 @@ public class RepositoryServiceGetUserAccountsTest {
     void POS01_getUserAccounts() {
         when(giteaRepositoryRepository.findBySubject_Name(wholeSubjectName)).thenReturn(List.of(repo));
 
+        Report mockReport = new Report();
+        mockReport.setAverageSimilarity(45.5);
+        when(reportsRepository.findByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId()))
+                .thenReturn(Optional.of(mockReport));
+
         List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(wholeSubjectName);
 
         assertNotNull(result);
@@ -72,6 +83,7 @@ public class RepositoryServiceGetUserAccountsTest {
         assertEquals(repoName, dto.getRepositoryName());
 
         assertNotNull(dto.getPlagiarismRatio());
+        assertEquals(45.5, dto.getPlagiarismRatio());
     }
 
     @Test
