@@ -80,10 +80,10 @@ public class RepositoryService {
 
                 Double averagePlagiarismRatio = null;
 
-                Optional<Report> reports = reportsRepository.findByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId());
+                Optional<Report> latestReport = reportsRepository.findFirstByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId());
 
-                if (!reports.isEmpty()) {
-                    averagePlagiarismRatio = reports.get().getAverageSimilarity();
+                if (latestReport.isPresent()) {
+                    averagePlagiarismRatio = latestReport.get().getAverageSimilarity();
                 }
 
                 results.add(new SubjectStudentStatsDTO(

@@ -67,7 +67,7 @@ public class RepositoryServiceGetUserAccountsTest {
 
         Report mockReport = new Report();
         mockReport.setAverageSimilarity(45.5);
-        when(reportsRepository.findByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId()))
+        when(reportsRepository.findFirstByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId()))
                 .thenReturn(Optional.of(mockReport));
 
         List<SubjectStudentStatsDTO> result = repositoryService.getUserAccounts(wholeSubjectName);
