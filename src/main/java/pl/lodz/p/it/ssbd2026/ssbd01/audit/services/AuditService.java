@@ -27,12 +27,15 @@ public class AuditService {
     private final Javers javers;
 
     public Page<AuditRecordDTO> getAuditHistory(int page, int size, String sortBy, boolean sortDesc, String entityFilter) {
-        QueryBuilder jqlQuery = QueryBuilder.anyDomainObject().limit(5000);
+
+        final int DB_FETCH_LIMIT = 1000;
+
+        QueryBuilder jqlQuery = QueryBuilder.anyDomainObject().limit(DB_FETCH_LIMIT);
 
         if (entityFilter != null && !entityFilter.trim().isEmpty() && !entityFilter.equalsIgnoreCase("ALL")) {
             try {
                 Class<?> entityClass = Class.forName("pl.lodz.p.it.ssbd2026.ssbd01.entities." + entityFilter);
-                jqlQuery = QueryBuilder.byClass(entityClass).limit(5000);
+                jqlQuery = QueryBuilder.byClass(entityClass).limit(DB_FETCH_LIMIT);
             } catch (ClassNotFoundException e) {
                 return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
             }
@@ -40,7 +43,7 @@ public class AuditService {
 
         Changes changes = javers.findChanges(jqlQuery.build());
 
-        Map<String, AuditRecordDTO> groupedRecords = new java.util.LinkedHashMap<>();
+        java.util.Map<String, AuditRecordDTO> groupedRecords = new java.util.LinkedHashMap<>();
 
         for (Change change : changes) {
             CommitMetadata commitMeta = change.getCommitMetadata().orElse(null);
@@ -103,8 +106,8 @@ public class AuditService {
             }
         }
 
-        List<AuditRecordDTO> dtoList = new ArrayList<>(groupedRecords.values());
 
+        List<AuditRecordDTO> dtoList = new ArrayList<>(groupedRecords.values());
         dtoList.removeIf(dto -> "UPDATE".equals(dto.getChangeType()) && dto.getChanges().isEmpty());
 
         Comparator<AuditRecordDTO> comparator;
@@ -119,10 +122,13 @@ public class AuditService {
         }
         dtoList.sort(comparator);
 
-        int start = Math.min(page * size, dtoList.size());
-        int end = Math.min((page + 1) * size, dtoList.size());
+
+        int totalGroupedElements = dtoList.size();
+        int start = Math.min(page * size, totalGroupedElements);
+        int end = Math.min((page + 1) * size, totalGroupedElements);
+
         List<AuditRecordDTO> paginatedList = dtoList.subList(start, end);
 
-        return new PageImpl<>(paginatedList, PageRequest.of(page, size), dtoList.size());
+        return new PageImpl<>(paginatedList, PageRequest.of(page, size), totalGroupedElements);
     }
 }
