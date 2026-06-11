@@ -59,4 +59,6 @@ public interface ReportsRepository extends AbstractRepository<Report> {
                 AND r.isStudentReport = false
             """)
     Page<ReportListProjectionDTO> findProjectedReportsForAssignedTeacher(@Param("login") String login, Pageable pageable);
+
+    List<Report> findByInitiatingRepositoryIdOrderByCreatedAtDesc(UUID repositoryId);
 }

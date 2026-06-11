@@ -16,6 +16,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.repository.RepositoryWithStudentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.repository.StudentDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.SubjectStudentStatsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
@@ -77,13 +78,21 @@ public class RepositoryService {
             repo.getStudentList().forEach(student -> {
                 Account account = student.getAccount();
 
+                Double averagePlagiarismRatio = null;
+
+                List<Report> reports = reportsRepository.findByInitiatingRepositoryIdOrderByCreatedAtDesc(repo.getId());
+
+                if (!reports.isEmpty()) {
+                    averagePlagiarismRatio = reports.get(0).getAverageSimilarity();
+                }
+
                 results.add(new SubjectStudentStatsDTO(
                         student.getId(),
                         account.getName(),
                         account.getSurname(),
                         repo.getId(),
                         repo.getRepositoryName(),
-                        null // TODO: jak będę robił przypadek MPP.23 to tutaj będzie średni wskaźnik plagiatu dla każdego studenta
+                        averagePlagiarismRatio
                 ));
             });
         });
