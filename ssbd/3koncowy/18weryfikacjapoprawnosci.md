@@ -227,48 +227,70 @@ Listing 18.4.2 Walidacja poprawności procesu zmiany hasła w warstwie logiki.
 
 Warstwa logiki uzupełnia ten proces poprzez weryfikację, czy przekazane hasło dotychczasowe (oldPassword) zgadza się ze skrótem zapisanym w bazie danych przy użyciu komponentu passwordEncoder.matches(). Dopiero pomyślny wynik obu tych kroków pozwala na zmianę danych.
 
-### 18.5 Walidacja zewnętrzna (spełniania warunki logiki biznesowej)
-
-Walidacja zewnętrzna polega na kontroli poprawności żądania w kontekście aktualnego stanu całego systemu, ograniczeń zasobów oraz reguł biznesowych przedsiębiorstwa, których nie da się zweryfikować badając wyłącznie strukturę i format samego obiektu żądania DTO.
+### 18.5 Walidacja zewnętrzna (względem stanu i więzów bazy danych)
 
 ```java
-@Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false, transactionManager = "mppTransactionManager")
-    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
-    public StudentReportDetailsDTO generateStudentReport(UUID repositoryId, String studentTag, String taskTag, String login) {
-        Repository repository = giteaRepositoryRepository.findById(repositoryId)
-                .orElseThrow(RepositoryNotFoundException::new);
+@Entity
+@Table(name = "account", indexes = {
+        @Index(name = "idx_account_language_version_id", columnList = "language_version_id"),
+        @Index(name = "idx_account_created_by", columnList = "created_by"),
+        @Index(name = "idx_account_modified_by", columnList = "modified_by")
+})
+@Getter
+@Setter
+public class Account extends AbstractEntity {
 
-        boolean isStudentInThisRepository = repository.getStudentList().stream()
-                .anyMatch(s -> s.getAccount().getLogin().equals(login));
-        if (!isStudentInThisRepository) {
-            throw new SubjectAccessDeniedException();
-        }
+    public static final String UNIQUE_LOGIN_INDEX_NAME = "account_login_key";
+    public static final String UNIQUE_EMAIL_INDEX_NAME = "account_email_key";
 
-        Subject subject = repository.getSubject();
-        RulePreset preset = subject.getRulePreset();
+    @Column(name = "login", nullable = false, unique = true, updatable = false, length = AccountConsts.LOGIN_LENGTH)
+    private String login;
 
-        if (preset == null || "NOTHING".equals(preset.getRaportLevel().getName())) {
-            throw new SubjectAccessDeniedException();
-        }
+    @Column(name = "password_hash", nullable = false, length = AccountConsts.PASSWORD_HASH_LENGTH)
+    private String passwordHash;
 
-        int usedTickets = repository.getTicketCount();
+    @Column(name = "email", nullable = false, unique = true, length = AccountConsts.EMAIL_LENGTH)
+    private String email;
 
-        if (usedTickets >= preset.getStudentTicketCount()) {
-            throw new NoTicketsLeftException();
-        }
-
-        repository.setTicketCount(usedTickets + 1);
-        giteaRepositoryRepository.saveAndFlush(repository);
-        
-        [...]
-
-        return getStudentReportDetails(report.getId(), login);
-    }
+    // [...]
+}
 ```
-Listing 18.5.1 Walidacja warunków logiki biznesowej w metodzie warstwy logiki.
+Listing 18.5.1. Definicja więzów unikalności (UNIQUE) w encji bazodanowej warstwy modelu.
 
-Przedstawiona metoda generateStudentReport realizuje trzy kroki walidacji zewnętrznej:
+Podstawą tak pojętej walidacji zewnętrznej jest narzucenie ograniczeń na poziomie samej bazy danych. Adnotacje `@Column(unique = true)` nad polami login oraz email gwarantują, że relacyjna baza danych na poziomie silnika odrzuci próbę zapisu zduplikowanych wartości, zapewniając bezwzględną spójność danych.
 
-* System sprawdza w bazie danych, czy zalogowany student (login) faktycznie jest przypisany do żądanego repozytorium kodu.
-* Sprawdzane jest, czy konfiguracja przedmiotu (RulePreset) dopuszcza generowanie raportów (czy poziom widoczności nie jest ustawiony jako NOTHING).
-* Repozytorium posiada licznik wykorzystanych żądań (getTicketCount()). System weryfikuje ten stan z maksymalnym dopuszczalnym limitem skonfigurowanym dla przedmiotu. Pomimo że przesyłane parametry żądania (identyfikatory UUID) są poprawne semantycznie i składniowo, transakcja zostanie bezpiecznie przerwana poprzez zgłoszenie wyjątku biznesowego NoTicketsLeftException, jeśli limit został wyczerpany.
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "mokTransactionManager")
+@MethodCallLogged
+@PreAuthorize("permitAll()")
+public void registerAccount(Account account) {
+    account.setPasswordHash(passwordEncoder.encode(account.getPasswordHash()));
+    account.getPasswordHistoryList().add(new PasswordHistory(account, account.getPasswordHash()));
+
+    account.setIsVerified(false);
+    account.setIsBlocked(false);
+    account.setForcePasswordChange(true);
+    account.setActivationToken(UUID.randomUUID().toString());
+    account.setCreationDate(LocalDateTime.now());
+    account.setSecondEmailSent(false);
+    account.setFailedAttempts(0);
+
+    LanguageDict defaultLang = languageDictRepository.findByLanguage("pl").orElseThrow(LanguageDictNotFoundException::new);
+    account.setLanguageVersion(defaultLang);
+
+    AccessLevelDict studentDict = accessLevelDictRepository.findByAccessLevelName(AccountConsts.ROLE_STUDENT).orElseThrow(AccessLevelDictNotFoundException::new);
+
+    Student studentRole = new Student();
+    studentRole.setAccessLevelDict(studentDict);
+    studentRole.setAccount(account);
+    studentRole.setActive(true);
+
+    account.getAccessLevelList().add(studentRole);
+
+    accountRepository.saveAndFlush(account);
+    postCommitTransactionManager.register(() -> emailService.sendActivationEmail(account.getEmail(), account.getActivationToken(), defaultLang.getLanguage()));
+}
+```
+Listing 18.5.2. Pasywna walidacja zewnętrzna (przechwytywanie naruszenia więzów) w warstwie logiki.
+
+Aplikacja kompletuje obiekt konta i wymusza jego fizyczny zapis w bazie wywołaniem metody saveAndFlush(account). Jeśli wprowadzone przez użytkownika dane (login lub e-mail) naruszają zdefiniowane w encji więzy unikalności, baza odrzuca operację, a dostawca JPA zgłasza błąd (np. DataIntegrityViolationException). Aplikacja przechwytuje ten błąd na poziomie globalnego mechanizmu obsługi wyjątków, przerywa transakcję i poddaje błąd translacji na bezpieczny wyjątek biznesowy informujący użytkownika o zajętym loginie, ukrywając tym samym techniczne detale bazy danych przed warstwą prezentacji.
