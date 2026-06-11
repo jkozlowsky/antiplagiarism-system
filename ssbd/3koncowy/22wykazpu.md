@@ -1979,17 +1979,22 @@ Listing 22.1.8.1 Dokumentacja OpenApi dla metody POST `/account/security/passwor
 
 **Fragmenty graficznego interfejsu użytkownika:**
 
-![Rys. 22.1.8.1](3koncowy/img/22.1.8.1.png)
-*Rys. 22.1.8.1. Fragment graficznego interfejsu użytkownika przedstawiający widok kont z rolami użytkowników.*
 
 ![Rys. 22.1.8.2](3koncowy/img/22.1.8.2.png)
-*Rys. 22.1.8.2. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta z aktywnymi poziomami dostępu.*
+*Rys. 22.1.8.1. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta.*
 
 ![Rys. 22.1.8.3](3koncowy/img/22.1.8.3.png)
-*Rys. 22.1.8.3. Fragment graficznego interfejsu użytkownika przedstawiający widok okno potwierdzające odebranie poziomu dostępu.*
+*Rys. 22.1.8.2. Fragment graficznego interfejsu użytkownika przedstawiający widok okno do zmiany hasła.*
 
 ![Rys. 22.1.8.4](3koncowy/img/22.1.8.4.png)
-*Rys. 22.1.8.4. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym odebraniu poziomu dostępu.*
+*Rys. 22.1.8.3. Fragment graficznego interfejsu użytkownika przedstawiający widok okno do zmiany hasła wraz z wprowadzonymi danymi.*
+
+![Rys. 22.1.8.5](3koncowy/img/22.1.8.5.png)
+*Rys. 22.1.8.4. Fragment graficznego interfejsu użytkownika przedstawiający okno z potwierdzeniem chęci zmiany własnego hasła.*
+
+![Rys. 22.1.8.6](3koncowy/img/22.1.8.6.png)
+*Rys. 22.1.8.5. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnej zmianie hasła.*
+
 
 
 
@@ -2103,9 +2108,9 @@ Listing 22.1.8.1 Dokumentacja OpenApi dla metody POST `/account/security/passwor
       }
     },
 ```
-Listing 22.1.9.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `changeOtherPassword`.
+Listing 22.1.9.1 Dokumentacja OpenApi dla metody POST `changeOtherPassword`.
 
-**Sekwencja wywołań:**
+**Sekwencja wywoływanych metod** dla metody kontrolera `AccountController.changeOtherPassword(String, ChangeOtherPasswordDto, String)`.
 
 1. AccountController.changeOtherPassword(String, ChangeOtherPasswordDto, String) (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
 2. ChangeOtherPasswordDto.getNewPassword()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
@@ -2137,7 +2142,25 @@ Listing 22.1.9.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `c
 
 
 **Fragmenty graficznego interfejsu użytkownika:**
-[//]: # (TODO mchodulski)
+
+![Rys. 22.1.9.1](3koncowy/img/22.1.9.1.png)
+*Rys. 22.1.9.1. Fragment graficznego interfejsu użytkownika przedstawiający widok kont z rolami użytkowników.*
+
+![Rys. 22.1.9.2](3koncowy/img/22.1.9.2.png)
+*Rys. 22.1.9.2. Fragment graficznego interfejsu użytkownika przedstawiający widok szczegółów konta jednego z użytkowników systemu.*
+
+![Rys. 22.1.9.3](3koncowy/img/22.1.9.3.png)
+*Rys. 22.1.9.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po kliknięciu przycisku `change password` - okno do zmiany hasła.*
+
+![Rys. 22.1.9.4](3koncowy/img/22.1.9.4.png)
+*Rys. 22.1.9.4. Fragment graficznego interfejsu użytkownika przedstawiający widok okno do zmiany hasła wraz z wprowadzonymi danymi.*
+
+![Rys. 22.1.9.5](3koncowy/img/22.1.9.5.png)
+*Rys. 22.1.9.5. Fragment graficznego interfejsu użytkownika przedstawiający okno z potwierdzeniem chęcią zmiany cudego hasła.*
+
+![Rys. 22.1.9.6](3koncowy/img/22.1.9.6.png)
+*Rys. 22.1.9.6. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnej zmianie hasła.*
+
 
 
 ### MOK.14 Wyloguj
