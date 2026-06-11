@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.DeleteReportException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
@@ -109,10 +110,9 @@ class RemoveReportTest {
             mockedFiles.when(() -> Files.deleteIfExists(any(Path.class)))
                     .thenThrow(new IOException("File is locked"));
 
-            RuntimeException exception = assertThrows(RuntimeException.class, () ->
+            RuntimeException exception = assertThrows(DeleteReportException.class, () ->
                     reportService.deleteReport(reportId)
             );
-            assertTrue(exception.getMessage().contains("Could not delete the report file"));
 
             verify(reportsRepository, never()).delete(any());
             verify(subjectRepository, never()).findByReportId(any());

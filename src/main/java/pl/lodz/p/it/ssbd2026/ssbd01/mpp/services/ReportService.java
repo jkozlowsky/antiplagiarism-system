@@ -17,10 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ReportListProjectionDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.GitCloneException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectAccessDeniedException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.SubjectNotFoundException;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.subject.SubjectArchivedException;
@@ -70,13 +67,7 @@ public class ReportService {
     public Report generateReportOnDemand(UUID subjectId, String tag, String login) {
         SubjectConfigDTO config = reportDatabaseService.verifyAccessAndGetConfig(subjectId, login);
 
-        Subject subject = subjectRepository.findById(subjectId).orElseThrow(SubjectNotFoundException::new);
-        if (subject.getArchived()) {
-            throw new SubjectArchivedException();
-        }
-
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(config.organizationName());
-
 
         long successfulClonesCount = giteaRepoDTO.stream()
                 .filter(repo -> !repo.template())
@@ -264,7 +255,7 @@ public class ReportService {
                 log.warn("File was not found on disk, but proceeding to delete DB record: {}", filePath);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not delete the report file physically", e);
+            throw new DeleteReportException(e);
         }
 
         Subject subject = subjectRepository.findByReportId(reportId).orElseThrow(SubjectNotFoundException::new);
@@ -279,25 +270,13 @@ public class ReportService {
     public boolean generateReportBySchedule() {
         ScheduleConfigDTO config = reportDatabaseService.fetchNextScheduleToExecute();
         if (config == null) return false;
-
-//        List<Schedule> schedules = scheduleRepository.findSchedulesToExecute(PageRequest.of(0, 1));
-//        if (schedules.isEmpty()) return false;
-
-//        Schedule schedule = schedules.getFirst();
         try {
             Subject subject = subjectRepository.findById(config.subjectId()).orElseThrow(SubjectNotFoundException::new);
             if (subject.getArchived()) {
                 throw new SubjectArchivedException();
             }
-//            RulePreset settings = schedule.getRulePreset();
-//            Subject subject = settings.getSubject();
-//            String giteaTag = schedule.getTag();
 
             List<GiteaRepoDTO> giteaRepoList = giteaService.getRepositoriesFromOrganization(config.organizationName());
-//            giteaRepoList.stream().filter(repo -> !repo.template()).forEach(repo -> {
-//                File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + giteaTag + "/" + repo.name());
-//                GitService.cloneTag(repo.clone_url(), giteaTag, targetDir, giteaToken);
-//            });
 
             long successfulClonesCount = giteaRepoList.stream()
                     .filter(repo -> !repo.template())
@@ -315,15 +294,6 @@ public class ReportService {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
             String reportPath = "reports/" + config.organizationName() + "/" + config.giteaTag() + "/" + timestamp + ".jplag";
 
-//            List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
-
-//            Report report = new Report();
-//            report.setSubject(subject);
-//            report.setTag(giteaTag);
-//            report.setScannedRepositories(successfulClonesCount);
-//            report.setIsStudentReport(false);
-//            report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + giteaTag + "/" + timestamp + ".jplag");
-//            report.setRepositoryList(repositoryList);
             JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                     config.organizationName(),
                     config.giteaTag(),
@@ -339,28 +309,9 @@ public class ReportService {
 
             reportDatabaseService.saveScheduleSuccess(config, successfulClonesCount, reportPath, avg);
 
-//            report.setAverageSimilarity(avg);
-
-//            reportsRepository.saveAndFlush(report);
-
-//            Double newSubjectAggregate = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
-//            if (subject.getSubjectStatistics() == null){
-//                SubjectStatistics subjectStatistics = new SubjectStatistics();
-//                subjectStatistics.setAverageSimilarity(newSubjectAggregate);
-//                subjectStatistics.setSubject(subject);
-//                subject.setSubjectStatistics(subjectStatistics);
-//            }else{
-//                subject.getSubjectStatistics().setAverageSimilarity(newSubjectAggregate);
-//            }
-//            subjectRepository.saveAndFlush(subject);
             subjectStatisticsService.recalculateAndUpdateStatistics(config.subjectId());
 
-//            schedule.setExecuted(true);
-//            scheduleRepository.saveAndFlush(schedule);
         } catch (Exception e) {
-//            schedule.setExecuted(true);
-//            schedule.setHasFailed(true);
-//            scheduleRepository.saveAndFlush(schedule);
             reportDatabaseService.saveScheduleFailure(config.scheduleId());
         }
         return true;

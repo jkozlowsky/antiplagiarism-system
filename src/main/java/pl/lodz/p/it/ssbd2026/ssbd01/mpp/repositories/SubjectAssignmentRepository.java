@@ -29,7 +29,7 @@ public interface SubjectAssignmentRepository extends AbstractRepository<SubjectA
             @Param("subjectId") UUID subjectId
     );
 
-    @Query("SELECT sa FROM SubjectAssignment sa WHERE sa.teacher.account.login = :login")
+    @Query("SELECT sa FROM SubjectAssignment sa JOIN FETCH sa.subject WHERE sa.teacher.account.login = :login")
     List<SubjectAssignment> findAllByTeacherLogin(@Param("login") String login);
 
 }

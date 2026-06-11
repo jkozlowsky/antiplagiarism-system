@@ -177,7 +177,7 @@ public class SubjectService {
 
         Map<UUID, String> descriptionMap = translations.stream()
                 .collect(Collectors.toMap(
-                        SubjectDescriptionTranslation::getId,
+                        (desc) -> desc.getSubject().getId(),
                         SubjectDescriptionTranslation::getTranslatedDescription
                 ));
 

@@ -56,7 +56,7 @@ public class GenerateReportServiceTest {
 
         Subject mockSubject = new Subject();
         mockSubject.setArchived(false);
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
+//        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
 
         SubjectConfigDTO configDTO = new SubjectConfigDTO(orgName, 12, true);
         when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
@@ -146,7 +146,7 @@ public class GenerateReportServiceTest {
 
         Subject mockSubject = new Subject();
         mockSubject.setArchived(false);
-        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
+//        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(mockSubject));
 
         SubjectConfigDTO configDTO = new SubjectConfigDTO("TestOrg", 10, true);
         when(reportDatabaseService.verifyAccessAndGetConfig(subjectId, login)).thenReturn(configDTO);
