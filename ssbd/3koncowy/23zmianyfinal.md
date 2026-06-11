@@ -31,3 +31,6 @@ statusami URUCHOMIONY, ZREALIZOWANY, ANULOWANY na rzecz pojedynczej aktualizacji
 
 
 7. Aktualizacja diagramu UML klas encji 
+
+
+8. Usunięto MPP 23 jako przypadek użycia
