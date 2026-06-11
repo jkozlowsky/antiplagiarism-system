@@ -61,5 +61,5 @@ public interface ReportsRepository extends AbstractRepository<Report> {
             """)
     Page<ReportListProjectionDTO> findProjectedReportsForAssignedTeacher(@Param("login") String login, Pageable pageable);
 
-    Optional<Report> findByInitiatingRepositoryIdOrderByCreatedAtDesc(UUID repositoryId);
+    Optional<Report> findFirstByInitiatingRepositoryIdOrderByCreatedAtDesc(UUID repositoryId);
 }
