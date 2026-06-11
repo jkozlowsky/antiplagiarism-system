@@ -1,7 +1,249 @@
 
 ## 22 Wykaz akcji dostępnych z interfejsu użytkownika 4 pkt
 
+### MOK.1 - Rejestracja użytkownika
 
+Rejestracja użytkownika
+
+Role które mają dostęp: Gość
+
+```json
+"/account/register": {
+      "post": {
+        "tags": [
+          "Konta"
+        ],
+        "summary": "Zarejestruj konto",
+        "description": "Tworzy nowe konto w systemie na podstawie przesłanych danych.",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAccountDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Żądanie rejestracji przyjęte (konto oczekuje na aktywację)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt - podany login lub email już istnieje",
+            "content": {
+              "text/plain": {
+                "example": "Konflikt - podany login lub email już istnieje"
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.1.1.1. Dokumentacja OpenApi dla metody POST `/account/register`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `AccountController.register`.
+
+1. AccountController.register(RegisterAccountDTO)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
+2. AccountMapper.toEntity(RegisterAccountDTO)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+3. AccountService.registerAccount(Account)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+4. Account.getPasswordHash()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+5. Account.setPasswordHash(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. Account.getPasswordHistoryList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. PasswordHistory.PasswordHistory(Account, String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Account.setIsVerified(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. Account.setIsBlocked(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. Account.setForcePasswordChange(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. Account.setActivationToken(String)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. Account.setCreationDate(LocalDateTime)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. Account.setSecondEmailSent(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. Account.setFailedAttempts(Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. LanguageDictRepository.findByLanguage(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+16. LanguageDictNotFoundException.LanguageDictNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+17. Account.setLanguageVersion(LanguageDict)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+18. AccessLevelDictRepository.findByAccessLevelName(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+19. AccessLevelDictNotFoundException.AccessLevelDictNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel)
+20. AccessLevel.setAccessLevelDict(AccessLevelDict)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. AccessLevel.setAccount(Account)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+22. AccessLevel.setActive(Boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+23. Account.getAccessLevelList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+24. JpaRepository.saveAndFlush(S)  (org.springframework.data.jpa.repository)
+25. Account.getEmail()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+26. Account.getActivationToken()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+27. LanguageDict.getLanguage()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+28. EmailService.sendActivationEmail(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+29. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Widoki użytkownika.
+
+![22.1.1.1.png](3koncowy/img/22.1.1.1.png)
+
+Rysunek 22.1.1.1. Interfejs graficzny użytkownika przedstawiający wypełniony formularz rejestracyjny.
+
+![22.1.1.2.png](3koncowy/img/22.1.1.2.png)
+
+Rysunek 22.1.1.2. Interfejs graficzny użytkownika przedstawiający komunikat z prośbą o potwierdzenie utworzenia konta na skrzynce pocztowej.
+
+![22.1.1.3.png](3koncowy/img/22.1.1.3.png)
+
+Rysunek 22.1.1.3. Interfejs graficzny użytkownika przedstawiający widok pomyślnej aktywacji konta po kliknięciu w link na mailu.
+
+### MOK.2 - Uwierzytelnienie użytkownika
+
+Logowanie użytkownika do systemu.
+
+Role które mają dostęp: Gość
+
+```json
+"/auth/login": {
+      "post": {
+        "tags": [
+          "Autoryzacja"
+        ],
+        "summary": "Zaloguj użytkownika (etap 1)",
+        "description": "Weryfikuje login i hasło, a następnie wysyła kod 2FA na adres e-mail użytkownika.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Poświadczenia poprawne, oczekiwanie na kod 2FA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konto zablokowane lub nie zweryfikowane",
+            "content": {
+              "text/plain": {
+                "example": "Konto zablokowane lub nie zweryfikowane"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.1.2.1. Dokumentacja OpenApi dla metody POST `/auth/login`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `AuthController.login`.
+
+1. AuthController.login(LoginRequestDTO, HttpServletRequest)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
+2. LoginRequestDTO.login()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+3. LoginRequestDTO.password()  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+4. AuthService.authenticate(String, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+5. AccountRepository.findByLogin(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories)
+6. InvalidCredentialsProvidedException.InvalidCredentialsProvidedException()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+7. Account.getIsBlocked()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. AccountIsBlockedException.AccountIsBlockedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+9. Account.getIsVerified()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. AccountIsNotVerifiedException.AccountIsNotVerifiedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. Account.getPasswordHash()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. AuthService.handleFailedLogin(Account, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+13. AuthService.generate2FactorCode(Account)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+14. MessageResponseDTO.MessageResponseDTO(String)  (pl.lodz.p.it.ssbd2026.ssbd01.dto)
+
+Widoki użytkownika.
+
+![22.1.2.1](3koncowy/img/22.1.2.1.png)
+
+Rysunek 22.1.2.1. Interfejs graficzny użytkownika przedstawiający uzupełniony formularz danymi do konta istniejącego w systemie.
+
+![22.1.2.2](3koncowy/img/22.1.2.2.png)
+
+Rysunek 22.1.2.2. Interfejs graficzny użytkownika przedstawiający uzupełniony kod z dwuskładnikowej weryfikacji, a po niej następuje zalogowanie.
 
 ### MOK.3 Reset hasła
 
@@ -1430,6 +1672,144 @@ Rysunek 22.2.3.1. Interfejs graficzny użytkownika przedstawiający stronę z li
 
 Rysunek 22.2.3.2. Interfejs graficzny użytkownika przedstawiający stronę z pustą listą raportów.
 
+### MPP.4 - Przeglądanie jednego raportu
+
+Przeglądanie jednego raportu
+
+Role które mają dostęp: Prowadzący (Owner, Editor, Observer)
+
+```json
+"/reports/{reportId}": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Szczegóły raportu dla Prowadzącego",
+        "description": "Pobiera szczegółowy wynik analizy antyplagiatowej, zawierający stopień podobieństwa oraz listę poszczególnych repozytoriów.",
+        "operationId": "getReportDetails",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Raport pobrany pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono rekordu raportu o podanym identyfikatorze",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      },
+```
+Listing 22.2.4.1. Dokumentacja OpenApi dla metody GET `/reports/{reportId}`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `ReportController.getReportDetails`.
+
+1. ReportController.getReportDetails(UUID, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ReportService.getTeacherReportDetails(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. ReportNotFoundException.ReportNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. Report.getSubject()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. AbstractEntity.getCreatedBy()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. Account.getLogin()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Subject.getSubjectAssignmentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. SubjectAssignment.getTeacher()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. SubjectAccessDeniedException.SubjectAccessDeniedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+12. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+13. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. JplagReportParser.parseFullTeacherReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+15. TopComparison.firstSubmission()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+16. TopComparison.secondSubmission()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+17. JplagReportParser.readFileFromZipSmart(ZipFile, String, String)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+18. TeacherMatchedFileDTO.TeacherMatchedFileDTO(String, String, String, String, List<Integer>, List<Integer>, int)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+19. TopComparison.similarities()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+20. Similarities.max()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+21. Similarities.avg()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+22. Similarities.longestMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+23. TeacherComparisonDTO.TeacherComparisonDTO(String, String, Double, Double, Double, String, String, ...)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+24. ReportFileException.ReportFileException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+25. TeacherComparisonDTO.maxSimilarity()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+26. AbstractEntity.getId()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+27. Report.getTag()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+28. Subject.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+29. AbstractEntity.getCreatedAt()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+30. Report.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+31. TeacherReportDetailsDTO.TeacherReportDetailsDTO(UUID, String, String, LocalDateTime, Double, List<TeacherComparisonDTO>)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+
+Widoki użytkownika.
+
+![22.2.4.1](3koncowy/img/22.2.4.1.png)
+
+Rysunek 22.2.4.1. Interfejs graficzny użytkownika przedstawiający szczegóły wybranego z listy przykładowego raportu ze wszystkimi statystykami m.in.: podobieństwa procentowe, repozytoriów, kodów źródłowych.
+
+
 ### MPP.5 Usuwanie raportów
 
 Role które mają dostęp: prowadzący, prowadzący dodatkowy.
@@ -1564,6 +1944,269 @@ Rysunek 22.2.5.3. Interfejs graficzny użytkownika przedstawiający stronę list
 ![2.5.4](3koncowy/img/22.2.5.4.png)
 
 Rysunek 22.2.5.4. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o błędzie usuwania raportu.
+
+### MPP.9 - Usuwanie przedmiotu
+
+Usuwanie przedmiotu
+
+Role które mają dostęp: Prowadzący (Owner)
+
+```json
+"/subjects/{subjectId}": {
+      "delete": {
+        "tags": [
+          "subject-controller"
+        ],
+        "summary": "Usuń przedmiot (MPP.9)",
+        "description": "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.",
+        "operationId": "deleteSubject",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deleteGiteaOrg",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Przedmiot został pomyślnie usunięty"
+          },
+          "404": {
+            "description": "Nie znaleziono podanego przedmiotu",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono podanego przedmiotu"
+              }
+            }
+          },
+          "409": {
+            "description": "Dane uległy zmianie (Błąd blokady optymistycznej) - odśwież widok"
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.9.1. Dokumentacja OpenApi dla metody DELETE `/subjects/{subjectId}`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `SubjectController.deleteSubject`.
+
+1. SubjectController.deleteSubject(UUID, String, boolean, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. SubjectService.deleteSubject(UUID, String, String, boolean)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. SubjectNotFoundException.SubjectNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+7. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+8. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+9. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. Subject.getSubjectAssignmentList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. SubjectAssignment.getTeacher()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. AccessLevel.getAccount()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. SubjectAssignment.getSubjectRole()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. SubjectAccessDeniedException.SubjectAccessDeniedException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+17. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+18. Subject.getReportList()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+19. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+20. Subject.getOrganizationName()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+21. GiteaService.deleteGiteaOrganization(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+22. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+23. GiteaIntegrationException.GiteaIntegrationException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+24. AppBaseException.AppBaseException(HttpStatusCode, String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+25. JpaRepository.flush()  (org.springframework.data.jpa.repository)
+26. SimpleJpaRepository.flush()  (org.springframework.data.jpa.repository.support)
+27. PostCommitTransactionManager.register(Runnable)  (pl.lodz.p.it.ssbd2026.ssbd01.common.utils)
+
+Widoki użytkownika.
+
+![22.2.9.1](3koncowy/img/22.2.9.1.png)
+
+Rysunek 22.2.9.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia przedmiotu, wraz z możliwością wyboru opcji usunięcia przy tym jednocześnie organizacji na serwerze Gitea.
+
+### MPP.13 - Usuwanie reguł
+
+Usuwanie reguł
+
+Role które mają dostęp: Prowadzący (Owner)
+
+```json
+"/rules/{ruleId}": {
+      "delete": {
+        "tags": [
+          "rule-controller"
+        ],
+        "summary": "Usuwanie globalnego szablonu reguł (MPP.13)",
+        "operationId": "deleteRulePreset",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Szablon reguł został pomyślnie usunięty"
+          },
+          "404": {
+            "description": "Nie znaleziono podanego szablonu reguł"
+          },
+          "409": {
+            "description": "Dane zostały zmodyfikowane przez innego użytkownika"
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.13.1. Dokumentacja OpenApi dla metody DELETE `/rules/{ruleId}`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `RuleController.deleteRulePreset`.
+
+1. RuleController.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. RuleService.deleteRulePreset(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. RulePresetNotFoundException.RulePresetNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. AbstractEntity.getVersion()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. VersionHashService.hashObjectVersion(UUID, Integer)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+7. VersionHashService.getStringFromByteArray(byte[])  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
+8. HashEncryptionException.HashEncryptionException(String, Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+9. ConcurrentUpdateException.ConcurrentUpdateException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. RulePreset.getIsPreset()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. RulePresetNoAccessException.RulePresetNoAccessException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions.rulePreset)
+13. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+14. JpaRepository.flush()  (org.springframework.data.jpa.repository)
+15. SimpleJpaRepository.flush()  (org.springframework.data.jpa.repository.support)
+
+Widoki użytkownika.
+
+![22.2.13.1](3koncowy/img/22.2.13.1.png)
+
+Rysunek 22.2.13.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia szablonu reguł.
 
 ### MPP.18 Przeglądanie repozytoriów
 
@@ -2708,3 +3351,257 @@ TODO (rysunki):
 
 ![Rys. 22.2.17.3](3koncowy/img/mpp17_delete_success.png)
 *Rys. 22.2.17.3. Fragment graficznego interfejsu użytkownika przedstawiający widok po pomyślnym usunięciu harmonogramu.*
+
+### MPP.21 - Przeglądanie swoich raportów
+
+Przeglądanie swoich listy swoich raportów
+
+Role które mają dostęp: Student
+
+```json
+"/reports/my-reports": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Pobierz moje raporty",
+        "description": "Zwraca listę raportów do których student ma wgląd w oparciu o politykę prywatności.",
+        "operationId": "getMyReports",
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Lista raportów pobrana pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.21.1. Dokumentacja OpenApi dla metody GET `/reports/my-reports/`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `ReportController.getMyReports`.
+
+1. ReportController.getMyReports(Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ReportService.getStudentOwnReports(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. ReportsRepository.findVisibleReportsForStudent(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories)
+4. Report.getSubject()(6 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+5. Subject.getRulePreset()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. RulePreset.getRaportLevel()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. ReportLevelDict.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. AbstractEntity.getId()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. Report.getTag()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+10. Report.getAverageSimilarity()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+11. AbstractEntity.getCreatedAt()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. AbstractEntity.getCreatedBy()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. Account.getLogin()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. Subject.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. ReportDTO.ReportDTO(UUID, String, Double, LocalDateTime, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+
+Widoki użytkownika.
+
+![22.2.21.1](3koncowy/img/22.2.21.1.png)
+
+Rysunek 22.2.21.1. Interfejs graficzny użytkownika przedstawiający liste raportów dostępnych do wglądu przez studenta.
+
+Przeglądanie szczegółów wybranego raportu z listy
+
+Role które mają dostęp: Student
+
+```json
+"/reports/my-reports/{reportId}": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Szczegóły mojego raportu",
+        "description": "Pobiera wynik analizy antyplagiatowej dla wybranego raportu wyselekcjonowanej specjalnie dla studenta. Inne dane są zanonimizowane.",
+        "operationId": "getMyReportDetails",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Raport pobrany pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono raportu o podanym identyfikatorze",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailsDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.21.2. Dokumentacja OpenApi dla metody GET `/reports/my-reports/{reportId}`.
+
+Sekwencja wywoływanych metod dla metody kontrolera `ReportController.getMyReportDetails`.
+
+1. ReportController.getMyReportDetails(UUID, Principal)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ReportService.getStudentReportDetails(UUID, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+3. ReportNotFoundException.ReportNotFoundException()  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+4. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+5. Report.getRepositoryList()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+6. Repository.getStudentList()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+7. AccessLevel.getAccount()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+8. Account.getLogin()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+9. SubjectAccessDeniedException.SubjectAccessDeniedException()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+10. AppBaseException.AppBaseException(HttpStatusCode, String)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+11. Report.getSubject()(5 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+12. Subject.getRulePreset()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+13. RulePreset.getRaportLevel()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+14. ReportLevelDict.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+15. Repository.getRepositoryName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+16. Report.getPathToReport()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+17. JplagReportParser.parseFullTeacherReport(String)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+18. TopComparison.firstSubmission()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+19. TopComparison.secondSubmission()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+20. JplagReportParser.readFileFromZipSmart(ZipFile, String, String)(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.utils)
+21. TeacherMatchedFileDTO.TeacherMatchedFileDTO(String, String, String, String, List<Integer>, List<Integer>, int)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+22. TopComparison.similarities()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+23. Similarities.max()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+24. Similarities.avg()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+25. Similarities.longestMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects)
+26. TeacherComparisonDTO.TeacherComparisonDTO(String, String, Double, Double, Double, String, String, ...)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+27. ReportFileException.ReportFileException(Throwable)  (pl.lodz.p.it.ssbd2026.ssbd01.exceptions)
+28. TeacherComparisonDTO.firstSubmission()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+29. TeacherComparisonDTO.secondSubmission()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+30. TeacherComparisonDTO.maxSimilarity()(3 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+31. TeacherComparisonDTO.averageSimilarity()(2 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+32. TeacherComparisonDTO.longestMatch()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+33. TeacherComparisonDTO.fileA()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+34. TeacherComparisonDTO.fileB()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+35. TeacherComparisonDTO.codeA()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+36. TeacherComparisonDTO.codeB()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+37. TeacherComparisonDTO.matchedLinesA()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+38. TeacherComparisonDTO.matchedLinesB()  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+39. FilteredComparisonDTO.FilteredComparisonDTO(String, Double, Double, Double, String, String, List<Integer>)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+40. FilteredComparisonDTO.maxSimilarity()(4 usages)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+41. AbstractEntity.getId()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+42. Report.getTag()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+43. Subject.getName()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+44. AbstractEntity.getCreatedAt()  (pl.lodz.p.it.ssbd2026.ssbd01.entities)
+45. StudentReportDetailsDTO.StudentReportDetailsDTO(UUID, String, String, LocalDateTime, List<FilteredComparisonDTO>)  (pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp)
+
+Widoki użytkownika.
+
+![22.2.21.2](3koncowy/img/22.2.21.2.png)
+
+Rysunek 22.2.21.2. Interfejs graficzny użytkownika przedstawiający widok szczegółów raportu dostępnych dla studenta w zależności od poziomu raportu wybranego przez prowadzącego przedmiotu. Akurat tutaj mamy wszystkie statystyki. Niezależnie od poziomu raportu, nazwy innych repozytoriów są zawsze zanonimizowane.
