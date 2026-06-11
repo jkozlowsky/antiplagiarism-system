@@ -71,7 +71,7 @@ public class RepositoryServiceGetUserAccountsTest {
         assertEquals(repo.getId(), dto.getRepositoryId());
         assertEquals(repoName, dto.getRepositoryName());
 
-        assertNull(dto.getPlagiarismRatio()); // TODO: jak będzie agregacja danych to zaaktualizować
+        assertNotNull(dto.getPlagiarismRatio());
     }
 
     @Test
