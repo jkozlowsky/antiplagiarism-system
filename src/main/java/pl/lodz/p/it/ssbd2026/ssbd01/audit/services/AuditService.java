@@ -28,7 +28,7 @@ public class AuditService {
 
     public Page<AuditRecordDTO> getAuditHistory(int page, int size, String sortBy, boolean sortDesc, String entityFilter) {
 
-        final int DB_FETCH_LIMIT = 1000;
+        final int DB_FETCH_LIMIT = 100;
 
         QueryBuilder jqlQuery = QueryBuilder.anyDomainObject().limit(DB_FETCH_LIMIT);
 
