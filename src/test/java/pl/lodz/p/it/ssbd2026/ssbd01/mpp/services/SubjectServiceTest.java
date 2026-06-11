@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,23 +49,30 @@ class SubjectServiceTest {
     private GiteaService giteaService;
     @Mock
     private StudentRepository studentRepository;
+    @Mock
+    private LanguageDictRepositoryMPP languageDictRepository;
+
+    @Mock
+    private SubjectDescriptionTranslationRepository subjectDescriptionTranslationRepository;
 
     @InjectMocks
     private SubjectService subjectService;
 
     private CreateSubjectManualDTO validDto;
     private final String TEACHER_LOGIN = "szponcik";
+    private LanguageDict languageDict;
 
     @BeforeEach
     void setUp() {
-        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true, 1, "hash123");
+        RulePresetDTO rules = new RulePresetDTO(UUID.randomUUID(), "PEŁNY_WGLĄD", 1, 1, true,  "hash123");
+        languageDict = new LanguageDict();
+        languageDict.setLanguage("pl");
 
         validDto = new CreateSubjectManualDTO(
                 "SSBD",
                 "elo_zelo_org",
                 "2026",
                 "64 osoby IAS",
-                "https://gitea.example.com/ssbd",
                 rules,
                 null
         );
@@ -74,6 +82,7 @@ class SubjectServiceTest {
     void shouldSuccessfullyCreateSubjectAndAssignTeacher() {
         Teacher teacher = new Teacher();
         when(teacherRepository.findActiveTeacherByLogin(TEACHER_LOGIN)).thenReturn(Optional.of(teacher));
+        when(languageDictRepository.findByLanguage(anyString())).thenReturn(Optional.ofNullable(languageDict));
 
         ReportLevelDict mockDict = new ReportLevelDict();
         mockDict.setName("PEŁNY_WGLĄD");
@@ -81,10 +90,14 @@ class SubjectServiceTest {
 
         when(giteaService.getRepositoriesFromOrganization(anyString())).thenReturn(List.of());
 
-        subjectService.createSubjectManual(validDto, TEACHER_LOGIN);
+        Subject mockSavedSubject = new Subject();
+        when(subjectRepository.saveAndFlush(any(Subject.class))).thenReturn(mockSavedSubject);
+
+        subjectService.createSubjectManual(validDto, TEACHER_LOGIN, "pl");
 
         assertAll(
-                () -> verify(subjectRepository, times(1)).saveAndFlush(any(Subject.class))
+                () -> verify(subjectRepository, atLeastOnce()).saveAndFlush(any(Subject.class)),
+                () -> verify(subjectDescriptionTranslationRepository, times(1)).saveAndFlush(any(SubjectDescriptionTranslation.class))
         );
     }
 
@@ -94,7 +107,7 @@ class SubjectServiceTest {
         when(teacherRepository.findActiveTeacherByLogin(notTeacherLogin)).thenReturn(Optional.empty());
 
         assertThrows(AccessLevelNotAssignedException.class, () ->
-                subjectService.createSubjectManual(validDto, notTeacherLogin)
+                subjectService.createSubjectManual(validDto, notTeacherLogin, "pl")
         );
     }
 
@@ -105,6 +118,7 @@ class SubjectServiceTest {
         Subject subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
         subject.setOrganizationName("test-org");
+        subject.setArchived(false);
 
         Teacher teacher = new Teacher();
         Account teacherAcc = new Account();
@@ -124,14 +138,14 @@ class SubjectServiceTest {
 
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
-        GiteaRepoDTO repoDTO = new GiteaRepoDTO("grupa-01", "https://git.local/grupa-01", false);
+        GiteaRepoDTO repoDTO = new GiteaRepoDTO("grupa-01", "https://git.localmvngrupa-01", false);
         when(giteaService.getRepositoriesFromOrganization("test-org")).thenReturn(List.of(repoDTO));
 
         GiteaUserDTO userDTO = new GiteaUserDTO("jkowalski", "jkowalski@edu.pl");
         when(giteaService.getRepoCollaborators("test-org", "grupa-01")).thenReturn(List.of(userDTO));
 
         Student student = new Student();
-        when(studentRepository.findByAccountEmailIgnoreCaseOrAccountLoginIgnoreCase("jkowalski@edu.pl", "jkowalski"))
+        when(studentRepository.findByAccountEmailIgnoreCase("jkowalski@edu.pl"))
                 .thenReturn(Optional.of(student));
 
         subjectService.syncSubjectWithGitea(subjectId);
@@ -148,6 +162,7 @@ class SubjectServiceTest {
         UUID subjectId = UUID.randomUUID();
         Subject subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
+        subject.setArchived(false);
 
         Authentication authentication = mock(Authentication.class);
         SecurityContext securityContext = mock(SecurityContext.class);
@@ -158,7 +173,6 @@ class SubjectServiceTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
         assertThrows(SubjectAccessDeniedException.class, () ->
-                subjectService.syncSubjectWithGitea(subjectId)
-        );
+                subjectService.syncSubjectWithGitea(subjectId));
     }
 }

@@ -65,6 +65,7 @@ public class SubjectServiceDeleteSubjectTest {
         subject = new Subject();
         ReflectionTestUtils.setField(subject, "id", subjectId);
         ReflectionTestUtils.setField(subject, "version", 1);
+        subject.setArchived(false);
         subject.setSubjectAssignmentList(List.of(assignment));
         subject.setName("Programowanie Aplikacji Sieciowych");
 

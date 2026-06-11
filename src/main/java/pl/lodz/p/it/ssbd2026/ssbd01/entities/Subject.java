@@ -28,8 +28,8 @@ public class Subject extends AbstractEntity {
     @Column(name = "edition", nullable = false, length = SubjectConsts.SUBJECT_EDITION_LENGTH)
     private String edition;
 
-    @Column(name = "subject_description", length = SubjectConsts.SUBJECT_DESCRIPTION_LENGTH)
-    private String subjectDescription;
+//    @Column(name = "subject_description", length = SubjectConsts.SUBJECT_DESCRIPTION_LENGTH)
+//    private String subjectDescription;
 
     @Column(name = "gitea_url", nullable = false, length = SubjectConsts.GITEA_URL_LENGTH)
     private String giteaURL;
@@ -37,8 +37,11 @@ public class Subject extends AbstractEntity {
     @Column(name = "archived", nullable = false)
     private Boolean archived;
 
-    @Column(name = "aggregated_average_similarity")
-    private Double aggregatedAverageSimilarity;
+//    @Column(name = "aggregated_average_similarity")
+//    private Double aggregatedAverageSimilarity;
+
+    @OneToOne(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    private SubjectStatistics subjectStatistics;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<Report> reportList = new ArrayList<>();
@@ -51,5 +54,8 @@ public class Subject extends AbstractEntity {
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<SubjectAssignment> subjectAssignmentList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    private List<SubjectDescriptionTranslation> subjectDescriptionTranslationList = new ArrayList<>();
 
 }

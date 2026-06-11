@@ -15,7 +15,8 @@ import java.util.List;
 @Table(name = "report", indexes = {
         @Index(name = "idx_report_subject_id", columnList = "subject_id"),
         @Index(name = "idx_report_created_by", columnList = "created_by"),
-        @Index(name = "idx_report_modified_by", columnList = "modified_by")
+        @Index(name = "idx_report_modified_by", columnList = "modified_by"),
+        @Index(name = "idx_report_repository", columnList = "initiating_repository")
 })
 public class Report extends AbstractEntity {
 
@@ -27,6 +28,12 @@ public class Report extends AbstractEntity {
 
     @Column(name = "average_similarity", nullable = false)
     private Double averageSimilarity;
+
+    @Column(name = "scanned_repositories", nullable = false)
+    private Long scannedRepositories;
+
+    @Column(name = "is_student_report", nullable = false)
+    private Boolean isStudentReport;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -43,4 +50,8 @@ public class Report extends AbstractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", updatable = false)
     private Subject subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiating_repository")
+    private Repository initiatingRepository;
 }

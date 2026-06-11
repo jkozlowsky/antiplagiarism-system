@@ -9,5 +9,6 @@ public record StudentReportDetailsDTO(
         String tag,
         String subjectName,
         LocalDateTime createdAt,
-        List<FilteredComparisonDTO> matches
+        List<FilteredComparisonDTO> matches,
+        String raportLevel
 ) {}

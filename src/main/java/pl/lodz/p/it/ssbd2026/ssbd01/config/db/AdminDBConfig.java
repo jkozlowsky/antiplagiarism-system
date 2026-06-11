@@ -71,6 +71,7 @@ public class AdminDBConfig {
         return em;
     }
 
+    @Primary
     @Bean(name = "adminTransactionManager")
     public PlatformTransactionManager adminTransactionManager(
             @Qualifier("adminEntityManagerFactory") EntityManagerFactory adminEntityManagerFactory) {

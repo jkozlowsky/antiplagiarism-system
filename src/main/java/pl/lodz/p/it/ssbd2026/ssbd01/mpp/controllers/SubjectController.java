@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.subject.ChangeManagerRequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.vgroups.OnCreate;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectDescriptionTranslationService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectService;
 
 import java.security.Principal;
@@ -25,50 +28,72 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @MethodCallLogged
 @RestController
-public class SubjectController  {
+@ApiSecuredResponses
+public class SubjectController {
     private final SubjectService subjectService;
+    private final SubjectDescriptionTranslationService subjectDescriptionTranslationService;
+
+    @Operation(summary = "Pobierz listę wszystkich przedmiotów (Admin)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
+    })
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
+        return ResponseEntity.ok(subjectService.getAllSubjects());
+    }
 
     @Operation(summary = "Synchronizuj z Gitea (MPP.1)", description = "Pobiera najnowszą listę repozytoriów z przypisanej organizacji na Gitea, pobiera ich współtwórców i aktualizuje stan w bazie danych.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Pomyślnie zsynchronizowano przedmioty z platformą Gitea"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "500", description = "Błąd komunikacji z zewnętrznym API Gitea")
     })
     @PostMapping("/{subjectId}/sync")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public void syncSubjectWithGitea(@PathVariable UUID subjectId) {
         subjectService.syncSubjectWithGitea(subjectId);
     }
 
-    @Operation(summary = "Pobierz listę przedmiotów", description = "Zwraca listę wszystkich przedmiotów, do których zalogowany użytkownik ma dostęp.")
+    @Operation(summary = "Pobierz listę przedmiotów (Nauczyciel)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
     })
     @GetMapping
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public ResponseEntity<List<SubjectDTO>> getAllSubjects() {
-        return ResponseEntity.ok(subjectService.getAllSubjects());
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public ResponseEntity<List<SubjectDTO>> getTeacherSubjects() {
+        return ResponseEntity.ok(subjectService.getTeacherSubjects());
+    }
+
+    @Operation(summary = "Pobierz listę przedmiotów (Student)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę przedmiotów")
+    })
+    @GetMapping("/student/list")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
+    public ResponseEntity<List<SubjectDTO>> getStudentSubjects() {
+        return ResponseEntity.ok(subjectService.getStudentSubjects());
     }
 
     @Operation(summary = "Pobierz przypisaną kadrę", description = "Zwraca listę wszystkich nauczycieli przypisanych do wskazanego przedmiotu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano listę nauczycieli"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/users")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER) or hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
     public ResponseEntity<List<TeacherAssignmentDTO>> getSubjectUsers(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectUsers(subjectId));
     }
 
-    @Operation(summary = "Pobierz szczegóły przedmiotu", description = "Zwraca dokładne dane wybranego przedmiotu wraz z wliczonymi uprawnieniami zalogowanego użytkownika.")
+    @Operation(summary = "Pobierz szczegóły przedmiotu", description = "Zwraca dokładne dane wybranego przedmiotu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public ResponseEntity<SubjectDTO> getSubjectDetails(@PathVariable UUID subjectId) {
         return ResponseEntity.ok(subjectService.getSubjectDetails(subjectId));
     }
@@ -80,7 +105,7 @@ public class SubjectController  {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pomyślnie pobrano szczegóły przedmiotu"),
             @ApiResponse(responseCode = "403", description = "Brak dostępu - student nie jest przypisany do tego przedmiotu"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono wskazanego przedmiotu")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @GetMapping("/{subjectId}/student")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
@@ -96,9 +121,13 @@ public class SubjectController  {
     @PostMapping("/manual")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createSubjectManual(@Validated(OnCreate.class) @RequestBody CreateSubjectManualDTO dto, Principal principal) {
+    public void createSubjectManual(
+            @Validated(OnCreate.class) @RequestBody CreateSubjectManualDTO dto,
+            Principal principal,
+            @RequestHeader("Accept-Language") String originalLanguage
+    ) {
         String userLogin = principal.getName();
-        subjectService.createSubjectManual(dto, userLogin);
+        subjectService.createSubjectManual(dto, userLogin, originalLanguage);
     }
 
     @Operation(summary = "Utwórz nowy przedmiot (szablon) (MPP.7)", description = "Tworzy nowy przedmiot wykorzystując szablon reguł i przypisuje do niego aktualnie zalogowanego prowadzącego.")
@@ -109,31 +138,36 @@ public class SubjectController  {
     @PostMapping("/template")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createSubjectFromTemplate(@Validated(OnCreate.class) @RequestBody CreateSubjectTemplateDTO dto, Principal principal) {
+    public void createSubjectFromTemplate(
+            @Validated(OnCreate.class) @RequestBody CreateSubjectTemplateDTO dto,
+            Principal principal,
+            @RequestHeader("Accept-Language") String originalLanguage
+    ) {
         String userLogin = principal.getName();
-        subjectService.createSubjectFromTemplate(dto, userLogin);
+        subjectService.createSubjectFromTemplate(dto, userLogin, originalLanguage);
     }
 
     @Operation(summary = "Aktualizuj przedmiot (MPP.8)", description = "Aktualizuje podstawowe dane przedmiotu, zasady oraz przypisanych menedżerów.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie zaktualizowany"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej - dane uległy zmianie w międzyczasie")
     })
     @PutMapping("/{subjectId}")
-    @PreAuthorize("hasAnyAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER, T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public ResponseEntity<Void> updateSubject( @PathVariable UUID subjectId,
-                                               @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
-                                               @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto)
-    {
-        subjectService.updateSubject(subjectId, dto, ifMatch);
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public ResponseEntity<Void> updateSubject(@PathVariable UUID subjectId,
+                                              @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch,
+                                              @RequestBody @jakarta.validation.Valid UpdateSubjectDTO dto,
+                                              @RequestHeader("Accept-Language") String originalLanguage
+    ) {
+        subjectService.updateSubject(subjectId, dto, ifMatch, originalLanguage);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Usuń przedmiot (MPP.9)", description = "Trwale usuwa przedmiot. Opcjonalnie usuwa również powiązaną organizację na serwerze Gitea.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Przedmiot został pomyślnie usunięty"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu"))),
             @ApiResponse(responseCode = "409", description = "Dane uległy zmianie (Błąd blokady optymistycznej) - odśwież widok")
     })
     @DeleteMapping("/{subjectId}")
@@ -157,12 +191,41 @@ public class SubjectController  {
     @Operation(summary = "Zmień kierownika przedmiotu", description = "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Kierownik przedmiotu został pomyślnie zmieniony"),
-            @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu lub wskazanego nauczyciela")
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu lub nauczyciela", content = @Content(mediaType = "text/plain", examples =@ExampleObject("Nie znaleziono podanego przedmiotu")))
     })
     @PatchMapping("/{subjectId}/manager")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_ADMIN)")
-    public void changeSubjectManager(@PathVariable UUID subjectId, @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
-        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin());
+    public void changeSubjectManager(
+            @PathVariable UUID subjectId,
+            @RequestHeader("If-Match") String versionHash,
+            @Validated(OnCreate.class) @RequestBody ChangeManagerRequestDTO dto) {
+        subjectService.changeSubjectManager(subjectId, dto.newManagerLogin(), versionHash);
+    }
+
+    @GetMapping("/{subjectId}/translate")
+    public TranslatedSubjectDescriptionDTO translateSubjectDescription(
+            @PathVariable UUID subjectId,
+            @RequestHeader("Accept-Language") String language) {
+        return new TranslatedSubjectDescriptionDTO(
+                subjectDescriptionTranslationService.translateSubjectDescription(subjectId, language)
+        );
+    }
+
+    @Operation(summary = "Zmień stan archiwizacji przedmiotu (MPP.X)", description = "Zmienia flagę archiwizacji przedmiotu (archiwizuje lub przywraca). Zablokowany przedmiot nie pozwala na modyfikacje ani skanowanie.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Stan archiwizacji został pomyślnie zmieniony"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono podanego przedmiotu", content = @Content(mediaType = "text/plain", examples = @ExampleObject("Nie znaleziono podanego przedmiotu"))),
+            @ApiResponse(responseCode = "409", description = "Błąd blokady optymistycznej - dane uległy zmianie w międzyczasie")
+    })
+
+    @PatchMapping("/{subjectId}/archive")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public ResponseEntity<Void> toggleArchiveSubject(
+            @PathVariable UUID subjectId,
+            @RequestHeader(org.springframework.http.HttpHeaders.IF_MATCH) String ifMatch) {
+
+        subjectService.toggleArchiveSubject(subjectId, ifMatch);
+        return ResponseEntity.noContent().build();
     }
 }

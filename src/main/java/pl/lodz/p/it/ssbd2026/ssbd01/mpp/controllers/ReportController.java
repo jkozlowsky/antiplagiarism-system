@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ReportMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @MethodCallLogged
 @RestController
+@ApiSecuredResponses
 public class ReportController {
 
     private final ReportService reportService;
@@ -63,7 +65,7 @@ public class ReportController {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public Page<ReportDTO> getAllReportsForTeacher(Principal principal, @ParameterObject Pageable pageable) {
         return reportService.getAllReportsForTeacher(principal.getName(), pageable)
-                .map(reportMapper::toDto);
+                .map(reportMapper::projectionToDto);
     }
 
     @Operation(summary = "Pobierz moje raporty", description = "Zwraca listę raportów do których student ma wgląd w oparciu o politykę prywatności.")

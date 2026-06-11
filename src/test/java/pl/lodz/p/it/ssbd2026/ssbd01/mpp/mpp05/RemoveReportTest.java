@@ -1,14 +1,18 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mpp.mpp05;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.ReportsRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.SubjectRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.SubjectStatisticsService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,16 +34,26 @@ class RemoveReportTest {
     @Mock
     private SubjectRepository subjectRepository;
 
+    @Mock
+    private SubjectStatisticsService subjectStatisticsService;
+
     @InjectMocks
     private ReportService reportService;
 
     @Test
     void deleteReport_Success_WhenFileExists() {
         UUID reportId = UUID.randomUUID();
+
+        Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/timestamp.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.deleteIfExists(any(Path.class))).thenReturn(true);
@@ -48,16 +62,24 @@ class RemoveReportTest {
 
             mockedFiles.verify(() -> Files.deleteIfExists(eq(Path.of(report.getPathToReport()))));
             verify(reportsRepository).delete(report);
+            verify(subjectStatisticsService).recalculateAndUpdateStatistics(subject.getId());
         }
     }
 
     @Test
     void deleteReport_Success_WhenFileIsAlreadyMissingOnDisk() {
         UUID reportId = UUID.randomUUID();
+
+        Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/missing_file.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(subjectRepository.findByReportId(reportId)).thenReturn(Optional.of(subject));
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.deleteIfExists(any(Path.class))).thenReturn(false);
@@ -65,14 +87,21 @@ class RemoveReportTest {
             assertDoesNotThrow(() -> reportService.deleteReport(reportId));
 
             verify(reportsRepository).delete(report);
+            verify(subjectStatisticsService).recalculateAndUpdateStatistics(subject.getId());
         }
     }
 
     @Test
     void deleteReport_ThrowsException_WhenIoFails() {
         UUID reportId = UUID.randomUUID();
+
+        Subject subject = new Subject();
+        ReflectionTestUtils.setField(subject, "id", UUID.randomUUID());
+        subject.setArchived(false);
+
         Report report = new Report();
         report.setPathToReport("reports/TestOrg/v1/locked_file.jplag");
+        report.setSubject(subject);
 
         when(reportsRepository.findById(reportId)).thenReturn(Optional.of(report));
 
@@ -86,7 +115,8 @@ class RemoveReportTest {
             assertTrue(exception.getMessage().contains("Could not delete the report file"));
 
             verify(reportsRepository, never()).delete(any());
+            verify(subjectRepository, never()).findByReportId(any());
+            verify(subjectStatisticsService, never()).recalculateAndUpdateStatistics(any());
         }
     }
-
 }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.ScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
 @MethodCallLogged
+@ApiSecuredResponses
 public class ScheduleController  {
     private final ScheduleService scheduleService;
     private final ScheduleMapper scheduleMapper;
@@ -39,7 +41,7 @@ public class ScheduleController  {
             @ApiResponse(responseCode = "403", description = "Użytkownik nie ma uprawnień do tego przedmiotu (nieodpowiednia rola lub brak przypisania do przedmiotu)")
     })
     public List<ScheduleDTO> getSchedules(@PathVariable UUID subjectId) {
-        return scheduleMapper.toScheduleDTOList(scheduleService.getSchedules(subjectId));
+        return scheduleService.getSchedules(subjectId);
     }
 
 
@@ -52,7 +54,7 @@ public class ScheduleController  {
             @ApiResponse(responseCode = "404", description = "Nie znaleziono przedmiotu"),
     })
     public ScheduleDTO createSchedule(@PathVariable UUID subjectId, @RequestBody ScheduleDTO scheduleDto, Principal principal) {
-        return scheduleMapper.toScheduleDTO(scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName()));
+        return scheduleService.createSchedule(subjectId, scheduleMapper.toSchedule(scheduleDto), principal.getName());
     }
 
 

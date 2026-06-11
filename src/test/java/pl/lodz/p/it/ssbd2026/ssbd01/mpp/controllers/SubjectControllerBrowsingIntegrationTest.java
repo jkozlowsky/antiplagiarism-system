@@ -86,7 +86,7 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @DisplayName("POS01: Admin pobiera listę wszystkich przedmiotów")
     public void POS01_AdminShouldGetAllSubjects() throws JsonProcessingException {
         String response = requestFunctions.sendGetRequest(
-                HttpStatus.OK.value(), "/api/subjects", adminHeaders);
+                HttpStatus.OK.value(), "/api/subjects/all", adminHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
 
@@ -110,7 +110,7 @@ public class SubjectControllerBrowsingIntegrationTest extends BaseTestSetup {
     @DisplayName("POS03: Student pobiera listę swoich przedmiotów")
     public void POS03_StudentShouldBeAbleToHitEndpoint() throws JsonProcessingException {
         String response = requestFunctions.sendGetRequest(
-                HttpStatus.OK.value(), "/api/subjects", studentHeaders);
+                HttpStatus.OK.value(), "/api/subjects/student/list", studentHeaders);
 
         List<SubjectDTO> subjects = Arrays.asList(objectMapper.readValue(response, SubjectDTO[].class));
         assertNotNull(subjects);

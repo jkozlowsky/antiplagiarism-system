@@ -58,7 +58,7 @@ public class UpdateRulePresetTest extends BaseTestSetup {
 
     private UUID testRuleId;
     private Integer testRuleVersion;
-    private final String targetRaportLevelName = "FULL_VIEW";
+    private final String targetRaportLevelName = "ONLY_PERCENTAGES";
 
     @BeforeEach
     public void setupDataAndAuth() {
@@ -111,13 +111,16 @@ public class UpdateRulePresetTest extends BaseTestSetup {
         );
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(mppTransactionManager);
-        transactionTemplate.execute(status -> {
+        transactionTemplate.executeWithoutResult(status -> {
+
+            ReportLevelDict expectedLevel = raportLevelRepository.findByName(targetRaportLevelName).orElseThrow();
             RulePreset updatedRule = ruleRepository.findById(testRuleId).orElseThrow();
+
             assertEquals(20, updatedRule.getStudentTicketCount());
             assertEquals(50, updatedRule.getMinimumTokensMatch());
             assertTrue(updatedRule.getEnableNormalization());
-            assertEquals(targetRaportLevelName, updatedRule.getRaportLevel().getName());
-            return null;
+
+            assertEquals(expectedLevel.getId(), updatedRule.getRaportLevel().getId());
         });
     }
 

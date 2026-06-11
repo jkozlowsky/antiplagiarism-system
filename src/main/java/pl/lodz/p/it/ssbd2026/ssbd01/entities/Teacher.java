@@ -5,11 +5,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.javers.core.metamodel.annotation.ShallowReference;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.SubjectAssignment;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ShallowReference
 @Entity
 @Getter
 @Setter

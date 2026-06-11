@@ -3,6 +3,6 @@ import java.util.List;
 
 public record RepositoryWithStudentDTO(
         String repositoryName,
-        String ticketCount,
+        Integer ticketCount,
         List<StudentDTO> students
 ) {}
