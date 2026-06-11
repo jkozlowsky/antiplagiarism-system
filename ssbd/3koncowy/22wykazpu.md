@@ -3312,6 +3312,217 @@ Widoki użytkownika.
 
 Rysunek 22.2.13.1. Interfejs graficzny użytkownika przedstawiający widok komunikatu w celu potwierdzenia usunięcia szablonu reguł.
 
+### MPP.14 Przeglądanie harmonogramów
+```json
+"/schedules/subject/{subjectId}": {
+      "get": {
+        "tags": [
+          "schedule-controller"
+        ],
+        "summary": "Pobierz harmonogramy dla przedmiotu",
+        "description": "Zwraca listę harmonogramów dla wybranego przedmiotu",
+        "operationId": "getSchedules",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista harmonogramów została pobrana pomyślnie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      },
+```
+Listing 22.2.14.1. Dokumentacja OpenApi dla metody GET `/schedules/subject/{subjectId}`.
+
+**Sekwencja wywołań:**
+1. ScheduleController.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ScheduleService.getSchedules(UUID) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika:**
+![22.2.14.1](3koncowy/img/22.2.14.1.png)
+Rysunek 22.2.14.1. Lista harmonogramów dla wybranego przedmiotu.
+
+### MPP.15 Tworzenie harmonogramu
+
+**Role upoważnione:** Teacher z odpowiednim poziomem dostępu w przedmiocie (OWNER lub EDITOR).
+
+```json
+"post": {
+        "tags": [
+          "schedule-controller"
+        ],
+        "summary": "Utwórz harmonogram wykonywania analizy porównawczej w ramach przedmiotu",
+        "description": "Zwraca ScheduleDTO z utworzonego obiektu",
+        "operationId": "createSchedule",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Poprawnie utworzono obiekt",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono przedmiotu",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.15.1. Dokumentacja OpenApi dla metody POST `/schedules/subject/{subjectId}`.
+
+**Sekwencja wywołań:**
+1. ScheduleController.createSchedule(UUID, ScheduleDTO, Principal) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ScheduleMapper.toSchedule(ScheduleDTO) (pl.lodz.p.it.ssbd2026.ssbd01.dto.converters)
+3. ScheduleService.createSchedule(UUID, Schedule, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika:**
+![22.2.15.1](3koncowy/img/22.2.15.1.png)
+Rysunek 22.2.15.1. Fragment interfejsu przedstawiającego listę harmonogramów w przedmiocie, zawierający przycisk 
+dodawania nowego harmonogramu.
+
+![22.2.15.2](3koncowy/img/22.2.15.2.png)
+Rysunek 22.2.15.2. Modal służący do tworzenia harmonogramu.
+
 ### MPP.18 Przeglądanie repozytoriów
 
 Role które mają dostęp: prowadzący, prowadzący dodatkowy.
@@ -3439,6 +3650,131 @@ Alternatywną formą prezentacji może być opis interfejsu aplikacji sieciowej 
 
 W takim przypadku opis może być zapisany w języku angielskim, o ile ten język został użyty w projekcie do tworzenia dokumentacji kodu źródłowego.
 
+### MPP.22 Wygeneruj raport według harmonogramu
+**Role uprawnione:** System
+
+Przypadek użycia realizowany jest w pełni w tle i nie posiada interfejsu REST.
+
+**Sekwencja wywołań:**
+1. ReportScheduler.schedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.scheduler)
+2. ReportService.generateReportBySchedule() (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+
+### MPP.24 Zmień kierownika przedmiotu
+**Role uprawnione:** Administrator
+
+```json
+"/subjects/{subjectId}/manager": {
+      "patch": {
+        "tags": [
+          "subject-controller"
+        ],
+        "summary": "Zmień kierownika przedmiotu",
+        "description": "Wyznacza nowego kierownika przedmiotu na podstawie jego loginu. Stary kierownik utraci swój poziom uprawnień i zostanie mu przypisane uprawnienie VIEWER.",
+        "operationId": "changeSubjectManager",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeManagerRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Kierownik przedmiotu został pomyślnie zmieniony"
+          },
+          "400": {
+            "description": "Błąd walidacji wejścia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji (nieprawidłowy token JWT)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unauthorized",
+                  "message": "Brak lub niepoprawny token autoryzacyjny."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Odmowa dostępu (brak roli)",
+            "content": {
+              "text/plain": {
+                "example": "No access: Access Denied"
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono podanego przedmiotu lub nauczyciela",
+            "content": {
+              "text/plain": {
+                "example": "Nie znaleziono podanego przedmiotu"
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "text/plain": {
+                "example": "Exception: Wystąpił nieoczekiwany błąd serwera"
+              }
+            }
+          },
+          "503": {
+            "description": "Niedostępność usługi bazy danych",
+            "content": {
+              "text/plain": {
+                "example": "Service is temporarily unavailable. Please try again later."
+              }
+            }
+          }
+        }
+      }
+    },
+```
+Listing 22.2.24.1. Dokumentacja OpenApi dla metody PATCH `/subjects/{subjectId}/manager`.
+
+**Sekwencja wywołań:**
+1. SubjectController.changeSubjectManager(UUID, String, ChangeManagerRequestDTO) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
+2. ChangeManagerRequestDTO.newManagerLogin() (pl.lodz.p.it.ssbd2026.ssbd01.dto.subject)
+3. SubjectService.changeSubjectManager(UUID, String, String) (pl.lodz.p.it.ssbd2026.ssbd01.mpp.services)
+
+**Fragmenty interfejsu użytkownika**
+![22.2.24.1](3koncowy/img/22.2.24.1.png)
+Rysunek 22.2.24.1. Panel pozwalający administratorowi na zmienianie kierownika przedmiotu.
+
+![22.2.24.2](3koncowy/img/22.2.24.2.png)
+Rysunek 22.2.24.2. Pomyślnie zmieniony kierownik przedmiotu.
 ### MOK.6 - Dołącz poziom dostępu do konta
 
 **Role uprawnione:** Administrator (`ADMIN`)
