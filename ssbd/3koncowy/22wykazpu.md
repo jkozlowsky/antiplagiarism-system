@@ -1241,6 +1241,8 @@ Rysunek 22.1.13.4. Interfejs graficzny użytkownika przedstawiający stronę edy
     }
 ```
 
+Listing 22.1.6.1. Dokumentacja OpenApi dla metody POST `/account/{id}/access-levels/{accessLevelName}/grant`.
+
 **Sekwencja wywołań:**
 1. AccountController.grantAccessLevel(UUID, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.controllers)
 2. AccountService.grantAccessLevel(UUID, String, String)  (pl.lodz.p.it.ssbd2026.ssbd01.mok.services)
@@ -1415,6 +1417,8 @@ TODO (rysunki):
       }
     }
 ```
+
+Listing 22.1.7.1. Dokumentacja OpenApi dla metody POST `/account/{id}/access-levels/{accessLevelName}/revoke`.
 
 **Sekwencja wywołań:**
 
@@ -1904,6 +1908,8 @@ Listing 22.1.9.1 Dokumentacja OpenApi dla metody `POST` dla metody kontrolera `c
       }
     }
 ```
+
+Listing 22.1.15.1. Dokumentacja OpenApi dla metody GET `/account`.
 
 **Sekwencja wywołań:**
 
@@ -2517,7 +2523,7 @@ Rysunek 22.2.5.3. Interfejs graficzny użytkownika przedstawiający stronę list
 Rysunek 22.2.5.4. Interfejs graficzny użytkownika przedstawiający stronę listy raportów z komunikatem o błędzie usuwania raportu.
 
 
-### MOK.6 - Pobierz liste przedmiotów
+### MPP.6 - Pobierz liste przedmiotów
 
 **Role uprawnione:** Administor, Powadzacy, Student
 
@@ -3417,6 +3423,8 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
     }
 ```
 
+Listing 22.2.10.1. Dokumentacja OpenApi dla metody GET `/rules/templates`.
+
 **Sekwencja wywołań:**
 
 1. RuleController.getRulePresetsTemplates()  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
@@ -3521,6 +3529,8 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
     }
   }
 ```
+
+Listing 22.2.11.1. Dokumentacja OpenApi dla metody POST `/rules/templates`.
 
 **Sekwencja wywołań:**
 
@@ -3667,6 +3677,8 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
     }
 ```
 
+Listing 22.2.12.1. Dokumentacja OpenApi dla metody PUT `/rules/{ruleId}`.
+
 **Sekwencja wywołań:**
 
 1. RuleController.updateRulePreset(UUID, String, UpdateRulePresetDTO)  (pl.lodz.p.it.ssbd2026.ssbd01.mpp.controllers)
@@ -3706,7 +3718,7 @@ Listing 22.x.x.x Dokumentacja OpenApi dla metody PUT `/subjects/{subjectId}`.
 
 ### MPP.16 Edycja harmonogramu
 
-**Role uprawnione:** Prowadzący, Prowadzący dodatkowy.
+**Role uprawnione:** Nauczyciel (`TEACHER`)
 
 ```json
 "/schedules/{scheduleId}": {
@@ -3932,6 +3944,8 @@ Listing 22.2.16.2. Sekwencja wywołań dla updateSchedule.
         }
       }
 ```
+
+Listing 22.2.17.1. Dokumentacja OpenApi dla metody DELETE `/schedules`.
 
 **Sekwencja wywołań:**
 
