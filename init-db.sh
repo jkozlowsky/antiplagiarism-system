@@ -13,6 +13,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     ALTER SYSTEM SET wal_keep_size = '1GB';
     ALTER SYSTEM SET synchronous_commit = 'on';
     ALTER SYSTEM SET synchronous_standby_names = 'ANY 1 ("db-replica-1", "db-replica-2")';
+    ALTER SYSTEM SET log_statement = 'mod';
+    ALTER SYSTEM SET log_min_duration_statement = 0;
 EOSQL
 
 echo "host replication repuser 0.0.0.0/0 trust" >> "$PGDATA/pg_hba.conf"
