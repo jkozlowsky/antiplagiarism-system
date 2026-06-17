@@ -32,7 +32,8 @@ public interface ReportsRepository extends AbstractRepository<Report> {
             "JOIN r.repositoryList repo " +
             "JOIN repo.studentList s " +
             "WHERE s.account.login = :login " +
-            "AND r.subject.rulePreset.raportLevel.name != 'NOTHING'")
+            "AND r.subject.rulePreset.raportLevel.name != 'NOTHING'"+
+            "AND r.initiatingRepository = repo")
     List<Report> findVisibleReportsForStudent(@Param("login") String login);
 
     @EntityGraph(attributePaths = {"subject", "createdBy"})
