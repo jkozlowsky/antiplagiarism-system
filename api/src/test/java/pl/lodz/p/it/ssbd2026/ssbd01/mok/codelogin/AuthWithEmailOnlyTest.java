@@ -19,7 +19,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.LanguageDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AuthService;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailRestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.AuthResponseDTO;
 
 import java.time.LocalDateTime;
@@ -42,7 +42,7 @@ public class AuthWithEmailOnlyTest {
     @Mock
     private AuthenticationTokenValueGenerator tokenValueGenerator;
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
     @Mock

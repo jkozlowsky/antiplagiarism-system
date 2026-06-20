@@ -47,7 +47,7 @@ public class AccountServiceRevokeAccessTest {
     private PostCommitTransactionManager postCommitTransactionManager;
 
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @InjectMocks
     private AccountService accountService;

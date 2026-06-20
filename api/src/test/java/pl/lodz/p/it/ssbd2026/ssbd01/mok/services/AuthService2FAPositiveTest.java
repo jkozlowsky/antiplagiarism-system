@@ -39,7 +39,7 @@ class AuthService2FAPositiveTest {
     @Mock
     private JwtAuthService jwtAuthService;
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
     @Mock

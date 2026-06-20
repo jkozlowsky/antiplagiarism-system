@@ -43,7 +43,7 @@ public class AccountServiceChangeOwnEmailTest {
     private OneTimeTokenRepository tokenRepository;
 
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @Mock
     private PasswordEncoder passwordEncoder;

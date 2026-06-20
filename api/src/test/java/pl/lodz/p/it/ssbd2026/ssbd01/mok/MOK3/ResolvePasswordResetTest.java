@@ -15,7 +15,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailRestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.PasswordResetService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
@@ -38,7 +38,7 @@ class ResolvePasswordResetTest {
     private AccountRepository accountRepository;
 
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @Mock
     private PasswordEncoder passwordEncoder;

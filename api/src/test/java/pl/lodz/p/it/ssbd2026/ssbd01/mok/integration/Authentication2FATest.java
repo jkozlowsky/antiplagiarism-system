@@ -23,7 +23,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.Verify2FARequestDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccessLevelDictRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailRestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.CommonFunctions;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
@@ -52,7 +52,7 @@ public class Authentication2FATest extends BaseTestSetup {
     private PasswordEncoder passwordEncoder;
 
     @MockitoBean
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @Autowired
     private RequestFunctions requestFunctions;

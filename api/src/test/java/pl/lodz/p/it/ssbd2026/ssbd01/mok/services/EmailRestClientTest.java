@@ -1,14 +1,13 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.mok.services;
 
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.clients.EmailServiceClient;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.email_messages.ActivationEmailRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -17,28 +16,29 @@ import static org.mockito.Mockito.verify;
 public class EmailRestClientTest {
 
     @Mock
-    private JavaMailSender javaMailSender;
+    private EmailServiceClient emailServiceClient;
 
     @InjectMocks
     private EmailRestClient emailRestClient;
 
     @Test
-    void shouldSendMailWithCorrectParameters(){
+    void shouldCallFeignClientWithCorrectParameters() {
 
-        String toAddress = "test@example.com";
-        String subject = "Test Subject";
-        String content = "Szpat";
+        String toAddress = "test_user@example.com";
+        String token = "super-secret-token";
+        String langCode = "pl";
 
-        emailRestClient.sendEmail(toAddress, subject, content);
 
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender).send(messageCaptor.capture());
+        emailRestClient.sendActivationEmail(toAddress, token, langCode);
 
-        SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-        assertEquals(toAddress, sentMessage.getTo()[0]);
-        assertEquals(subject, sentMessage.getSubject());
-        assertEquals(content, sentMessage.getText());
+        ArgumentCaptor<ActivationEmailRequest> requestCaptor = ArgumentCaptor.forClass(ActivationEmailRequest.class);
+        verify(emailServiceClient).sendActivationEmail(requestCaptor.capture());
 
+        ActivationEmailRequest sentRequest = requestCaptor.getValue();
+
+        assertEquals(toAddress, sentRequest.toAddress());
+        assertEquals(token, sentRequest.token());
+        assertEquals(langCode, sentRequest.langCode());
     }
 }

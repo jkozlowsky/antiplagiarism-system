@@ -30,7 +30,7 @@ public class AccountServiceBlockAccountTest {
     private AccountRepository accountRepository;
 
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @Mock
     private VersionHashService versionHashService;

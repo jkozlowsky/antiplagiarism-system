@@ -13,7 +13,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.LanguageDict;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailService;
+import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailRestClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.config.BaseTestSetup;
 import pl.lodz.p.it.ssbd2026.ssbd01.utils.functions.RequestFunctions;
@@ -29,7 +29,7 @@ public class NEG01_unblockUserAccount extends BaseTestSetup {
     private AccountRepository accountRepository;
 
     @MockitoBean
-    private EmailService emailService;
+    private EmailRestClient emailService;
 
     @Autowired
     private VersionHashService versionHashService;

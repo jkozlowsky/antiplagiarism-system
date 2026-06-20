@@ -33,7 +33,7 @@ class AuthService2FANegativeTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private EmailService emailService;
+    private EmailRestClient emailService;
     @Mock
     private PostCommitTransactionManager postCommitTransactionManager;
     @Mock
