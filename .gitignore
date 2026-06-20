@@ -1,60 +1,39 @@
-# Compiled class file
+### MAVEN & JAVA ###
+target/
+**/target/
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
-*.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs
-hs_err_pid*
-
-# Maven
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
+*.log
 .mvn/wrapper/maven-wrapper.jar
 
-# IntelliJ IDEA
-.idea/
-*.iml
-*.iws
-
-# Eclipse
-.classpath
-.project
-.settings/
-bin/
-
+### DOCKER & SECURITY (KRYTYCZNE) ###
 .env
 secrets/
 
-*.http
-.DS_Store
-
+### WOLUMENY APLIKACJI I DOCKERA ###
 repos/
 reports/
+logs/
+db_primary_data/
+db_replica_1_data/
+db_replica_2_data/
 
-# Gitea
+### WOLUMENY GITEA ###
 gitea-data/
 gitea-config/
 gitea-postgresql/
+gitea-local/
+gitea_db_data_local/
+
+### INTELLIJ IDEA & VS CODE ###
+.idea/
+*.iml
+*.iws
+*.ipr
+*.http
+.vscode/
+
+### SYSTEM ###
+.DS_Store

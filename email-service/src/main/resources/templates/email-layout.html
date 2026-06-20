@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="background-color: #f9f9f9; padding: 20px;">
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
+
+    <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #3498db;">
+        <h2 style="color: #2c3e50; margin: 0;" th:text="${subject}">Tytuł domyślny</h2>
+    </div>
+
+    <div style="font-size: 16px; line-height: 1.6; color: #444444; padding: 20px 0;" th:utext="${content}">
+        Treść domyślna...
+    </div>
+
+    <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e0e0e0; text-align: center;">
+        <p style="font-size: 12px; color: #888888; margin: 0;">Ta wiadomość została wygenerowana automatycznie.</p>
+        <p style="font-size: 12px; color: #888888; margin: 0;">System SSBD01 &copy; 2026</p>
+    </div>
+
+</div>
+</body>
+</html>
