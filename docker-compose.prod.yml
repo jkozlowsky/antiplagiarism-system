@@ -54,13 +54,22 @@ services:
       - proxy-backend
     depends_on:
       - vault
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8888/api/default || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   eureka-server:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api/eureka-server:latest
     networks:
       - proxy-backend
+#    depends_on:
+#      - config-server
     depends_on:
-      - config-server
+      config-server:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f -s http://localhost:8761/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 15s
@@ -78,7 +87,7 @@ services:
       eureka-server:
         condition: service_healthy
       config-server:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
@@ -117,6 +126,8 @@ services:
       - proxy-backend
       - backend-db
     depends_on:
+      config-server:
+        condition: service_healthy
       pgpool:
         condition: service_started
       eureka-server:

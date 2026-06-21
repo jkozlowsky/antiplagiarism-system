@@ -178,7 +178,7 @@ services:
       - backend-db
     depends_on:
       pgpool:
-        condition: service_started
+        condition: service_healthy
       config-server:
         condition: service_healthy
       eureka-server:
