@@ -12,22 +12,46 @@ public abstract class TestContainersSetupInit {
 
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-    private static String readSecret(String filePath) {
+//    private static String readSecret(String filePath) {
+//        try {
+//            return Files.readString(Paths.get(filePath)).trim();
+//        } catch (Exception e) {
+//            throw new RuntimeException("Nie można odczytać pliku z hasłem: " + filePath, e);
+//        }
+//    }
+
+    private static String getEnv(String key, String defaultValue) {
+        String value = dotenv.get(key);
+        return value != null ? value : defaultValue;
+    }
+
+    // BEZPIECZNE POBIERANIE SEKRETÓW (DLA PIPELINE CI)
+    private static String readSecret(String filePath, String defaultValue) {
         try {
             return Files.readString(Paths.get(filePath)).trim();
         } catch (Exception e) {
-            throw new RuntimeException("Nie można odczytać pliku z hasłem: " + filePath, e);
+            System.out.println("Ostrzeżenie: Nie można odczytać pliku " + filePath + ". Użyto domyślnego hasła testowego.");
+            return defaultValue;
         }
     }
 
-    private static final String PG_DB = dotenv.get("PG_DATABASE");
-    private static final String PG_USER = dotenv.get("PG_USERNAME");
-    private static final String MOK_USER = dotenv.get("MOK_USER");
-    private static final String MPP_USER = dotenv.get("MPP_USER");
+//    private static final String PG_DB = dotenv.get("PG_DATABASE");
+//    private static final String PG_USER = dotenv.get("PG_USERNAME");
+//    private static final String MOK_USER = dotenv.get("MOK_USER");
+//    private static final String MPP_USER = dotenv.get("MPP_USER");
+//
+//    private static final String PG_PASS = readSecret("secrets/pg_password.txt");
+//    private static final String MOK_PASS = readSecret("secrets/mok_password.txt");
+//    private static final String MPP_PASS = readSecret("secrets/mpp_password.txt");
 
-    private static final String PG_PASS = readSecret("secrets/pg_password.txt");
-    private static final String MOK_PASS = readSecret("secrets/mok_password.txt");
-    private static final String MPP_PASS = readSecret("secrets/mpp_password.txt");
+    private static final String PG_DB = getEnv("PG_DATABASE", "ssbd01_test_db");
+    private static final String PG_USER = getEnv("PG_USERNAME", "admin");
+    private static final String MOK_USER = getEnv("MOK_USER", "mok");
+    private static final String MPP_USER = getEnv("MPP_USER", "mpp");
+
+    private static final String PG_PASS = readSecret("secrets/pg_password.txt", "dummy");
+    private static final String MOK_PASS = readSecret("secrets/mok_password.txt", "dummy");
+    private static final String MPP_PASS = readSecret("secrets/mpp_password.txt", "dummy");
 
     public static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:18.3")
             .withDatabaseName(PG_DB)
