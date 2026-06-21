@@ -13,25 +13,26 @@ test-backend:
     DOCKER_HOST: "tcp://docker:2375"
     TESTCONTAINERS_HOST_OVERRIDE: "docker"
   script:
-    - echo "MAIL_HOST=localhost" >> .env
-    - echo "MAIL_PORT=1025" >> .env
-    - echo "MAIL_USERNAME=test" >> .env
-    - echo "PG_DATABASE=$CI_PG_DATABASE" >> .env
-    - echo "PG_USERNAME=$CI_PG_USERNAME" >> .env
-    - echo "MOK_USER=$CI_MOK_USER" >> .env
-    - echo "MPP_USER=$CI_MPP_USER" >> .env
-    - mkdir -p secrets
+    - mkdir -p secrets api/secrets
     - echo "$CI_PG_PASSWORD" > secrets/pg_password.txt
     - echo "$CI_MOK_PASSWORD" > secrets/mok_password.txt
     - echo "$CI_MPP_PASSWORD" > secrets/mpp_password.txt
     - echo "test_mail_password" > secrets/mail_password.txt
     - echo "dummy_test_token" > secrets/gitea_token.txt
-    - cp -r secrets api/secrets
+    - cp -r secrets/* api/secrets/
+
+    - export PG_DATABASE=$CI_PG_DATABASE
+    - export PG_USERNAME=$CI_PG_USERNAME
+    - export ADMIN_USER=$CI_PG_USERNAME
+    - export MOK_USER=$CI_MOK_USER
+    - export MPP_USER=$CI_MPP_USER
+
     - export GITEA_URL=http://localhost:3000
     - export MAIL_HOST=localhost
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test
     - export MAIL_PASSWORD=test
+
     - mvn test -e -DtrimStackTrace=false
   artifacts:
     when: always
