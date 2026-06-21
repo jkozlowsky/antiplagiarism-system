@@ -7,8 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.EmailRestClient;
@@ -53,6 +52,13 @@ public class AccountScheduler {
                 .forEach(acc -> {
                     String lang = acc.getLanguageVersion().getLanguage();
                     emailRestClient.sendAccountDeletedEmail(acc.getEmail(), lang);
+                    for (AccessLevel accessLevel : acc.getAccessLevelList()) {
+                        if (accessLevel instanceof Student student) {
+                            for (Repository repo : student.getRepositories()) {
+                                repo.getStudentList().remove(student);
+                            }
+                        }
+                    }
                     accountRepository.delete(acc);
                 });
     }
