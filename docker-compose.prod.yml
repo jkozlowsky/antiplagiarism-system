@@ -83,6 +83,22 @@ services:
       interval: 20s
       start_period: 30s
 
+  mcp-server:
+    image: registry.gitlab.com/iitpl/ssbd/2026/01/api/mcp-server:latest
+    environment:
+      - TZ=Europe/Warsaw
+    networks:
+      - proxy-backend
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8083/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 30s
+
   backend:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
     environment:
