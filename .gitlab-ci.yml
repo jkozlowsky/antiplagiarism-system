@@ -30,7 +30,7 @@ test-backend:
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test
     - export MAIL_PASSWORD=test
-    - mvn test
+    - mvn test -e -DtrimStackTrace=false
 
 build-backend:
   stage: build
