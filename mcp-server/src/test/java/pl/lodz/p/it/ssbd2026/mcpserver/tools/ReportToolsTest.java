@@ -14,6 +14,7 @@ import pl.lodz.p.it.ssbd2026.mcpserver.dto.ComparisonDTO;
 import pl.lodz.p.it.ssbd2026.mcpserver.dto.ReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.mcpserver.dto.ReportSummaryDTO;
 import pl.lodz.p.it.ssbd2026.mcpserver.dto.RestPage;
+import pl.lodz.p.it.ssbd2026.mcpserver.service.GroqSummaryService;
 
 import java.time.LocalDateTime;
 import java.util.List;

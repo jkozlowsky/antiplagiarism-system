@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import pl.lodz.p.it.ssbd2026.mcpserver.client.ReportApiClient;
 import pl.lodz.p.it.ssbd2026.mcpserver.dto.ReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.mcpserver.dto.ReportSummaryDTO;
+import pl.lodz.p.it.ssbd2026.mcpserver.service.GroqSummaryService;
 
 import java.util.List;
 import java.util.UUID;
