@@ -1,4 +1,5 @@
-Feature: Uczelniany System Antyplagiatowy
+Feature: Block and unblock user accounts
+  Uczelniany System Antyplagiatowy -
   As a system administrator
   I want to block and unblock user accounts
   So that I can say that the system is working properly
