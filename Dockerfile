@@ -13,6 +13,6 @@ ARG MODULE_NAME
 
 COPY --from=builder /app/${MODULE_NAME}/target/*.jar app.jar
 
-EXPOSE 8081 8082 8761 8888
+EXPOSE 8081 8082 8083 8761 8888
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

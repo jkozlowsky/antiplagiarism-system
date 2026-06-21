@@ -60,6 +60,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - GITEA_TOKEN=${GITEA_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
     networks:
       - proxy-backend
     depends_on:
@@ -70,6 +71,7 @@ services:
       echo 'Ladowanie sekretow z pliku .env do Vaulta...';
       vault kv put secret/api pg_password=\"$$PG_PASSWORD\" mok_password=\"$$MOK_PASSWORD\" mpp_password=\"$$MPP_PASSWORD\" security.jwt.secret=\"$$JWT_SECRET\" gitea.token=\"$$GITEA_TOKEN\";
       vault kv put secret/email-service spring.mail.password=\"$$MAIL_PASSWORD\";
+      vault kv put secret/mcp-server groq.api.key=\"$$GROQ_API_KEY\";
       echo 'Sekrety zaladowane!';
       "
 
@@ -131,6 +133,27 @@ services:
         condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 30s
+
+  mcp-server:
+    build:
+      context: .
+      args:
+        MODULE_NAME: mcp-server
+    environment:
+      - TZ=Europe/Warsaw
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - proxy-backend
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8083/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
       start_period: 30s
 
