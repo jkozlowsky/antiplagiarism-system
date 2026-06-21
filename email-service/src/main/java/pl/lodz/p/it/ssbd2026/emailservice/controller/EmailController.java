@@ -79,8 +79,7 @@ public class EmailController {
 
     @PostMapping("/2fa")
     public void handle2FAuthEmail(@RequestBody TwoFactorAuthEmailRequest request) {
-        // POPRAWKA: Przekazujemy toAddress jako pierwsze (zgodnie z poprawką w EmailService)
-        emailService.send2FAuthEmail(request.toAddress(), request.auth2F(), request.langCode());
+        emailService.send2FAuthEmail(request.auth2F(), request.toAddress() ,request.langCode());
     }
 
     @PostMapping("/email-revert")
