@@ -30,17 +30,18 @@ services:
       retries: 3
 
   vault:
-    image: hashicorp/vault:2.0
+    image: hashicorp/vault:latest
     ports:
       - "8200:8200"
     environment:
-      - VAULT_LOCAL_CONFIG={"backend":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":1}},"ui":true}
+      - VAULT_LOCAL_CONFIG={"storage":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":1}},"ui":true}
     volumes:
       - vault_data:/vault/file
     cap_add:
       - IPC_LOCK
     networks:
       - proxy-backend
+    command: server
 
   config-server:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api/config-server:latest
