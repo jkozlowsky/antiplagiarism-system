@@ -31,7 +31,13 @@ test-backend:
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test
     - export MAIL_PASSWORD=test
-    - mvn test -e -DtrimStackTrace=false || (find . -path "*/target/surefire-reports/*.txt" -exec cat {} + && exit 1)
+    - mvn test -e -DtrimStackTrace=false
+  artifacts:
+    when: always
+    paths:
+      - api/target/surefire-reports/
+      - target/surefire-reports/
+    expire_in: 1 week
 
 build-backend:
   stage: build
