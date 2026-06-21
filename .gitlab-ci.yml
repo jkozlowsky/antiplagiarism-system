@@ -11,6 +11,7 @@ test-backend:
   variables:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
+    TESTCONTAINERS_HOST_OVERRIDE: "docker"
   script:
     - echo "MAIL_HOST=localhost" >> .env
     - echo "MAIL_PORT=1025" >> .env
@@ -30,7 +31,7 @@ test-backend:
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test
     - export MAIL_PASSWORD=test
-    - mvn test -e -DtrimStackTrace=false
+    - mvn test -e -DtrimStackTrace=false || (find . -path "*/target/surefire-reports/*.txt" -exec cat {} + && exit 1)
 
 build-backend:
   stage: build
