@@ -17,6 +17,7 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ReportDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.StudentReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherReportDetailsDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
+import pl.lodz.p.it.ssbd2026.ssbd01.mpp.clients.McpServerClient;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ReportService;
 
 import java.security.Principal;
@@ -32,6 +33,7 @@ public class ReportController {
 
     private final ReportService reportService;
     private final ReportMapper reportMapper;
+    private final McpServerClient mcpServerClient;
 
     @Operation(summary = "Wykonaj skanowanie", description = "Uruchom skanowanie repozytoriów za etykietą w przedmiocie")
     @ApiResponses({
@@ -104,6 +106,21 @@ public class ReportController {
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public TeacherReportDetailsDTO getReportDetails(@PathVariable UUID reportId, Principal principal) {
         return reportService.getTeacherReportDetails(reportId, principal.getName());
+    }
+
+    @Operation(summary = "Podsumowanie raportu (AI)", description = "Generuje podsumowanie raportu antyplagiatowego przy użyciu modelu AI (Groq) za pośrednictwem serwera MCP.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Podsumowanie wygenerowane pomyślnie"),
+            @ApiResponse(responseCode = "401", description = "Brak uwierzytelnienia"),
+            @ApiResponse(responseCode = "403", description = "Brak dostępu do raportu (nie przypisano prowadzącego do przedmiotu)"),
+            @ApiResponse(responseCode = "404", description = "Nie znaleziono raportu o podanym identyfikatorze"),
+            @ApiResponse(responseCode = "503", description = "Usługa podsumowań (AI) jest chwilowo niedostępna")
+    })
+    @GetMapping(value = "/{reportId}/summary", produces = "text/plain")
+    @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
+    public String getReportSummary(@PathVariable UUID reportId, Principal principal) {
+        TeacherReportDetailsDTO details = reportService.getTeacherReportDetails(reportId, principal.getName());
+        return mcpServerClient.summarizeReport(details);
     }
 
     @Operation(summary = "Usuń raport", description = "Usuwa raporty z bazy oraz pliki z maszyny")
