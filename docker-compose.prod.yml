@@ -34,7 +34,7 @@ services:
     ports:
       - "8200:8200"
     environment:
-      - VAULT_LOCAL_CONFIG={"storage":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":1}},"ui":true}
+      - VAULT_LOCAL_CONFIG={"disable_mlock":true,"storage":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":1}},"ui":true}
     volumes:
       - vault_data:/vault/file
     cap_add:
