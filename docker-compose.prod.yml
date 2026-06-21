@@ -29,35 +29,67 @@ services:
       timeout: 5s
       retries: 3
 
+  vault:
+    image: hashicorp/vault:2.0
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_LOCAL_CONFIG={"backend":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":1}},"ui":true}
+    volumes:
+      - vault_data:/vault/file
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - proxy-backend
+
+  config-server:
+    image: registry.gitlab.com/iitpl/ssbd/2026/01/config-server:latest
+    volumes:
+      - ./config-repo:/app/config-repo
+    environment:
+      - TZ=Europe/Warsaw
+      - SPRING_CLOUD_CONFIG_SERVER_VAULT_TOKEN=${VAULT_TOKEN}
+    networks:
+      - proxy-backend
+    depends_on:
+      - vault
+
+  eureka-server:
+    image: registry.gitlab.com/iitpl/ssbd/2026/01/eureka-server:latest
+    networks:
+      - proxy-backend
+    depends_on:
+      - config-server
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8761/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  email-service:
+    image: registry.gitlab.com/iitpl/ssbd/2026/01/email-service:latest
+    environment:
+      - TZ=Europe/Warsaw
+    networks:
+      - proxy-backend
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 30s
+
   backend:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
     environment:
-      - APP_FRONTEND_URL=https://team-1.proj-sum.it.p.lodz.pl
       - TZ=Europe/Warsaw
-      - DB_HOST=pgpool
-      - DB_PORT=5432
-      - DB_NAME=${PG_DATABASE}
-      - ADMIN_USER=${PG_USERNAME}
-      - MOK_USER=${MOK_USER}
-      - MPP_USER=${MPP_USER}
-      - MAIL_HOST=${MAIL_HOST}
-      - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
-      - MANAGEMENT_SERVER_PORT=8082
-      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,loggers
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GITEA_URL=http://gitea:3000
-      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_credentials
-    secrets:
-      - pg_password
-      - mok_password
-      - mpp_password
-      - mail_password
-      - jwt_secret
-      - frontend_url
-      - gitea_token
-      - google_credentials
+      - GITEA_URL=${GITEA_URL}
     volumes:
       - ../logs:/app/logs
       - ../repos:/app/repos
@@ -67,9 +99,11 @@ services:
       - backend-db
     depends_on:
       pgpool:
+        condition: service_started
+      eureka-server:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8081/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
       start_period: 40s
 
@@ -104,7 +138,6 @@ services:
       - pg_password
       - mok_password
       - mpp_password
-      - jwt_secret
     volumes:
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
       - db_primary_data:/var/lib/postgresql/data
@@ -245,6 +278,7 @@ networks:
     driver: bridge
 
 volumes:
+  vault_data:
   db_primary_data:
   db_replica_1_data:
   db_replica_2_data:
@@ -257,17 +291,5 @@ secrets:
     file: ./secrets/mok_password.txt
   mpp_password:
     file: ./secrets/mpp_password.txt
-  mail_password:
-    file: ./secrets/mail_password.txt
-  jwt_secret:
-    file: ./secrets/jwt_secret.txt
-  frontend_url:
-    file: ./secrets/frontend_url.txt
-  version_hash_secret:
-    file: ./secrets/version_hash_secret.txt
   gitea_db_password:
     file: ./secrets/gitea_db_password.txt
-  gitea_token:
-    file: ./secrets/gitea_token.txt
-  google_credentials:
-    file: ./secrets/google_credentials.json
