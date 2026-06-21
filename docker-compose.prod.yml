@@ -91,6 +91,8 @@ services:
       - APP_FRONTEND_URL=${APP_FRONTEND_URL}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GITEA_URL=${GITEA_URL}
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+      - MANAGEMENT_SERVER_PORT=8082
     volumes:
       - ../logs:/app/logs
       - ../repos:/app/repos
@@ -104,7 +106,7 @@ services:
       eureka-server:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f -s http://localhost:8081/actuator/health | grep -q 'UP' || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
       start_period: 40s
 
