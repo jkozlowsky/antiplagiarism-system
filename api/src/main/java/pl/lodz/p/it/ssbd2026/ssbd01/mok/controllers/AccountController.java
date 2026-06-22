@@ -178,7 +178,7 @@ public class AccountController {
     })
     @PostMapping("/register")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
+    public ResponseEntity<Void> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
         Account account = accountMapper.toEntity(dto);
         accountService.registerAccount(account);
         return ResponseEntity.accepted().build();
@@ -191,7 +191,7 @@ public class AccountController {
     })
     @PostMapping("/activate")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<?> activate(@RequestParam String token) {
+    public ResponseEntity<Void> activate(@RequestParam String token) {
         accountService.confirmActivation(token);
         return ResponseEntity.ok().build();
     }

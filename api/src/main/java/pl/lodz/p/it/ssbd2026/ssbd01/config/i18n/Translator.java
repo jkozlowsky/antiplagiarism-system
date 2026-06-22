@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 
 import java.util.Locale;
 
