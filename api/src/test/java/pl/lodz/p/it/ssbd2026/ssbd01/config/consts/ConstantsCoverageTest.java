@@ -29,4 +29,14 @@ public class ConstantsCoverageTest {
         assertNotNull(TagConsts.TAG_LENGTH);
         assertDoesNotThrow(TagConsts::new);
     }
+
+    @Test
+    void shouldCoverOneTimeTokenConsts() {
+        assertDoesNotThrow(OneTimeTokenConsts::new);
+    }
+
+    @Test
+    void shouldCoverReportConsts() {
+        assertDoesNotThrow(ReportConsts::new);
+    }
 }
