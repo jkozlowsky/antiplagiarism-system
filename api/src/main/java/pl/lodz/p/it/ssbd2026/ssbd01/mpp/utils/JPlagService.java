@@ -7,14 +7,12 @@ import de.jplag.java.JavaLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.JplagScanException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Set;
 
 @Slf4j

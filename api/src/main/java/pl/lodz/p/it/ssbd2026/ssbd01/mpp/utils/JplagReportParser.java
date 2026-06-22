@@ -9,6 +9,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherMatchedFileDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -19,6 +21,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JplagReportParser {
+
+    private static final int MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
 
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -119,7 +124,6 @@ public class JplagReportParser {
             return result;
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ReportFileException(e);
         }
     }
@@ -130,28 +134,53 @@ public class JplagReportParser {
         String normalizedFileName = fileName.replace("\\", "/");
         if (normalizedFileName.startsWith("/")) normalizedFileName = normalizedFileName.substring(1);
 
+        if (normalizedFileName.contains("..")) {
+            return "// Odmowa dostępu: Niedozwolona ścieżka pliku (Zip Slip protection).";
+        }
+
         if (normalizedFileName.startsWith(submission + "/")) {
             normalizedFileName = normalizedFileName.substring(submission.length() + 1);
         }
+
 
         String exactPath = "files/" + submission + "/" + normalizedFileName;
         ZipEntry entry = zipFile.getEntry(exactPath);
         if (entry != null) {
             try (InputStream is = zipFile.getInputStream(entry)) {
-                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                return readStreamSafely(is);
             } catch (Exception ignored) {}
         }
 
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
             String eName = e.getName();
+            if (eName.contains("..")) continue;
             if (!e.isDirectory() && eName.startsWith("files/" + submission + "/") && eName.endsWith(normalizedFileName)) {
                 try (InputStream is = zipFile.getInputStream(e)) {
-                    return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    return readStreamSafely(is);
                 } catch (Exception ignored) {}
             }
         }
         return "// Nie odczytano kodu z archiwum.\n// Próbowano znaleźć: " + exactPath;
+    }
+
+
+    private static String readStreamSafely(InputStream is) throws IOException {
+        byte[] buffer = new byte[8192];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int totalBytesRead = 0;
+        int bytesRead;
+
+        while ((bytesRead = is.read(buffer)) != -1) {
+            totalBytesRead += bytesRead;
+
+            if (totalBytesRead > MAX_FILE_SIZE_BYTES) {
+                throw new IOException("Przekroczono limit rozmiaru pliku. (Zip Bomb protection)");
+            }
+            baos.write(buffer, 0, bytesRead);
+        }
+        return baos.toString(StandardCharsets.UTF_8);
     }
 }

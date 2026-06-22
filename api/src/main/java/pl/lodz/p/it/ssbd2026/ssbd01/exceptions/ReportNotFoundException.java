@@ -1,7 +1,6 @@
 package pl.lodz.p.it.ssbd2026.ssbd01.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 
 public class ReportNotFoundException extends AppBaseException {
 

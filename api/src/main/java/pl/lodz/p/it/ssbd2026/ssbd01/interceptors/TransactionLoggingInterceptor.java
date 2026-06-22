@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -27,8 +28,12 @@ public class TransactionLoggingInterceptor {
             return;
         }
 
-        final String transactionId = TransactionSynchronizationManager.getCurrentTransactionName() + ":" + Thread.currentThread().threadId()
-                + (null != RetrySynchronizationManager.getContext() ? " (retry # " + RetrySynchronizationManager.getContext().getRetryCount() + ")" : "");
+        RetryContext retryContext = RetrySynchronizationManager.getContext();
+        String retryInfo = (retryContext != null) ? " (retry # " + retryContext.getRetryCount() + ")" : "";
+
+        final String transactionId = TransactionSynchronizationManager.getCurrentTransactionName()
+                + ":" + Thread.currentThread().threadId()
+                + retryInfo;
 
         TransactionSynchronizationLogger synchronizationLogger = new TransactionSynchronizationLogger(transactionId);
         TransactionSynchronizationManager.registerSynchronization(synchronizationLogger);

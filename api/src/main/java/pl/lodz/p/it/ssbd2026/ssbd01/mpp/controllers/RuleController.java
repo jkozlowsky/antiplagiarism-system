@@ -13,13 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.CreateRulePresetDTO;
+import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.UpdateRulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.RuleService;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 

@@ -16,7 +16,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.projections.ReportListProjectionDTO;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Report;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Repository;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.RulePreset;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.Subject;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.NoTicketsLeftException;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ownReport.RepositoryNotFoundException;
@@ -38,6 +41,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -132,72 +136,13 @@ public class ReportService {
                 .toList();
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true, transactionManager = "mppTransactionManager")
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true, transactionManager = "mppTransactionManager")
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_STUDENT)")
     public StudentReportDetailsDTO getStudentReportDetails(UUID reportId, String login) {
         Report report = reportsRepository.findById(reportId)
                 .orElseThrow(ReportNotFoundException::new);
 
-        boolean hasAccess = report.getRepositoryList().stream()
-                .flatMap(repo -> repo.getStudentList().stream())
-                .anyMatch(student -> student.getAccount().getLogin().equals(login));
-
-        if (!hasAccess) {
-            throw new SubjectAccessDeniedException();
-        }
-
-        if (report.getSubject() == null || report.getSubject().getRulePreset() == null || report.getSubject().getRulePreset().getRaportLevel() == null) {
-            throw new SubjectAccessDeniedException();
-        }
-
-        String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
-
-        List<String> studentRepoNames = report.getRepositoryList().stream()
-                .filter(repo -> repo.getStudentList().stream()
-                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
-                .map(Repository::getRepositoryName)
-                .toList();
-
-        List<FilteredComparisonDTO> filteredMatches = new ArrayList<>();
-
-        if (!"NOTHING".equals(raportLevel)) {
-            List<TeacherComparisonDTO> allComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
-
-            filteredMatches = allComparisons.stream()
-                    .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
-                    .map(c -> {
-                        Double studentSimilarity = null;
-                        Double otherSimilarity = null;
-                        Double avgSim = null;
-
-                        boolean isFirst = studentRepoNames.contains(c.firstSubmission());
-
-                        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
-                            studentSimilarity = c.maxSimilarity();
-                        } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
-                            studentSimilarity = c.maxSimilarity();
-                            avgSim = c.averageSimilarity();
-                        }
-                        return new FilteredComparisonDTO("ANONYMIZED", studentSimilarity, otherSimilarity, avgSim);
-                    })
-                    .sorted((c1, c2) -> Double.compare(
-                            c2.getStudentSimilarity() != null ? c2.getStudentSimilarity() : 0.0,
-                            c1.getStudentSimilarity() != null ? c1.getStudentSimilarity() : 0.0
-                    ))
-                    .toList();
-
-            if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !filteredMatches.isEmpty()) {
-                filteredMatches = List.of(filteredMatches.get(0));
-            }
-        }
-            return new StudentReportDetailsDTO(
-                    report.getId(),
-                    report.getTag(),
-                    report.getSubject().getName(),
-                    report.getCreatedAt(),
-                    filteredMatches,
-                    raportLevel
-            );
+        return buildReportDetailsDTO(report, login);
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
@@ -385,10 +330,88 @@ public class ReportService {
 
         reportsRepository.saveAndFlush(report);
 
-//        Double aggValue = reportsRepository.calculateAggregatedAverageForSubject(subject.getId());
-//        subject.getSubjectStatistics().setAverageSimilarity(aggValue);
         subjectRepository.saveAndFlush(subject);
 
-        return getStudentReportDetails(report.getId(), login);
+        return buildReportDetailsDTO(report, login);
+    }
+
+    private StudentReportDetailsDTO buildReportDetailsDTO(Report report, String login) {
+        validateStudentAccess(report, login);
+
+        String raportLevel = report.getSubject().getRulePreset().getRaportLevel().getName();
+        List<String> studentRepoNames = extractStudentRepositoryNames(report, login);
+
+        List<FilteredComparisonDTO> filteredMatches = getFilteredMatches(report, studentRepoNames, raportLevel);
+
+        return new StudentReportDetailsDTO(
+                report.getId(),
+                report.getTag(),
+                report.getSubject().getName(),
+                report.getCreatedAt(),
+                filteredMatches,
+                raportLevel
+        );
+    }
+
+    private void validateStudentAccess(Report report, String login) {
+        boolean hasAccess = report.getRepositoryList().stream()
+                .flatMap(repo -> repo.getStudentList().stream())
+                .anyMatch(student -> student.getAccount().getLogin().equals(login));
+
+        if (!hasAccess) {
+            throw new SubjectAccessDeniedException();
+        }
+
+        if (report.getSubject() == null
+                || report.getSubject().getRulePreset() == null
+                || report.getSubject().getRulePreset().getRaportLevel() == null) {
+            throw new SubjectAccessDeniedException();
+        }
+    }
+
+
+    private List<String> extractStudentRepositoryNames(Report report, String login) {
+        return report.getRepositoryList().stream()
+                .filter(repo -> repo.getStudentList().stream()
+                        .anyMatch(s -> s.getAccount().getLogin().equals(login)))
+                .map(Repository::getRepositoryName)
+                .toList();
+    }
+
+
+    private List<FilteredComparisonDTO> getFilteredMatches(Report report, List<String> studentRepoNames, String raportLevel) {
+        if ("NOTHING".equals(raportLevel)) {
+            return new ArrayList<>();
+        }
+
+        List<TeacherComparisonDTO> allComparisons = JplagReportParser.parseFullTeacherReport(report.getPathToReport());
+
+        List<FilteredComparisonDTO> matches = allComparisons.stream()
+                .filter(c -> studentRepoNames.contains(c.firstSubmission()) || studentRepoNames.contains(c.secondSubmission()))
+                .map(c -> mapToFilteredComparisonDTO(c, raportLevel))
+                .sorted(Comparator.comparing(
+                        (FilteredComparisonDTO c) -> c.getStudentSimilarity() != null ? c.getStudentSimilarity() : 0.0
+                ).reversed())
+                .toList();
+
+        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel) && !matches.isEmpty()) {
+            return List.of(matches.get(0));
+        }
+
+        return matches;
+    }
+
+    private FilteredComparisonDTO mapToFilteredComparisonDTO(TeacherComparisonDTO c, String raportLevel) {
+        Double studentSimilarity = null;
+        Double avgSim = null;
+
+        if ("ONLY_HIGHEST_PERCENT".equals(raportLevel)) {
+            studentSimilarity = c.maxSimilarity();
+        } else if ("ONLY_PERCENTAGES".equals(raportLevel)) {
+            studentSimilarity = c.maxSimilarity();
+            avgSim = c.averageSimilarity();
+        }
+
+        return new FilteredComparisonDTO("ANONYMIZED", studentSimilarity, null, avgSim);
     }
 }

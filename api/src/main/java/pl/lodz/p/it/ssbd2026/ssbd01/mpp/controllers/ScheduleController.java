@@ -6,10 +6,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.ScheduleMapper;
@@ -18,8 +17,8 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.schedule.UpdateScheduleDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.services.ScheduleService;
 
-import java.util.List;
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController

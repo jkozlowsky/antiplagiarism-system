@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -31,9 +32,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.accesslevel.AccessLevelNotAssigne
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.TransactionLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,8 +40,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
 import static pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts.*;
+import static pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType.ACCOUNT_UNBLOCK;
 
 @RequiredArgsConstructor
 @Service

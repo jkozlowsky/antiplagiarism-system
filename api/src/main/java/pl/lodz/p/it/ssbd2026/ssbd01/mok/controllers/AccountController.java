@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiPublicResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.openApi.ApiSecuredResponses;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.converters.AccountMapper;
@@ -27,9 +29,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.interceptors.MethodCallLogged;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.AccountService;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.services.VersionHashService;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -178,7 +177,7 @@ public class AccountController {
     })
     @PostMapping("/register")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<?> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
+    public ResponseEntity<Void> register(@Validated(OnCreate.class) @RequestBody RegisterAccountDTO dto) {
         Account account = accountMapper.toEntity(dto);
         accountService.registerAccount(account);
         return ResponseEntity.accepted().build();
@@ -191,7 +190,7 @@ public class AccountController {
     })
     @PostMapping("/activate")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<?> activate(@RequestParam String token) {
+    public ResponseEntity<Void> activate(@RequestParam String token) {
         accountService.confirmActivation(token);
         return ResponseEntity.ok().build();
     }
