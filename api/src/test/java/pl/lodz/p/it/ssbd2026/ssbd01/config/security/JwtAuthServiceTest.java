@@ -12,12 +12,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JwtAuthServiceTest {
     private JwtAuthService jwtAuthService;
 
-    @Autowired
-    private AccountRepository accountRepository;
-
     @BeforeEach
     void setUp() {
-        jwtAuthService = new JwtAuthService(accountRepository);
+        jwtAuthService = new JwtAuthService();
 
         String testSecret = "n10rb1FUMXskFj1RV4PDQOmMvRtrhB9NBWeeGZ+fSGvCmMVIOMFqikGHy66Icdmka4pdXpmkpLtsdqSkSHQC1A==";
         ReflectionTestUtils.setField(jwtAuthService, "secret", testSecret);
