@@ -1,5 +1,6 @@
 stages:
   - test
+  - analyze
   - build
   - deploy
 
@@ -42,7 +43,10 @@ test-backend:
     expire_in: 1 week
 
 sonarqube-check:
+  stage: analyze
   image: maven:3.9.14-eclipse-temurin-25-alpine
+  tags:
+    - ovirt-runner
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
