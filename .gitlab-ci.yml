@@ -11,26 +11,35 @@ test-backend:
   variables:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
+    TESTCONTAINERS_HOST_OVERRIDE: "docker"
   script:
-    - echo "MAIL_HOST=localhost" >> .env
-    - echo "MAIL_PORT=1025" >> .env
-    - echo "MAIL_USERNAME=test" >> .env
-    - echo "PG_DATABASE=$CI_PG_DATABASE" >> .env
-    - echo "PG_USERNAME=$CI_PG_USERNAME" >> .env
-    - echo "MOK_USER=$CI_MOK_USER" >> .env
-    - echo "MPP_USER=$CI_MPP_USER" >> .env
-    - mkdir -p secrets
+    - mkdir -p secrets api/secrets
     - echo "$CI_PG_PASSWORD" > secrets/pg_password.txt
     - echo "$CI_MOK_PASSWORD" > secrets/mok_password.txt
     - echo "$CI_MPP_PASSWORD" > secrets/mpp_password.txt
     - echo "test_mail_password" > secrets/mail_password.txt
     - echo "dummy_test_token" > secrets/gitea_token.txt
+    - cp -r secrets/* api/secrets/
+
+    - export PG_DATABASE=$CI_PG_DATABASE
+    - export PG_USERNAME=$CI_PG_USERNAME
+    - export ADMIN_USER=$CI_PG_USERNAME
+    - export MOK_USER=$CI_MOK_USER
+    - export MPP_USER=$CI_MPP_USER
+
     - export GITEA_URL=http://localhost:3000
     - export MAIL_HOST=localhost
     - export MAIL_PORT=1025
     - export MAIL_USERNAME=test
     - export MAIL_PASSWORD=test
-    - mvn test
+
+    - mvn test -e -DtrimStackTrace=false
+  artifacts:
+    when: always
+    paths:
+      - api/target/surefire-reports/
+      - target/surefire-reports/
+    expire_in: 1 week
 
 build-backend:
   stage: build
@@ -42,8 +51,20 @@ build-backend:
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker build -t registry.gitlab.com/iitpl/ssbd/2026/01/api:latest .
-    - docker push registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
+    - docker build --build-arg MODULE_NAME=api -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+    - docker build --build-arg MODULE_NAME=email-service -t $CI_REGISTRY_IMAGE/email-service:latest .
+    - docker push $CI_REGISTRY_IMAGE/email-service:latest
+
+    - docker build --build-arg MODULE_NAME=eureka-server -t $CI_REGISTRY_IMAGE/eureka-server:latest .
+    - docker push $CI_REGISTRY_IMAGE/eureka-server:latest
+
+    - docker build --build-arg MODULE_NAME=config-server -t $CI_REGISTRY_IMAGE/config-server:latest .
+    - docker push $CI_REGISTRY_IMAGE/config-server:latest
+
+    - docker build --build-arg MODULE_NAME=mcp-server -t $CI_REGISTRY_IMAGE/mcp-server:latest .
+    - docker push $CI_REGISTRY_IMAGE/mcp-server:latest
   only:
     - main
 
@@ -56,8 +77,21 @@ deploy-backend:
   script:
     - cd /opt/api
     - git pull origin main
+    - mkdir -p secrets
+    - echo "$CI_PG_PASSWORD" > secrets/pg_password.txt
+    - echo "$CI_MOK_PASSWORD" > secrets/mok_password.txt
+    - echo "$CI_MPP_PASSWORD" > secrets/mpp_password.txt
+    - echo "$CI_GITEA_DB_PASSWORD" > secrets/gitea_db_password.txt
+    - export PG_USERNAME=$CI_PG_USERNAME
+    - export PG_DATABASE=$CI_PG_DATABASE
+    - export MOK_USER=$CI_MOK_USER
+    - export MPP_USER=$CI_MPP_USER
+    - export APP_FRONTEND_URL=$CI_APP_FRONTEND_URL
     - export GOOGLE_CLIENT_ID=$CI_GOOGLE_CLIENT_ID
-    - docker compose -f docker-compose.prod.yml pull backend
+    - export GITEA_URL=$CI_GITEA_URL
+    - export VAULT_TOKEN=$CI_VAULT_TOKEN
+    - docker compose -f docker-compose.prod.yml build pgpool
+    - docker compose -f docker-compose.prod.yml pull backend email-service eureka-server config-server mcp-server
     - docker compose -f docker-compose.prod.yml up -d
   only:
     - main

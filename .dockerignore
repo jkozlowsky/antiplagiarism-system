@@ -1,5 +1,5 @@
 .git
-.gitignore
+api/.gitignore
 .idea/
 *.iml
 *.iws

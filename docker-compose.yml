@@ -31,35 +31,144 @@ services:
       retries: 3
       start_period: 10s
 
+  vault:
+    image: hashicorp/vault:2.0
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=my-super-secret-token
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - proxy-backend
+      - backend-db
+    healthcheck:
+      test: [ "CMD-SHELL", "vault status -address=http://127.0.0.1:8200 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vault-init:
+    image: hashicorp/vault:2.0
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=my-super-secret-token
+      - PG_PASSWORD=${PG_PASSWORD}
+      - MOK_PASSWORD=${MOK_PASSWORD}
+      - MPP_PASSWORD=${MPP_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - GITEA_TOKEN=${GITEA_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    networks:
+      - proxy-backend
+    depends_on:
+      vault:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Ladowanie sekretow z pliku .env do Vaulta...';
+      vault kv put secret/api pg_password=\"$$PG_PASSWORD\" mok_password=\"$$MOK_PASSWORD\" mpp_password=\"$$MPP_PASSWORD\" security.jwt.secret=\"$$JWT_SECRET\" gitea.token=\"$$GITEA_TOKEN\";
+      vault kv put secret/email-service spring.mail.password=\"$$MAIL_PASSWORD\";
+      vault kv put secret/mcp-server groq.api.key=\"$$GROQ_API_KEY\";
+      echo 'Sekrety zaladowane!';
+      "
+
+  config-server:
+    build:
+      context: .
+      args:
+        MODULE_NAME: config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/app/config-repo
+    networks:
+      - proxy-backend
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8888/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  eureka-server:
+    build:
+      context: .
+      args:
+        MODULE_NAME: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - proxy-backend
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8761/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  email-service:
+    build:
+      context: .
+      args:
+        MODULE_NAME: email-service
+    environment:
+      - TZ=Europe/Warsaw
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - proxy-backend
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 30s
+
+  mcp-server:
+    build:
+      context: .
+      args:
+        MODULE_NAME: mcp-server
+    environment:
+      - TZ=Europe/Warsaw
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - proxy-backend
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f -s http://localhost:8083/actuator/health | grep -q 'UP' || exit 1" ]
+      interval: 20s
+      start_period: 30s
+
   backend:
     build:
       context: .
+      args:
+        MODULE_NAME: api
     environment:
-      - APP_FRONTEND_URL=https://localhost
       - TZ=Europe/Warsaw
-      - DB_HOST=pgpool
-      - DB_PORT=5432
-      - DB_NAME=${PG_DATABASE}
-      - ADMIN_USER=${PG_USERNAME}
-      - MOK_USER=${MOK_USER}
-      - MPP_USER=${MPP_USER}
-      - MAIL_HOST=${MAIL_HOST}
-      - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USERNAME=${MAIL_USERNAME}
+      - APP_FRONTEND_URL=https://localhost
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
       - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
       - MANAGEMENT_SERVER_PORT=8082
-      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,loggers
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GITEA_URL=${GITEA_URL}
-      - GITEA_TOKEN=${GITEA_TOKEN}
-    secrets:
-      - pg_password
-      - mok_password
-      - mpp_password
-      - mail_password
-      - jwt_secret
-      - frontend_url
-      - google_credentials
     volumes:
       - ../logs:/app/logs
       - ../repos:/app/repos
@@ -69,7 +178,11 @@ services:
       - backend-db
     depends_on:
       pgpool:
-        condition: service_started
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f -s http://localhost:8082/actuator/health | grep -q 'UP' || exit 1" ]
       interval: 20s
@@ -100,15 +213,12 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${PG_USERNAME}
       POSTGRES_DB: ${PG_DATABASE}
-      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
       MOK_USER: ${MOK_USER}
       MPP_USER: ${MPP_USER}
-    secrets:
-      - pg_password
-      - mok_password
-      - mpp_password
-      - jwt_secret
+      MOK_PASSWORD: ${MOK_PASSWORD}
+      MPP_PASSWORD: ${MPP_PASSWORD}
     volumes:
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
       - db_primary_data:/var/lib/postgresql/data
@@ -125,10 +235,8 @@ services:
     image: postgres:18.3
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
-    secrets:
-      - pg_password
     volumes:
       - db_replica_1_data:/var/lib/postgresql/data
     networks:
@@ -157,10 +265,8 @@ services:
     image: postgres:18.3
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
-    secrets:
-      - pg_password
     volumes:
       - db_replica_2_data:/var/lib/postgresql/data
     networks:
@@ -248,21 +354,3 @@ volumes:
   db_replica_1_data:
   db_replica_2_data:
   gitea_db_data_local:
-
-secrets:
-  pg_password:
-    file: ./secrets/pg_password.txt
-  mok_password:
-    file: ./secrets/mok_password.txt
-  mpp_password:
-    file: ./secrets/mpp_password.txt
-  mail_password:
-    file: ./secrets/mail_password.txt
-  jwt_secret:
-    file: ./secrets/jwt_secret.txt
-  frontend_url:
-    file: ./secrets/frontend_url.txt
-  version_hash_secret:
-    file: ./secrets/version_hash_secret.txt
-  google_credentials:
-    file: ./secrets/google_credentials.json

@@ -1,25 +1,18 @@
 FROM maven:3.9.14-eclipse-temurin-25-alpine AS builder
-
 WORKDIR /app
 
-COPY pom.xml .
-
-RUN mvn dependency:go-offline
-
-COPY src ./src
+COPY . .
 
 RUN mvn clean package -Dmaven.test.skip=true
 
-###
-
 FROM eclipse-temurin:25-jdk-alpine
-
 RUN apk add --no-cache curl
-
 WORKDIR /app
 
-COPY --from=builder /app/target/*.jar app.jar
+ARG MODULE_NAME
 
-EXPOSE 8081
+COPY --from=builder /app/${MODULE_NAME}/target/*.jar app.jar
+
+EXPOSE 8081 8082 8083 8761 8888
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
