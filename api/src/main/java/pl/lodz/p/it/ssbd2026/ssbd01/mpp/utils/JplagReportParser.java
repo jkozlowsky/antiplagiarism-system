@@ -119,7 +119,6 @@ public class JplagReportParser {
             return result;
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ReportFileException(e);
         }
     }
