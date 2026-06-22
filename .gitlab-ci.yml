@@ -53,8 +53,6 @@ sonarqube-check:
   script:
     - mvn verify sonar:sonar -Dsonar.projectKey=Uczelniany-system-antyplagiatowy
   allow_failure: true
-  only:
-    - main
 
 
 build-backend:
