@@ -113,7 +113,6 @@ public class GenerateStudentReportServiceTest {
         when(reportsRepository.saveAndFlush(any(Report.class))).thenAnswer(inv -> {
             Report report = inv.getArgument(0);
             ReflectionTestUtils.setField(report, "id", UUID.randomUUID());
-            when(reportsRepository.findById(report.getId())).thenReturn(Optional.of(report));
             return report;
         });
 
