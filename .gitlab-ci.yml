@@ -38,8 +38,8 @@ test-backend:
   artifacts:
     when: always
     paths:
-      - api/target/surefire-reports/
-      - target/surefire-reports/
+      - api/target/
+      - target/
       - email-service/target/
       - config-server/target/
       - mcp-server/target/
