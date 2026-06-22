@@ -25,110 +25,141 @@ import java.util.*;
 public class AuditService {
 
     private final Javers javers;
+    private static final int DB_FETCH_LIMIT = 100;
+    private static final String ENTITY_PACKAGE = "pl.lodz.p.it.ssbd2026.ssbd01.entities.";
+    private static final String HIDDEN_PASSWORD_TEXT = "*** UKRYTE ***";
 
     public Page<AuditRecordDTO> getAuditHistory(int page, int size, String sortBy, boolean sortDesc, String entityFilter) {
-
-        final int DB_FETCH_LIMIT = 100;
-
-        QueryBuilder jqlQuery = QueryBuilder.anyDomainObject().limit(DB_FETCH_LIMIT);
-
-        if (entityFilter != null && !entityFilter.trim().isEmpty() && !entityFilter.equalsIgnoreCase("ALL")) {
-            try {
-                Class<?> entityClass = Class.forName("pl.lodz.p.it.ssbd2026.ssbd01.entities." + entityFilter);
-                jqlQuery = QueryBuilder.byClass(entityClass).limit(DB_FETCH_LIMIT);
-            } catch (ClassNotFoundException e) {
-                return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
-            }
+        QueryBuilder queryBuilder = buildJaversQuery(entityFilter);
+        if (queryBuilder == null) {
+            return new PageImpl<>(List.of(), PageRequest.of(page, size), 0);
         }
 
-        Changes changes = javers.findChanges(jqlQuery.build());
+        Changes changes = javers.findChanges(queryBuilder.build());
+        List<AuditRecordDTO> auditRecords = processAndGroupChanges(changes);
 
-        java.util.Map<String, AuditRecordDTO> groupedRecords = new java.util.LinkedHashMap<>();
+        sortRecords(auditRecords, sortBy, sortDesc);
+
+        return paginateRecords(auditRecords, page, size);
+    }
+
+    private QueryBuilder buildJaversQuery(String entityFilter) {
+        if (entityFilter == null || entityFilter.trim().isEmpty() || "ALL".equalsIgnoreCase(entityFilter)) {
+            return QueryBuilder.anyDomainObject().limit(DB_FETCH_LIMIT);
+        }
+
+        try {
+            Class<?> entityClass = Class.forName(ENTITY_PACKAGE + entityFilter);
+            return QueryBuilder.byClass(entityClass).limit(DB_FETCH_LIMIT);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    private List<AuditRecordDTO> processAndGroupChanges(Changes changes) {
+        Map<String, AuditRecordDTO> groupedRecords = new LinkedHashMap<>();
 
         for (Change change : changes) {
-            CommitMetadata commitMeta = change.getCommitMetadata().orElse(null);
-            if (commitMeta == null) continue;
+            change.getCommitMetadata().ifPresent(commitMeta -> {
+                String commitId = commitMeta.getId().value();
+                String entityId = extractCleanEntityId(change.getAffectedGlobalId().value());
+                String entityType = extractEntityType(change.getAffectedGlobalId().getTypeName());
+                String groupKey = commitId + "_" + entityId;
 
-            String commitId = commitMeta.getId().value();
+                AuditRecordDTO dto = groupedRecords.computeIfAbsent(groupKey, k ->
+                        createBaseAuditRecord(commitMeta, entityId, entityType));
 
-            String rawEntityId = change.getAffectedGlobalId().value();
-            String cleanId = rawEntityId.contains("/")
-                    ? rawEntityId.substring(rawEntityId.lastIndexOf('/') + 1)
-                    : rawEntityId;
-
-            final String entityId = (cleanId.startsWith("\"") && cleanId.endsWith("\""))
-                    ? cleanId.substring(1, cleanId.length() - 1)
-                    : cleanId;
-
-            String groupKey = commitId + "_" + entityId;
-
-            String fullTypeName = change.getAffectedGlobalId().getTypeName();
-            String entityType = fullTypeName.substring(fullTypeName.lastIndexOf('.') + 1);
-
-            AuditRecordDTO dto = groupedRecords.computeIfAbsent(groupKey, k -> {
-                AuditRecordDTO newDto = new AuditRecordDTO();
-                newDto.setCommitId(commitId);
-                newDto.setAuthor(commitMeta.getAuthor());
-                newDto.setCommitDate(commitMeta.getCommitDate());
-                newDto.setEntityType(entityType);
-                newDto.setEntityId(entityId);
-                newDto.setChanges(new ArrayList<>());
-                newDto.setChangeType("UPDATE");
-                return newDto;
+                applyChangeDetails(dto, change);
             });
-
-            if (change instanceof NewObject) {
-                dto.setChangeType("ADD");
-            } else if (change instanceof ObjectRemoved) {
-                dto.setChangeType("REMOVE");
-            } else if (change instanceof ValueChange valChange) {
-                String propName = valChange.getPropertyName();
-                String oldVal = valChange.getLeft() != null ? valChange.getLeft().toString() : "";
-                String newVal = valChange.getRight() != null ? valChange.getRight().toString() : "";
-
-                if ("passwordHash".equals(propName)) {
-                    oldVal = "*** UKRYTE ***";
-                    newVal = "*** UKRYTE ***";
-                }
-                dto.getChanges().add(new PropertyChangeDTO(propName, oldVal, newVal));
-
-            } else if (change instanceof ReferenceChange refChange) {
-                String propName = refChange.getPropertyName();
-                String oldVal = refChange.getLeft() != null ? refChange.getLeft().toString() : "brak";
-                String newVal = refChange.getRight() != null ? refChange.getRight().toString() : "brak";
-
-                oldVal = oldVal.contains("/") ? oldVal.substring(oldVal.lastIndexOf('/') + 1) : oldVal;
-                newVal = newVal.contains("/") ? newVal.substring(newVal.lastIndexOf('/') + 1) : newVal;
-
-                dto.getChanges().add(new PropertyChangeDTO(propName + " (Relacja)", oldVal, newVal));
-            } else if (change instanceof ContainerChange contChange) {
-                dto.getChanges().add(new PropertyChangeDTO(contChange.getPropertyName() + " (Kolekcja)", "Zmiana elementÃ³w", ""));
-            }
         }
-
 
         List<AuditRecordDTO> dtoList = new ArrayList<>(groupedRecords.values());
         dtoList.removeIf(dto -> "UPDATE".equals(dto.getChangeType()) && dto.getChanges().isEmpty());
+        return dtoList;
+    }
 
-        Comparator<AuditRecordDTO> comparator;
-        if ("entityType".equalsIgnoreCase(sortBy)) {
-            comparator = Comparator.comparing(AuditRecordDTO::getEntityType);
-        } else {
-            comparator = Comparator.comparing(AuditRecordDTO::getCommitDate);
+    private AuditRecordDTO createBaseAuditRecord(CommitMetadata commitMeta, String entityId, String entityType) {
+        AuditRecordDTO dto = new AuditRecordDTO();
+        dto.setCommitId(commitMeta.getId().value());
+        dto.setAuthor(commitMeta.getAuthor());
+        dto.setCommitDate(commitMeta.getCommitDate());
+        dto.setEntityType(entityType);
+        dto.setEntityId(entityId);
+        dto.setChanges(new ArrayList<>());
+        dto.setChangeType("UPDATE");
+        return dto;
+    }
+
+
+    private void applyChangeDetails(AuditRecordDTO dto, Change change) {
+        if (change instanceof NewObject) {
+            dto.setChangeType("ADD");
+        } else if (change instanceof ObjectRemoved) {
+            dto.setChangeType("REMOVE");
+        } else if (change instanceof ValueChange valChange) {
+            handleValueChange(dto, valChange);
+        } else if (change instanceof ReferenceChange refChange) {
+            handleReferenceChange(dto, refChange);
+        } else if (change instanceof ContainerChange contChange) {
+            dto.getChanges().add(new PropertyChangeDTO(contChange.getPropertyName() + " (Kolekcja)", "Zmiana elementów", ""));
         }
+    }
+
+    private void handleValueChange(AuditRecordDTO dto, ValueChange change) {
+        String propName = change.getPropertyName();
+        String oldVal = change.getLeft() != null ? change.getLeft().toString() : "";
+        String newVal = change.getRight() != null ? change.getRight().toString() : "";
+
+        if ("passwordHash".equals(propName)) {
+            oldVal = HIDDEN_PASSWORD_TEXT;
+            newVal = HIDDEN_PASSWORD_TEXT;
+        }
+
+        dto.getChanges().add(new PropertyChangeDTO(propName, oldVal, newVal));
+    }
+
+    private void handleReferenceChange(AuditRecordDTO dto, ReferenceChange change) {
+        String propName = change.getPropertyName() + " (Relacja)";
+        String oldVal = change.getLeft() != null ? extractPathSuffix(change.getLeft().toString()) : "brak";
+        String newVal = change.getRight() != null ? extractPathSuffix(change.getRight().toString()) : "brak";
+
+        dto.getChanges().add(new PropertyChangeDTO(propName, oldVal, newVal));
+    }
+
+    private String extractCleanEntityId(String rawEntityId) {
+        String cleanId = extractPathSuffix(rawEntityId);
+        if (cleanId.startsWith("\"") && cleanId.endsWith("\"")) {
+            return cleanId.substring(1, cleanId.length() - 1);
+        }
+        return cleanId;
+    }
+
+    private String extractEntityType(String fullTypeName) {
+        return fullTypeName.substring(fullTypeName.lastIndexOf('.') + 1);
+    }
+
+    private String extractPathSuffix(String path) {
+        return path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+    }
+
+    private void sortRecords(List<AuditRecordDTO> records, String sortBy, boolean sortDesc) {
+        Comparator<AuditRecordDTO> comparator = "entityType".equalsIgnoreCase(sortBy)
+                ? Comparator.comparing(AuditRecordDTO::getEntityType)
+                : Comparator.comparing(AuditRecordDTO::getCommitDate);
 
         if (sortDesc) {
             comparator = comparator.reversed();
         }
-        dtoList.sort(comparator);
 
+        records.sort(comparator);
+    }
 
-        int totalGroupedElements = dtoList.size();
-        int start = Math.min(page * size, totalGroupedElements);
-        int end = Math.min((page + 1) * size, totalGroupedElements);
+    private Page<AuditRecordDTO> paginateRecords(List<AuditRecordDTO> records, int page, int size) {
+        int total = records.size();
+        int start = Math.min(page * size, total);
+        int end = Math.min((page + 1) * size, total);
 
-        List<AuditRecordDTO> paginatedList = dtoList.subList(start, end);
-
-        return new PageImpl<>(paginatedList, PageRequest.of(page, size), totalGroupedElements);
+        List<AuditRecordDTO> paginatedList = records.subList(start, end);
+        return new PageImpl<>(paginatedList, PageRequest.of(page, size), total);
     }
 }
