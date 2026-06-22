@@ -14,15 +14,11 @@ import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.OneTimeTokenConsts;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.Account;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenEnt;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.OneTimeTokenType;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.AccountNotFoundException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.HashEncryptionException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.OneTimeTokenInvalidException;
+import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
+import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.*;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.OneTimeTokenRepository;
 import pl.lodz.p.it.ssbd2026.ssbd01.mok.schedulers.TokenScheduler;
-import pl.lodz.p.it.ssbd2026.ssbd01.entities.PasswordHistory;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordAlreadyUsedInPastException;
-import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.PasswordSameAsOldException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

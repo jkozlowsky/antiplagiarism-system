@@ -8,7 +8,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.RulePresetDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.ScheduleConfigDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.SubjectConfigDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.entities.*;
