@@ -19,7 +19,7 @@ public class TokenScheduler {
     @Scheduled(fixedDelayString = "${app.scheduler.check.interval.ms}")
     @Transactional(propagation = Propagation.REQUIRES_NEW,  readOnly = false, transactionManager = "mokTransactionManager")
     @PreAuthorize("permitAll()")
-    public void DeleteExpiredTokens() {
+    public void deleteExpiredTokens() {
         tokenRepository.deleteByExpiresAtBefore(LocalDateTime.now());
     }
 

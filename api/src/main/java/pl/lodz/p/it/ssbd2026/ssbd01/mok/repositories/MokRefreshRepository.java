@@ -14,7 +14,7 @@ public class MokRefreshRepository {
     @PersistenceContext(unitName = "mokPersistenceUnit")
     private EntityManager em;
 
-    public void refresh (AbstractEntity entity) {
+    public void refresh(AbstractEntity entity) {
         em.refresh(em.merge(entity));
-    };
+    }
 }

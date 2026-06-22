@@ -32,8 +32,7 @@ public interface ScheduleRepository extends AbstractRepository<Schedule> {
     @Query(value = "select s from Schedule as s join s.rulePreset rp join rp.subject sub where sub.id = :subjectId")
     List<Schedule> findAllBySubjectId(@Param("subjectId") UUID subjectId);
 
-    //todo zweryfikować czy to ma sens i działa przy >1 instancjach, bo przy Pgpool możliwe, że będzie problem
-    @Lock(LockModeType.PESSIMISTIC_WRITE) //To na wypadek, gdy będziemy mieli więcej niż jedną instancję aplikacji
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // Na wypadek wielu instancji aplikacji; przy Pgpool wymaga weryfikacji zachowania
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")) // -2 = skip locked
     @Query(value = "select s from Schedule s where s.scheduleDateTime <= CURRENT_TIMESTAMP and s.isExecuted = false")
     List<Schedule> findSchedulesToExecute(Pageable pageable);

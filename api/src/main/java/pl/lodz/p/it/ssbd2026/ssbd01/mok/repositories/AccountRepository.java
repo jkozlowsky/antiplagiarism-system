@@ -62,7 +62,6 @@ public interface AccountRepository extends AbstractRepository<Account> {
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     @EntityGraph(attributePaths = {"accessLevelList", "accessLevelList.accessLevelDict", "createdBy", "modifiedBy"})
     Page<Account> findByNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(String name, String surname, Pageable pageable);
-//    List<Account> findByLoginContainingIgnoreCaseOrEmailContainingIgnoreCase(String login, String email);
 
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true, transactionManager = "mokTransactionManager")
     List<Account> findByIsBlockedTrueAndFailedAttemptsGreaterThanEqualAndLastLoginFailureDateTimeBefore(Integer failedAttempts, LocalDateTime date);

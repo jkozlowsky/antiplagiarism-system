@@ -54,6 +54,11 @@ import java.util.UUID;
 @Retryable(retryFor = {JpaSystemException.class}, backoff = @Backoff(delayExpression = "${app.retry.backoff}"), maxAttemptsExpression = "${app.retry.maxattempts}")
 public class ReportService {
 
+    private static final String SUBMISSIONS_DIR = "repos/submissions/";
+    private static final String REPORTS_DIR = "reports/";
+    private static final String JPLAG_EXT = ".jplag";
+    private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd_HH-mm-ss";
+
     private final SubjectRepository subjectRepository;
     private final GiteaService giteaService;
     private final JPlagService jPlagService;
@@ -76,7 +81,7 @@ public class ReportService {
         long successfulClonesCount = giteaRepoDTO.stream()
                 .filter(repo -> !repo.template())
                 .map(repo -> {
-                    File targetDir = new File("repos/submissions/" + config.organizationName() + "/" + tag + "/" + repo.name());
+                    File targetDir = new File(SUBMISSIONS_DIR + config.organizationName() + "/" + tag + "/" + repo.name());
                     return GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
                 })
                 .filter(success -> success)
@@ -86,8 +91,8 @@ public class ReportService {
             throw new GitCloneException();
         }
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-        String reportPath = "reports/" + config.organizationName() + "/" + tag + "/" + timestamp + ".jplag";
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT));
+        String reportPath = REPORTS_DIR + config.organizationName() + "/" + tag + "/" + timestamp + JPLAG_EXT;
 
         JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                 config.organizationName(),
@@ -226,7 +231,7 @@ public class ReportService {
             long successfulClonesCount = giteaRepoList.stream()
                     .filter(repo -> !repo.template())
                     .map(repo -> {
-                        File targetDir = new File("repos/submissions/" + config.organizationName() + "/" + config.giteaTag() + "/" + repo.name());
+                        File targetDir = new File(SUBMISSIONS_DIR + config.organizationName() + "/" + config.giteaTag() + "/" + repo.name());
                         return GitService.cloneTag(repo.clone_url(), config.giteaTag(), targetDir, giteaToken);
                     })
                     .filter(success -> success)
@@ -236,8 +241,8 @@ public class ReportService {
                 throw new GitCloneException();
             }
 
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-            String reportPath = "reports/" + config.organizationName() + "/" + config.giteaTag() + "/" + timestamp + ".jplag";
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT));
+            String reportPath = REPORTS_DIR + config.organizationName() + "/" + config.giteaTag() + "/" + timestamp + JPLAG_EXT;
 
             JPlagResult result = jPlagService.runPlagiarismScanOnOrganisation(
                     config.organizationName(),
@@ -294,19 +299,19 @@ public class ReportService {
         List<GiteaRepoDTO> giteaRepoDTO = giteaService.getRepositoriesFromOrganization(subject.getOrganizationName());
 
         giteaRepoDTO.stream().filter(repo -> !repo.template()).forEach(repo -> {
-            File targetDir = new File("repos/submissions/" + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
+            File targetDir = new File(SUBMISSIONS_DIR + subject.getOrganizationName() + "/" + studentTag + "/" + repo.name());
             String tag = repo.name().equals(repository.getRepositoryName()) ? studentTag : taskTag;
             GitService.cloneTag(repo.clone_url(), tag, targetDir, giteaToken);
         });
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT));
 
         List<Repository> repositoryList = giteaRepositoryRepository.getAllBySubjectId(subject.getId());
 
         Report report = new Report();
         report.setSubject(subject);
         report.setTag(studentTag);
-        report.setPathToReport("reports/" + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + ".jplag");
+        report.setPathToReport(REPORTS_DIR + subject.getOrganizationName() + "/" + studentTag + "/" + timestamp + JPLAG_EXT);
         report.setScannedRepositories(0L);
         report.setIsStudentReport(true);
         report.setInitiatingRepository(repository);

@@ -26,7 +26,6 @@ import pl.lodz.p.it.ssbd2026.ssbd01.mpp.repositories.*;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -57,11 +56,10 @@ public class RuleService {
                             dto.studentTicketCount(),
                             dto.minimumTokensMatch(),
                             dto.enableNormalization(),
-//                            dto.version(),
                             versionHashService.hashObjectVersion(preset.getId(), preset.getVersion())
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")

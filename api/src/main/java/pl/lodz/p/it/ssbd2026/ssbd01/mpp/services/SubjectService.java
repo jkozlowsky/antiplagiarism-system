@@ -177,7 +177,7 @@ public class SubjectService {
 
         Map<UUID, String> descriptionMap = translations.stream()
                 .collect(Collectors.toMap(
-                        (desc) -> desc.getSubject().getId(),
+                        desc -> desc.getSubject().getId(),
                         SubjectDescriptionTranslation::getTranslatedDescription
                 ));
 
@@ -354,7 +354,7 @@ public class SubjectService {
                         .orElseThrow(RaportLevelDictNotFoundException::new));
     }
 
-    private Subject createBaseSubject(String name, String orgName, String edition, String desc, String url, String originalLanguage) {
+    private Subject createBaseSubject(String name, String orgName, String edition, String url) {
 
         Subject subject = new Subject();
         subject.setName(name);
@@ -410,9 +410,7 @@ public class SubjectService {
                 dto.name(),
                 dto.organizationName(),
                 dto.edition(),
-                dto.subjectDescription(),
-                generatedGiteaUrl,
-                originalLanguage
+                generatedGiteaUrl
         );
 
         RulePreset preset = new RulePreset();
@@ -426,7 +424,6 @@ public class SubjectService {
 
         assignTeachers(subject, teacher, creatorLogin, dto.teachers());
         internalSyncWithGitea(subject);
-//        subjectRepository.saveAndFlush(subject);
         Subject savedSubject = subjectRepository.saveAndFlush(subject);
         SubjectDescriptionTranslation subjectDescriptionTranslation = new SubjectDescriptionTranslation();
         subjectDescriptionTranslation.setTranslatedDescription(dto.subjectDescription());
@@ -458,9 +455,7 @@ public class SubjectService {
                 dto.name(),
                 dto.organizationName(),
                 dto.edition(),
-                dto.subjectDescription(),
-                generatedGiteaUrl,
-                originalLanguage
+                generatedGiteaUrl
         );
         RulePreset template = ruleRepository.findById(dto.templateId())
                 .orElseThrow(RulePresetTemplateNotFoundException::new);
@@ -539,7 +534,7 @@ public class SubjectService {
             preset.setEnableNormalization(dto.rules().enableNormalization());
             preset.setIsPreset(false);
         }
-        if (!isOwner && isEditor) {
+        if (!isOwner) {
             boolean isTeacherListModified = false;
 
             if (dto.teachers() != null) {
