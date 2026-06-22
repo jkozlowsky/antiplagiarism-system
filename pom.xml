@@ -12,6 +12,7 @@
     <properties>
         <spring-cloud.version>2025.1.2</spring-cloud.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
     </properties>
 
     <groupId>pl.lodz.p.it.ssbd2026</groupId>

@@ -41,6 +41,22 @@ test-backend:
       - target/surefire-reports/
     expire_in: 1 week
 
+sonarqube-check:
+  image: maven:3.6.3-jdk-11
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn verify sonar:sonar -Dsonar.projectKey=Uczelniany-system-antyplagiatowy
+  allow_failure: true
+  only:
+    - main
+
+
 build-backend:
   stage: build
   image: docker:29.4.0
