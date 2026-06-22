@@ -100,7 +100,7 @@ public class AuditService {
             handleValueChange(dto, valChange);
         } else if (change instanceof ReferenceChange refChange) {
             handleReferenceChange(dto, refChange);
-        } else if (change instanceof ContainerChange contChange) {
+        } else if (change instanceof ContainerChange<?> contChange) {
             dto.getChanges().add(new PropertyChangeDTO(contChange.getPropertyName() + " (Kolekcja)", "Zmiana elementów", ""));
         }
     }

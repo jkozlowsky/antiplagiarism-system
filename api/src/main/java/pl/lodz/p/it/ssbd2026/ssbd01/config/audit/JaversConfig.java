@@ -49,7 +49,7 @@ public class JaversConfig {
                 .javers()
                 .withTxManager(txManager)
                 .registerJaversRepository(sqlRepository)
-                .withObjectAccessHook(new HibernateUnproxyObjectAccessHook())
+                .withObjectAccessHook(new HibernateUnproxyObjectAccessHook<>())
                 .build();
     }
 }

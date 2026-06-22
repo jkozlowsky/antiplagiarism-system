@@ -2,10 +2,8 @@ package pl.lodz.p.it.ssbd2026.ssbd01.config.openApi;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import pl.lodz.p.it.ssbd2026.ssbd01.rest.handlers.ValidationErrorResponse;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

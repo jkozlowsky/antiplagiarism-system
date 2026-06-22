@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 public class OneTimeTokenEnt extends AbstractEntity{
 
-    @Column(name = "token_value", nullable = false, unique = true, updatable = false) //TODO: zmienić rozmiar na konstantę (wyznaczyć jaki)
+    @Column(name = "token_value", nullable = false, unique = true, updatable = false)
     private String tokenValue;
 
     @Column(name = "username", nullable = false, updatable = false, length = AccountConsts.LOGIN_LENGTH)

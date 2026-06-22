@@ -65,16 +65,13 @@ public class RepositoryService {
             return repositoryMapper.projectionToWithStudentDto(repo, assignedStudents);
         }).toList();
     }
-//    public List<Repository> getRepositories(UUID subjectId) {
-//        return giteaRepositoryRepository.findBySubjectId(subjectId);
-//    }
 
     @PreAuthorize("hasAuthority(T(pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts).ROLE_TEACHER)")
     public List<SubjectStudentStatsDTO> getUserAccounts(String subjectName) {
         List<Repository> repos = giteaRepositoryRepository.findBySubject_Name(subjectName);
         List<SubjectStudentStatsDTO> results = new ArrayList<>();
 
-        repos.forEach(repo -> {
+        repos.forEach(repo ->
             repo.getStudentList().forEach(student -> {
                 Account account = student.getAccount();
 
@@ -94,8 +91,8 @@ public class RepositoryService {
                         repo.getRepositoryName(),
                         averagePlagiarismRatio
                 ));
-            });
-        });
+            })
+        );
 
         return results;
     }

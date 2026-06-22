@@ -32,21 +32,6 @@ public class EmailRestClient {
             "test_student@ssbd.edu.pl"
     );
 
-//    @PreAuthorize("permitAll()")
-//    public void sendEmail(String toAddress, String subject, String content) {
-//        if (toAddress != null && BYPASS_EMAILS.contains(toAddress)) {
-//            log.info("[DRY BYPASS] Pominięto fizyczne wysyłanie wiadomości e-mail dla konta testowego: {}", toAddress);
-//            return;
-//        }
-//        SimpleMailMessage message = new SimpleMailMessage();
-//        message.setFrom("ssbd01.2026@gmail.com");
-//        message.setTo(toAddress);
-//        message.setSubject(subject);
-//        message.setText(content);
-//
-//        mailSender.send(message);
-//    }
-
     private boolean isBypassed(String toAddress) {
         if (toAddress != null && BYPASS_EMAILS.contains(toAddress)) {
             log.info("[DRY BYPASS] Pominięto wysyłanie zadania e-mail przez sieć dla konta testowego: {}", toAddress);
@@ -54,15 +39,8 @@ public class EmailRestClient {
         }
         return false;
     }
-//    @PreAuthorize("permitAll()")
-//    public void sendActivationEmail(String toAddress, String token, String langCode) {
-//        String subject = translator.translateForUser("email.activation.subject", langCode);
-//        String content = translator.translateForUser("email.activation.content", langCode, frontendUrl, token);
-//        sendEmail(toAddress, subject, content);
-//    }
 
-
-    @Async // <- Możesz zostawić @Async, aby strzał sieciowy nie blokował wątku!
+    @Async
     public void sendActivationEmail(String toAddress, String token, String langCode) {
         if (isBypassed(toAddress)) return;
         emailClient.sendActivationEmail(
@@ -76,9 +54,6 @@ public class EmailRestClient {
         emailClient.sendActivationReminderEmail(
                 new ActivationEmailRequest(toAddress, token, langCode, frontendUrl)
         );
-//        String subject = translator.translateForUser("email.activation.reminder.subject", langCode);
-//        String content = translator.translateForUser("email.activation.reminder.content", langCode, frontendUrl, token);
-//        sendEmail(toAddress, subject, content);
     }
 
     @Async

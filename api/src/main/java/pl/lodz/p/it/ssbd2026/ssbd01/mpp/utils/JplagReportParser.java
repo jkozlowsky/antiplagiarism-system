@@ -9,6 +9,9 @@ import pl.lodz.p.it.ssbd2026.ssbd01.dto.mpp.TeacherMatchedFileDTO;
 import pl.lodz.p.it.ssbd2026.ssbd01.exceptions.ReportFileException;
 import pl.lodz.p.it.ssbd2026.ssbd01.mpp.reportObjects.TopComparison;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,10 +23,13 @@ import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JplagReportParser {
 
     private static final int MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-
+    private static final String KEY_START = "start";
+    private static final String KEY_TOKENS = "tokens";
+    private static final String KEY_LENGTH = "length";
 
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -32,7 +38,7 @@ public class JplagReportParser {
         try (ZipFile zipFile = new ZipFile(pathToJplagFile)) {
 
             ZipEntry topEntry = zipFile.getEntry("topComparisons.json");
-            if (topEntry == null) throw new RuntimeException("Brak topComparisons.json w archiwum.");
+            if (topEntry == null) throw new ReportFileException(new IllegalArgumentException("Brak topComparisons.json w archiwum."));
 
             List<TopComparison> topComparisons;
             try (InputStream is = zipFile.getInputStream(topEntry)) {
@@ -51,7 +57,10 @@ public class JplagReportParser {
                     detailEntry = zipFile.getEntry("comparisons/" + sub2 + "-" + sub1 + ".json");
                 }
 
-                String fileA = null, fileB = null, codeA = null, codeB = null;
+                String fileA = null;
+                String fileB = null;
+                String codeA = null;
+                String codeB = null;
                 List<Integer> linesA = List.of();
                 List<Integer> linesB = List.of();
 
@@ -67,8 +76,12 @@ public class JplagReportParser {
 
                             for (int i = 0; i < matchesNode.size(); i++) {
                                 JsonNode match = matchesNode.get(i);
-                                String fA = null, fB = null, cA = null, cB = null;
-                                List<Integer> lA = List.of(), lB = List.of();
+                                String fA = null;
+                                String fB = null;
+                                String cA = null;
+                                String cB = null;
+                                List<Integer> lA = List.of();
+                                List<Integer> lB = List.of();
 
                                 int t = 0;
                                 if (match.has("firstFileName") && match.has("secondFileName")) {
@@ -86,11 +99,11 @@ public class JplagReportParser {
                                     JsonNode m2 = match.get("match2");
                                     fA = m1.has("file") ? m1.get("file").asText() : m1.get("name").asText();
                                     fB = m2.has("file") ? m2.get("file").asText() : m2.get("name").asText();
-                                    int s1 = m1.has("start") ? m1.get("start").asInt() : m1.get("startLine").asInt();
-                                    int l1 = m1.has("length") ? m1.get("length").asInt() : m1.get("tokens").asInt();
-                                    int s2 = m2.has("start") ? m2.get("start").asInt() : m2.get("startLine").asInt();
-                                    int l2 = m2.has("length") ? m2.get("length").asInt() : m2.get("tokens").asInt();
-                                    t = m1.has("length") ? m1.get("length").asInt() : m1.get("tokens").asInt();
+                                    int s1 = m1.has(KEY_START) ? m1.get(KEY_START).asInt() : m1.get("startLine").asInt();
+                                    int l1 = m1.has(KEY_LENGTH) ? m1.get(KEY_LENGTH).asInt() : m1.get(KEY_TOKENS).asInt();
+                                    int s2 = m2.has(KEY_START) ? m2.get(KEY_START).asInt() : m2.get("startLine").asInt();
+                                    int l2 = m2.has(KEY_LENGTH) ? m2.get(KEY_LENGTH).asInt() : m2.get(KEY_TOKENS).asInt();
+                                    t = m1.has(KEY_LENGTH) ? m1.get(KEY_LENGTH).asInt() : m1.get(KEY_TOKENS).asInt();
                                     lA = IntStream.range(s1, s1 + l1).boxed().toList();
                                     lB = IntStream.range(s2, s2 + l2).boxed().toList();
                                 }
@@ -160,7 +173,9 @@ public class JplagReportParser {
             if (!e.isDirectory() && eName.startsWith("files/" + submission + "/") && eName.endsWith(normalizedFileName)) {
                 try (InputStream is = zipFile.getInputStream(e)) {
                     return readStreamSafely(is);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    // fallback do dalszego przeszukiwania archiwum
+                }
             }
         }
         return "// Nie odczytano kodu z archiwum.\n// Próbowano znaleźć: " + exactPath;
