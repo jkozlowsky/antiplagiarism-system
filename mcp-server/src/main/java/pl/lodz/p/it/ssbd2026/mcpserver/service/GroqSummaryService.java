@@ -130,6 +130,9 @@ public class GroqSummaryService {
                         .append(" | max=").append(formatPercent(c.maxSimilarity()))
                         .append(", śr=").append(formatPercent(c.averageSimilarity()))
                         .append('\n'));
+        sb.append("Nie korzystaj z tabel, bo się ładnie nie chcą formatować na froncie. " +
+                "Możesz korzystać z formatowania tekstu w Markdown ale nei stosuj tabel!!!")
+                .append("\n");
 
         return sb.toString();
     }
