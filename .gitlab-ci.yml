@@ -42,16 +42,16 @@ test-backend:
     expire_in: 1 week
 
 sonarqube-check:
-  image: maven:3.6.3-jdk-11
+  image: maven:3.9.14-eclipse-temurin-25-alpine
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
+  script:
+    - mvn sonar:sonar -Dsonar.projectKey=Uczelniany-system-antyplagiatowy
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script:
-    - mvn verify sonar:sonar -Dsonar.projectKey=Uczelniany-system-antyplagiatowy
   allow_failure: true
 
 
