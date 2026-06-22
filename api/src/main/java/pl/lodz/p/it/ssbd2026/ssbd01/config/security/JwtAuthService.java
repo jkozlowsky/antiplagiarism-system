@@ -18,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 import pl.lodz.p.it.ssbd2026.ssbd01.config.consts.AccountConsts;
-import pl.lodz.p.it.ssbd2026.ssbd01.mok.repositories.AccountRepository;
 
 import javax.crypto.SecretKey;
 import java.util.Date;

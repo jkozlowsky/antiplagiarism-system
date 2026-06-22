@@ -152,6 +152,7 @@ public class JplagReportParser {
         }
 
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
             String eName = e.getName();
