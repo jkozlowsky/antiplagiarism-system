@@ -42,6 +42,8 @@ public class EmailRestClient {
 
     @Async
     public void sendActivationEmail(String toAddress, String token, String langCode) {
+        log.warn("------------frontend-url--------------");
+        log.warn(frontendUrl);
         if (isBypassed(toAddress)) return;
         emailClient.sendActivationEmail(
                 new ActivationEmailRequest(toAddress, token, langCode, frontendUrl)
