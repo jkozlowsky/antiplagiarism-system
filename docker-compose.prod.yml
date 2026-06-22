@@ -113,7 +113,7 @@ services:
     image: registry.gitlab.com/iitpl/ssbd/2026/01/api:latest
     environment:
       - TZ=Europe/Warsaw
-      - APP_FRONTEND_URL=${APP_FRONTEND_URL}
+#      - APP_FRONTEND_URL=${APP_FRONTEND_URL}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GITEA_URL=${GITEA_URL}
       - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
