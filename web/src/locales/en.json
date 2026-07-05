@@ -1,0 +1,989 @@
+{
+  "common": {
+    "goToLogin": "Go to login",
+    "cancel": "Cancel",
+    "confirmPasswordChangeTitle": "Change password?",
+    "confirmPasswordChangeDesc": "Are you sure you want to change your password? You will need to use your new password at the next authentication.",
+    "confirmSaveDesc": "Are you sure you want to save changes?",
+    "confirmSaveTitle": "Save changes?",
+    "confirmUnblockTitle": "Unblock user?",
+    "confirmBlockTitle": "Block user?",
+    "confirmUnblockDesc": "Are you sure you want to unblock this user?",
+    "confirmBlockDesc": "Are you sure you want to block this user?",
+    "unblock": "Unblock",
+    "block": "Block",
+    "confirmPasswordChangeAdminDesc": "Are you sure you want to change this user's password? They will lose access to their current credentials.",
+    "confirmPasswordResetTitle": "Confirm password reset?",
+    "confirmPasswordResetDesc": "Are you sure you want to reset the password? You must use the new password during the next authentication.",
+    "confirmEmailChangeTitle": "Confirm email change?",
+    "confirmEmailChangeDesc": "Are you sure you want to change the email address?",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No",
+    "saving": "Saving...",
+    "create": "Create",
+    "delete": "Delete",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "save": "Save",
+    "accessDenied": "You do not have access to this page",
+    "confirmAction": "Save changes",
+    "searching": "Searching...",
+    "edit": "Edit"
+  },
+  "audit": {
+    "title": "System Change History",
+    "subtitle": "Managing audit logs and database entity edit history.",
+    "filter": {
+      "all": "All entities"
+    },
+    "table": {
+      "date": "Date",
+      "author": "Author",
+      "entity": "Entity Type",
+      "entityId": "Object ID",
+      "action": "Action",
+      "modifications": "Field Modifications"
+    },
+    "details": {
+      "created": "Object creation",
+      "deleted": "Object deletion"
+    }
+  },
+  "auth": {
+    "mobileTitle": "Anti-plagiarism TUL",
+    "layoutTitle": "Academic Integrity",
+    "layoutTitleHighlight": "System",
+    "layoutSubtitle": "Advanced verification and structural source code analysis delivered for students and staff of Lodz University of Technology.",
+    "features": {
+      "gitea": {
+        "title": "Gitea Repositories",
+        "desc": "Instant integration with projects."
+      },
+      "jplag": {
+        "title": "JPlag Analysis",
+        "desc": "Plagiarism detection in code structure."
+      }
+    },
+    "footer": "Team 1 • {{year}} SSBD",
+    "title": "Academic Integrity Protection",
+    "subtitle": "Analysis of scientific contribution with precision and prestigious authority at Lodz University of Technology.",
+    "founded": "Founded in 1945",
+    "login": {
+      "heading": "Login",
+      "subheading": "Access your academic integrity dashboard",
+      "loginLabel": "LOGIN",
+      "loginPlaceholder": "jkowalski",
+      "passwordLabel": "PASSWORD",
+      "rememberMe": "Remember my device",
+      "button": "Sign In",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "New to the anti-plagiarism system?",
+      "createAccount": "Create an account",
+      "errorInvalid": "Invalid username or password.",
+      "errorBlocked": "Your account has been blocked. Please contact the administrator.",
+      "errorGeneric": "An unexpected error occurred. Please try again later.",
+      "errorGoogle": "Google login failed. Please try again.",
+      "orLoginWith": "Or log in with"
+    },
+    "register": {
+      "heading": "Create an Account",
+      "subheading": "Institutional access for instructors",
+      "name": "FIRST NAME",
+      "surname": "LAST NAME",
+      "login": "USERNAME",
+      "email": "UNIVERSITY EMAIL",
+      "password": "PASSWORD",
+      "confirmPassword": "CONFIRM PASSWORD",
+      "passwordHelper": "Minimum 8 characters, 1 uppercase letter, 1 special character.",
+      "terms": "I accept the Terms and Privacy Policy regarding scientific data processing.",
+      "button": "CREATE ACCOUNT",
+      "haveAccount": "Already registered in the portal?",
+      "loginLink": "LOG IN",
+      "successHeading": "Check your inbox",
+      "successText": "We have sent an activation link to your email address. Please click it to verify your account before logging in.",
+      "spamNote": "Don't see the email? Check your SPAM folder.",
+      "backToLogin": "BACK TO LOGIN"
+    },
+    "activate": {
+      "loading": "Activating account...",
+      "loadingSub": "Please wait, we are verifying your token.",
+      "success": "Account Activated!",
+      "successSub": "Your email address has been successfully verified.",
+      "proceed": "PROCEED TO LOGIN",
+      "error": "Activation Failed",
+      "errorSub": "The activation link is invalid, expired, or your account is already active.",
+      "back": "BACK TO LOGIN"
+    },
+    "2fa": {
+      "heading": "Verification",
+      "description": "We have sent an 8-digit authentication code to the email address assigned to your account. Enter it below.",
+      "inputLabel": "Authorization code (8 digits)",
+      "submit": "Log In",
+      "resend": "Didn't receive the code? Resend",
+      "cancel": "Cancel and return to login",
+      "code": {
+        "required": "Authorization code is required",
+        "validationError": "The code must consist of exactly 8 digits",
+        "invalid": "Invalid verification code.",
+        "retry": {
+          "success": "A new code has been sent! Check your inbox.",
+          "fail": "Failed to resend the code."
+        },
+        "unexpectedError": "An unexpected error occurred."
+      }
+    },
+    "unblock": {
+      "heading": "Unblocking account after inactivity",
+      "description": "Click the button to unblock your account due to inactivity.",
+      "button": "UNBLOCK ACCOUNT",
+      "loading": "Unblocking account",
+      "loadingSub": "The account unblocking process is being processed by the system.",
+      "success": "Account unblocked",
+      "successSub": "Your account has been successfully unblocked. You can now log in.",
+      "proceed": "PROCEED TO LOGIN",
+      "error": "Unblocking failed",
+      "errorSub": "The link is invalid, expired, or your account does not require unblocking.",
+      "back": "BACK TO LOGIN"
+    },
+    "emailLogin": {
+      "heading": "Login with code",
+      "subheading": "Enter your email address to receive a one-time login code.",
+      "errorBlocked": "Your account has been blocked.",
+      "errorNotFound": "An account with the provided email address does not exist.",
+      "errorGeneric": "An unexpected error occurred.",
+      "emailLabel": "EMAIL ADDRESS",
+      "emailPlaceholder": "213767@edu.p.lodz.pl",
+      "submitButton": "Send code",
+      "backToLogin": "Back to login",
+      "verify": {
+        "heading": "Enter code",
+        "subheading": "We sent a verification code to",
+        "subheadingTime": "The code is valid for 5 minutes.",
+        "errorInvalid": "Invalid or expired code.",
+        "errorGeneric": "An unexpected error occurred.",
+        "codeLabel": "ONE-TIME CODE",
+        "codePlaceholder": "e.g. A1B2C3D4E5",
+        "submitButton": "Verify and log in",
+        "backToLogin": "Back"
+      }
+    }
+  },
+  "userList": {
+    "changePasswordFor": "Change password for",
+    "cancel": "Cancel",
+    "title": "User Management",
+    "subtitle": "Efficiently manage institutional access, define academic roles, and monitor researchers' activity within the university repository.",
+    "refresh": "Refresh",
+    "filterPlaceholder": "Filter by name, email...",
+    "noResults": "No results found",
+    "changePassword": "Change password",
+    "table": {
+      "role": "Role",
+      "firstName": "First Name",
+      "surname": "Last Name",
+      "login": "Username",
+      "email": "Email",
+      "lastLogin": "Last Login",
+      "actions": "Actions",
+      "edit": "Edit",
+      "noUsers": "No users found matching the filter criteria."
+    },
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "users": "users",
+      "page": "Page",
+      "first": "First",
+      "prev": "Previous",
+      "next": "Next",
+      "last": "Last"
+    }
+  },
+  "userEdit": {
+    "title": "Edit User",
+    "noRoles": "No roles assigned",
+    "stats": {
+      "title": "Account statistics",
+      "lastLogin": "Last login",
+      "lastLoginFail": "Last failed login",
+      "never": "Never",
+      "createdAt": "Created at",
+      "createdBy": "By",
+      "updatedAt": "Modified at",
+      "modifiedBy": "By"
+    },
+    "credentials": {
+      "title": "Credentials",
+      "login": "Username",
+      "loginHint": "The institutional identifier cannot be changed manually.",
+      "password": "Password"
+    },
+    "personal": {
+      "firstName": "First Name",
+      "surname": "Last Name",
+      "email": "Email address",
+      "emailError": "Please provide a valid email address.",
+      "changeEmail": "Change email"
+    },
+    "blockStatus": {
+      "title": "User account suspension",
+      "hint": "Suspend user account in the system",
+      "active": "Active",
+      "blocked": "Suspended"
+    },
+    "roles": {
+      "title": "Assigned roles",
+      "student": "Student",
+      "teacher": "Teacher",
+      "admin": "Administrator",
+      "adminBadge": "ADMIN"
+    },
+    "actions": {
+      "discard": "Discard changes",
+      "save": "Save changes"
+    },
+    "messages": {
+      "updateError": "An error occurred while updating roles."
+    }
+  },
+  "force_password_change": {
+    "title": "Enforced Password Change",
+    "description": "For security reasons, you must set a new password before entering the application."
+  },
+  "password": {
+    "old": "Old password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "change_button": "Change password and unlock access"
+  },
+  "profile": {
+    "oldPassword": "Old password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "applyChanges": "Save changes",
+    "loading": "Loading profile...",
+    "errorLoad": "Failed to load user data.",
+    "accountSettings": "Account Settings",
+    "personalInfo": "Personal Information",
+    "fullName": "First and Last Name",
+    "email": "Email",
+    "login": "Username",
+    "edit": "Edit",
+    "userList": "User List",
+    "security": "Security",
+    "securityDesc": "Changing your password regularly increases your account's security.",
+    "changeOwnPassword": "Change own password",
+    "changePassword": "Change password",
+    "cancel": "Cancel",
+    "passwordChangedSuccess": "Password has been successfully changed!"
+  },
+  "error": {
+    "changePasswordFailed": "Failed to change password. Verify if the old password and data version are correct.",
+    "concurrent.update": "Data was modified in the background. Please try again.",
+    "password.same.as.old": "The new password cannot be the same as the old one!",
+    "password.invalid.old": "The provided old password is incorrect.",
+    "password.already.used": "The proposed password has already been used on this account in the past."
+  },
+  "emailChange": {
+    "main": {
+      "breadcrumb": "Email change",
+      "title": "Change email address",
+      "backToProfile": "Return",
+      "success": {
+        "title": "Check your mailbox",
+        "description": "A link to change your email address has been sent to your current address. Click it to complete the action.",
+        "timeLimit": "The link is valid for 10 minutes.",
+        "backButton": "Return"
+      },
+      "form": {
+        "title": "Change your email address",
+        "subtitle": "Changing the email address requires two-step verification via a link sent to your current mailbox.",
+        "description1": "After clicking the button, the system will send a link to your ",
+        "descriptionBold": "current email address",
+        "description2": " to change it.",
+        "submitButton": "Send link to change email address"
+      },
+      "error": {
+        "default": "An error occurred while attempting to change the email address.",
+        "unexpected": "An unexpected error occurred."
+      },
+      "resendButton": "Resend",
+      "resendSuccess": "Sent successfully"
+    },
+    "confirm": {
+      "invalidLink": {
+        "title": "The link is invalid",
+        "description": "The link is invalid or has expired, please try again."
+      },
+      "success": {
+        "title": "Email has been changed",
+        "description": "Your email address has been successfully updated."
+      },
+      "form": {
+        "title": "Enter new email address",
+        "subtitle": "To change the email address, enter the new address and confirm the operation with your current account password.",
+        "newEmailLabel": "New email address",
+        "passwordLabel": "Current password",
+        "submitButton": "Confirm email address change"
+      },
+      "backButton": "Return",
+      "error": {
+        "wrongCredentials": "Invalid account credentials.",
+        "expired": "The link has expired or is invalid.",
+        "unexpected": "An unexpected error occurred."
+      }
+    },
+    "revert": {
+      "loading": "Restoring email address",
+      "success": {
+        "title": "Previous email address restored",
+        "description": "The previous email address has been successfully restored to the account."
+      },
+      "error": {
+        "title": "Error restoring email address",
+        "description": "The restoration link is invalid, has been used, or has expired."
+      }
+    }
+  },
+  "passwordReset": {
+    "confirm": {
+      "invalidLinkTitle": "Invalid link",
+      "invalidLinkDesc": "This password reset link is invalid or does not contain the required security token.",
+      "requestNewLink": "Request a new link",
+      "successTitle": "Password has been updated",
+      "successDesc": "Your password has been successfully changed. You can now log in using your new credentials.",
+      "returnToLogin": "Return to login",
+      "title": "Create new password",
+      "subtitle": "Please enter a new password below.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Reset password",
+      "backToLogin": "Return to login",
+      "errorExpired": "Failed to reset password. The link might have expired or has already been used.",
+      "errorUnexpected": "An unexpected error occurred."
+    },
+    "init": {
+      "successTitle": "Check your mailbox",
+      "successDesc1": "We sent a password reset link to the address ",
+      "successDesc2": ". Please check your inbox and SPAM folder.",
+      "returnToLogin": "Return to login",
+      "title": "Reset password",
+      "subtitle": "Enter your email address and we will send you a secure link to reset your password.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "backToLogin": "Return to login",
+      "errorSend": "An error occurred while sending the reset link.",
+      "errorUnexpected": "An unexpected error occurred.",
+      "codeLogin": "Log in with a one-time code"
+    }
+  },
+  "header": {
+    "title": "Anti-plagiarism System",
+    "og nazwa wraca": "great regards",
+    "subtitle": "Lodz University of Technology",
+    "dashboard": "Main Dashboard",
+    "userManagement": "User Management",
+    "defaultUser": "User",
+    "defaultGuest": "Guest",
+    "logout": "Log Out",
+    "settings": {
+      "name": "System settings",
+      "language": "Language",
+      "activeRole": "Active role"
+    }
+  },
+  "about": {
+    "title": "aleikum asalam"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": {
+      "invalid": "Please provide a valid email address (e.g. name@edu.p.lodz.pl)"
+    },
+    "password": {
+      "minLength": "Password must contain at least 12 characters",
+      "maxLength": "Password can contain a maximum of 64 characters",
+      "uppercase": "Password must contain at least one uppercase letter",
+      "lowercase": "Password must contain at least one lowercase letter",
+      "number": "Password must contain at least one digit",
+      "specialChar": "Password must contain at least one uppercase letter and special character",
+      "confirmRequired": "Please confirm your password",
+      "mismatch": "Passwords match fail"
+    },
+    "user": {
+      "nameMin": "First name must contain at least 3 characters",
+      "nameMax": "First name cannot exceed 32 characters",
+      "nameFormat": "First name must start with a letter and can only contain letters, spaces, hyphens, and apostrophes",
+      "surnameMin": "Last name must contain at least 3 characters",
+      "surnameMax": "Last name cannot exceed 32 characters",
+      "surnameFormat": "Last name must start with a letter and can only contain letters, spaces, hyphens, and apostrophes",
+      "loginMin": "Username must contain at least 3 characters",
+      "loginMax": "Username cannot exceed 32 characters",
+      "loginFormat": "Username can only contain letters and digits"
+    },
+    "terms": {
+      "required": "You must accept the terms and conditions"
+    },
+    "emailCode": {
+      "required": "Code is required",
+      "length": "The code must consist of exactly 10 characters",
+      "format": "The code can only contain letters and digits"
+    }
+  },
+  "sessionModal": {
+    "title": "Session is about to expire",
+    "desc1": "For security reasons, you will be logged out in ",
+    "desc2": " seconds. Do you want to extend your session?",
+    "logout": "Log out",
+    "extend": "Extend session"
+  },
+  "sidebar": {
+    "userManagement": "User Management",
+    "subjectList": "My subjects",
+    "globalRules": "Rule presets",
+    "reportList": "Report list",
+    "studentScan": "Check your code",
+    "changeSubjectManager": "Change subject's manager",
+    "auditLogs": "System Audit"
+  },
+  "subjectUsers": {
+    "title": "Student list for subject",
+    "subtitle": "Browse the list of students, their repositories, and average plagiarism ratio.",
+    "searchPlaceholder": "Search...",
+    "noResults": "No students assigned to this subject.",
+    "table": {
+      "firstName": "First Name",
+      "surname": "Last Name",
+      "repoName": "Repository name",
+      "plagiarism": "Average similarity index ratio",
+      "noData": "No scan results available"
+    }
+  },
+  "globalRules": {
+    "error": {
+      "fetch": "Failed to retrieve rule templates",
+      "createFailed": "Action failed. Please check data validity.",
+      "invalidTokens": "Minimum tokens count must be at least 1",
+      "invalidTickets": "Value cannot be negative",
+      "updateFailed": "Update failed. Please try again."
+    },
+    "add": {
+      "title": "Add new rule",
+      "submit": "Create rule"
+    },
+    "edit": {
+      "title": "Edit rule",
+      "submit": "Save changes"
+    },
+    "editConfirmTitle": "Confirm edit",
+    "editConfirmDescription": "Are you sure you want to save the changes made to this rule?",
+    "form": {
+      "raportLevelLabel": "Report visibility level",
+      "studentTicketsLabel": "Maximum submissions per student",
+      "minTokensLabel": "Minimum matching tokens threshold",
+      "normalizationLabel": "Enable normalization"
+    },
+    "table": {
+      "raportLevel": "Report visibility level",
+      "studentTickets": "Submissions per student",
+      "minTokens": "Min. token match (seed)",
+      "normalization": "Normalization",
+      "actions": "Actions"
+    },
+    "noResults": "No rule templates available",
+    "levels": {
+      "NOTHING": "None",
+      "ONLY_PERCENTAGES": "Percentages only",
+      "ONLY_HIGHEST_PERCENT": "Highest similarity only"
+    },
+    "subject": {
+      "create": {
+        "title": "Create a new subject"
+      },
+      "name": "Subject name",
+      "organizationName": "Organization name on Gitea",
+      "edition": "Edition (e.g. 2026)",
+      "giteaURL": "Gitea URL address",
+      "subjectDescription": "Subject description",
+      "templateId": "Rule template (optional)",
+      "template": {
+        "none": "-- None (Custom configuration below) --"
+      },
+      "manualRules": {
+        "title": "Manual rule configuration"
+      },
+      "rules": {
+        "studentTicketCount": "Submission limit per student",
+        "minimumTokensMatch": "Minimum token match",
+        "enableNormalization": "Enable code normalization"
+      },
+      "info": {
+        "templateActive": "Verification rules will be copied automatically from the selected template."
+      }
+    },
+    "deleteTitle": "Delete rule template",
+    "deleteConfirmation": "Are you sure you want to delete this rule template? This will cancel and remove all associated scheduled checks.",
+    "deleteSuccess": "Rule template has been successfully deleted.",
+    "deleteError": "An error occurred while deleting the rule template.",
+    "deleteErrorNotFound": "Rule not found. It might have already been deleted.",
+    "conflictError": "Data was modified by another user. Refresh the view and try again."
+  },
+  "reportList": {
+    "title": "My reports",
+    "sub": "Browse and manage academic integrity analysis reports across all available subjects.",
+    "refresh": "Refresh",
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "users": "reports",
+      "page": "Page",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "list": {
+      "subject": "Subject",
+      "creation_date": "Created at",
+      "avg": "Average similarity",
+      "action": "Action",
+      "notFound": "No reports found",
+      "delete": "Delete",
+      "viewDetails": "Show report details"
+    }
+  },
+  "studentReportList": {
+    "title": "My reports",
+    "sub": "Browse your anti-plagiarism reports across all assigned subjects.",
+    "refresh": "Refresh",
+    "list": {
+      "subject": "Subject / Tag",
+      "creation_date": "Creation date",
+      "avg": "Average similarity",
+      "action": "Actions",
+      "notFound": "You currently have no available reports to review.",
+      "view": "View report"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of"
+    }
+  },
+  "studentReportDetails": {
+    "back": "Back to list",
+    "privacyNotice": "This view has been anonymized. According to the anti-plagiarism system policy, students do not have insight into the source code — only anonymized percentage statistics are presented.",
+    "hiddenTitle": "Results hidden",
+    "hiddenDesc": "The instructor has disabled the detailed preview for this report. If you have any questions, please contact your lecturer.",
+    "noMatches": "No significant similarities found",
+    "noMatchesSub": "The system did not detect plagiarism within your repository in this report.",
+    "matchesTitle": "Found similarities in your code",
+    "comparedWith": "Compared with:",
+    "anonymized": "Another Student's Repository",
+    "metrics": {
+      "studentSimilarity": "Amount of your code in the foreign repository",
+      "otherSimilarity": "Amount of foreign code in your repository",
+      "average": "Average repository similarity"
+    }
+  },
+  "studentScan": {
+    "title": "Check your code",
+    "sub": "Verify your code against potential plagiarism.",
+    "form": {
+      "tag": "Test tag",
+      "tagPlaceholder": "e.g. IAS64",
+      "submit": "Start scanning",
+      "scanning": "Scanning...",
+      "repository": "Repository",
+      "repositoryPlaceholder": "— select repository —",
+      "noRepositories": "No repositories assigned to this user.",
+      "scansUsed": "Number of performed scans",
+      "studentTag": "Assigned test tag",
+      "studentTagPlaceholder": "Provide the tag matching the uploaded code",
+      "taskTag": "Target assignment tag",
+      "taskTagPlaceholder": "e.g. task1_ias64"
+    },
+    "result": {
+      "title": "Scan result",
+      "tag": "Tag",
+      "subject": "Subject",
+      "scannedAt": "Scanned at",
+      "matches": "Matches",
+      "noMatches": "No matches",
+      "similarity": "Similarity","btn": {
+        "manage": "Manage course",
+        "stats": "Statistics",
+        "view": "View",
+        "students": "Students",
+        "studentsTitle": "Show students list"
+      },
+      "matchedLines": "Matching code lines",
+      "openReport" : "Open report"
+    },
+    "errors": {
+      "noTickets": "No available code scans remaining for this repository.",
+      "accessDenied": "Access denied to this repository.",
+      "notFound": "Repository not found.",
+      "optimisticLock": "Optimistic lock error — refresh the page and try again.",
+      "base": "An error occurred during the scan."
+    },
+    "history": {
+      "title": "Scan history",
+      "empty": "No previous code scans recorded."
+    }
+  },
+  "subject": {
+    "deleteVersionError": "Error: Missing subject version (versionHash). Refresh the page.",
+    "manager": {
+      "change": {
+        "title": "Change subject manager",
+        "submit": "Change manager"
+      },
+      "subtitle": "Manage the assignment of the primary coordinator to the selected subject. Enter the exact username.",
+      "selectSubject": "Select subject",
+      "selectPlaceholder": "Select subject",
+      "selectNewManager": "Select new manager",
+      "selectFirst": "Select a subject first",
+      "selectFromList": "Select from assigned staff",
+      "currentRole": "(Current: {{role}})",
+      "loginInput": "Enter new manager's username",
+      "loginPlaceholder": "e.g. jdoe",
+      "teacherFound": "Valid identifier. You can assign this user.",
+      "warning": "This action will immediately revoke ownership rights from the current instructor. The save option will unlock once the username is successfully verified in the background.",
+      "success": "Successfully assigned the new manager to the subject!",
+      "error": {
+        "fetchSubjects": "Failed to load subjects list.",
+        "fetchTeachers": "Failed to load staff list.",
+        "noCandidates": "This subject has no additional teachers assigned who are ready to take over the manager role.",
+        "notATeacher": "Teacher with the specified username was not found.",
+        "noSubjectSelected": "Please select a subject.",
+        "notVerified": "A valid teacher username has not been provided.",
+        "notFound": "The indicated user does not possess teacher roles or the subject does not exist.",
+        "conflict": "Subject data was modified in the meantime. Refresh the page and try again.",
+        "forbidden": "Access denied to change the manager for this subject.",
+        "unexpected": "An unexpected error occurred. Please try again."
+      }
+    },
+    "translation": "Show translation",
+    "list": {
+      "title": "Managed Subjects",
+      "description": "Browse your subjects and manage anti-plagiarism rules as well as organizations on Gitea.",
+      "noDescription": "No subject description provided.",
+      "role": {
+        "student": "Student Panel / My Subjects",
+        "teacher": "Instructor Panel / My Subjects"
+      },
+      "tabs": {
+        "active": "Active Courses",
+        "archived": "Archived"
+      },
+      "btn": {
+        "create": "Create Subject"
+      },
+      "empty": "No subjects found in this category.",
+      "card": {
+        "archived": "Archived",
+        "pending": "Pending",
+        "noScanPlanned": "No scans planned",
+        "nextScan": "Next scan",
+        "exampleImage": "[ Sample image ]",
+        "btn": {
+          "manage": "Manage course",
+          "stats": "Statistics",
+          "view": "View",
+          "students": "Students",
+          "studentsTitle": "Show students list"
+        },
+        "status": {
+          "archived": "Archived",
+          "pending": "Pending",
+          "noScanPlanned": "No scans planned"
+        }
+      },
+      "fetchError": "An error occurred during retrieval."
+    },
+    "details": {
+      "fetchError": "Error fetching data.",
+      "notFound": "Subject not found.",
+      "breadcrumb": "Course Management",
+      "edition": "Edition",
+      "organization": "Gitea Organization",
+      "editionLabel": "Edition:",
+      "organizationLabel": "Organization:",
+      "repoHeader": "Your Repository",
+      "availableTickets": "Available scan tokens:",
+      "runScanBtn": "Execute code scan",
+      "noRepoAssigned": "You are not assigned to any repository within this subject.",
+      "reportsHeader": "Reports Visibility",
+      "reportLevelLabel": "Access level to results:",
+      "goToReportsBtn": "Go to my reports",
+      "noDescription": "No subject description provided.",
+      "archivedWarning": "This subject is archived. Running scans, deleting reports, and editing are locked.",
+      "studentBreadcrumb": "Subject details",
+      "studentArchivedWarning": "This subject is archived. Running new scans from your repository is locked.",
+      "syncError": "Gitea communication failure during synchronization.",
+      "syncGitea": "Refresh from Gitea",
+      "actions": {
+        "schedule": "Schedule",
+        "edit": "Edit Subject",
+        "analyze": "Run Analysis",
+        "statistics": "Statistics",
+        "settings": "Archive Settings"
+      },
+      "stats": {
+        "students": "NUMBER OF STUDENTS",
+        "repos": "ACTIVE REPOSITORIES",
+        "pending": "ANALYSES PERFORMED",
+        "similarity": "AVERAGE SIMILARITY"
+      },
+      "reports": {
+        "title": "Recent Reports",
+        "viewAll": "See all →",
+        "report": "Report",
+        "reposCount": "student repositories",
+        "modalTitle": "All Anti-Plagiarism Reports",
+        "modalReposCount": "Repositories",
+        "repositories": "Repositories scanned:",
+        "empty": "No generated reports available."
+      },
+      "repos": {
+        "title": "Active Student Repositories",
+        "refresh": "Refresh",
+        "filter": "Filter",
+        "sort": "Sort by date",
+        "lastCommit": "Last commit",
+        "contributors": "Users",
+        "viewCode": "Preview Code",
+        "analyze": "Analyze",
+        "tickets": "Used scans",
+        "empty": "No synchronized repositories. Click \"Refresh from Gitea\" to download updates.",
+        "noUsers": "No members assigned"
+      },
+      "status": {
+        "clean": "Code clean",
+        "alert": "Similarity detected",
+        "pending": "Awaiting verification"
+      },
+      "noAccess": "Access denied to view detailed course data.",
+      "visibility": {
+        "ONLY_PERCENTAGES": {
+          "label": "Percentages only",
+          "description": "You see percentage similarity results for all your scans. Access to detailed source code comparison is locked."
+        },
+        "ONLY_HIGHEST_PERCENT": {
+          "label": "Highest percentage only",
+          "description": "You only see your highest similarity percentage score. Other scans and exact code comparisons are locked."
+        },
+        "NOTHING": {
+          "label": "None",
+          "description": "All generated reports are hidden from you. Only the course instructors possess full analysis insights."
+        }
+      }
+    },
+    "student": {
+      "title": "My subjects",
+      "description": "Scan your own repositories for plagiarism"
+    },
+    "analysis": {
+      "modal": {
+        "title": "Trigger new analysis",
+        "description": "Enter the corresponding tag to launch the analysis for all repositories matching this tag.",
+        "tagLabel": "Gitea tag",
+        "tagPlaceholder": "e.g. v67",
+        "submit": "Start analysis"
+      }
+    },
+    "delete": "Delete subject",
+    "deleteConfirmTitle": "Are you sure you want to delete this subject?",
+    "deleteConfirmMessage": "This operation is irreversible. All subject data, repositories, and report files will be permanently erased from the system.",
+    "deleteGiteaOption": "Also delete the associated organization on the Gitea server",
+    "deleteSuccess": "Subject successfully removed.",
+    "deleteError": "An error occurred while deleting the subject.",
+    "deleteConflict": "Subject data was modified by another user. Refresh the page and try again.",
+    "deleteForbidden": "You do not have permission to delete this subject."
+  },
+  "schedule": {
+    "modal": {
+      "title": "Schedule analysis",
+      "desc": "Specify execution date and point out the repository tag to evaluate.",
+      "deadline": "Execution deadline",
+      "giteaTag": "Gitea Tag",
+      "tagPlaceholder": "e.g. lab-01",
+      "errorPast": "Cannot schedule an analysis in the past."
+    },
+    "subtitle": "Manage planned and completed repository scanning operations.",
+    "date": "Scheduled date",
+    "tag": "Analysis tag",
+    "statusLabel": "Status",
+    "status": {
+      "all": "All",
+      "planned": "Pending",
+      "executed": "Executed",
+      "failed": "Failed"
+    },
+    "empty": "No scheduled analyses.",
+    "error": {
+      "fetch": "Failed to load schedule."
+    },
+    "sort": {
+      "toggle": "Change sort direction",
+      "newest": "Newest",
+      "oldest": "Oldest"
+    },
+    "deleteScheduleTitle": "Delete schedule entry",
+    "deleteScheduleConfirm": "Are you sure you want to delete this scheduled task?",
+    "deleteScheduleError": "An error occurred while deleting the schedule entry.",
+    "deleteScheduleErrorNotFound": "Schedule entry not found. It might have already been removed.",
+    "deleteScheduleConflict": "Schedule data was modified. Refresh the page and try again.",
+    "actions": "Actions"
+  },
+  "subjectEdit": {
+    "title": "Edit Subject",
+    "subtitle": "Update subject metadata and analysis parameters.",
+    "generalInfo": "GENERAL INFORMATION",
+    "nameLabel": "Subject Name",
+    "descLabel": "Description",
+    "coTeachers": "CO-TEACHERS AND PERMISSIONS",
+    "addTeacher": "Add Instructor",
+    "searchPlaceholder": "Search by last name or email...",
+    "assignedStaff": "ASSIGNED STAFF",
+    "errorEmptyName": "Subject name cannot be empty.",
+    "errorShortName": "Subject name must be at least 3 characters long.",
+    "errorLongDesc": "Subject description is too long (maximum 500 characters).",
+    "confirmTitle": "Confirm data modification",
+    "confirmMessage": "Are you sure you want to save the entered changes? Existing business data for the subject in the database will be overwritten.",
+    "archivedWarning": "This subject is archived. Unlock it at the bottom of the page to edit data.",
+    "dangerZone": "DANGER ZONE",
+    "unarchiveSubject": "Restore subject from archive",
+    "archiveSubject": "Archive subject",
+    "unarchiveDesc": "Restoring the subject will unlock editing and scanning capabilities.",
+    "archiveDesc": "Archiving will lock editing, synchronization, and execution of new scans.",
+    "unarchiveBtn": "Unarchive",
+    "archiveBtn": "Archive",
+    "defaultError": "An error occurred during operation.",
+    "archiveError": "An error occurred while changing the archive status.",
+    "roles": {
+      "OWNER": "Owner",
+      "EDITOR": "Editor (Edit Access)",
+      "VIEWER": "Observer (Read Only)"
+    },
+    "giteaAnalysis": "GITEA AND ANALYSIS",
+    "giteaUrl": "Gitea Organization URL address",
+    "tokens": "Tokens for Students",
+    "minTokens": "Minimum token match",
+    "normalization": "Enable normalization",
+    "visibility": "Report Visibility Level",
+    "levelPercentages": "All Statistics (All comparisons)",
+    "levelHighest": "Highest result (Single comparison)",
+    "levelHidden": "Hidden (No access for students)",
+    "cancel": "Cancel",
+    "apply": "Apply Changes",
+    "loading": "Saving...",
+    "errorEmpty": "Name and URL cannot be empty.",
+    "success": "Subject has been updated."
+  },
+  "subjectCreate": {
+    "breadcrumb": "Create Subject",
+    "title": "Create New Subject",
+    "subtitle": "Enter baseline parameters and set up code analysis options.",
+    "errorEmpty": "Fill out all required fields (Name, Organization, Edition).",
+    "errorTemplate": "Select a rule template from the list.",
+    "generalInfo": "General Information",
+    "nameLabel": "Subject Name *",
+    "orgLabel": "Gitea Organization Name *",
+    "editionLabel": "Edition (Year/Semester) *",
+    "descLabel": "Subject Description",
+    "rulesSection": "Grading and Analysis Rules",
+    "visibilityLabel": "Report Visibility Level",
+    "visibilityScore": "Percentages Only - the student only sees the similarity percentage matches",
+    "visibilityHighest": "Highest Percentage Only - the student only sees the single highest score from the report",
+    "visibilityHidden": "Hidden - the student sees no analysis outcomes",
+    "jplagSettings": "Advanced scanner parameters (JPlag)",
+    "modeManual": "Manual Configuration",
+    "modeTemplate": "Use Template",
+    "templateSelect": "Select saved parameters template",
+    "templateDefault": "-- Select template from the list --",
+    "templateHelp": "Choosing a template will automatically apply its recorded token bounds and normalization choices.",
+    "tokensLabel": "Initial Tokens",
+    "minTokensLabel": "Minimum token match (%)",
+    "normalizationLabel": "Enable code normalization before scanning",
+    "scheduleSection": "Scanning Schedule",
+    "scheduleTitle": "Schedule Management",
+    "scheduleDesc": "Options for adding and configuring automated schedule intervals will be supplied in upcoming system rollouts.",
+    "submitCreating": "Creating...",
+    "submitButton": "Create Subject",
+    "errorShortName": "Subject name must be at least 3 characters long.",
+    "errorShortOrg": "Gitea organization name is too short.",
+    "defaultError": "An error occurred during operation.",
+    "noTemplates": "No saved templates in the database. Configure rules manually.",
+    "templateOption": "Template: {{tickets}} tokens (Match: {{match}}%)",
+    "confirmTitle": "Confirm subject creation",
+    "confirmMessage": "Are you sure you want to create this subject? This action will permanently write new business layouts into the relational database.",
+    "confirmAction": "I confirm",
+    "addTeacher": "Add Instructor",
+    "searchPlaceholder": "Search by last name or email...",
+    "addBtn": "Add +",
+    "noResults": "No results",
+    "assignedStaff": "ASSIGNED STAFF",
+    "noStaff": "No additional instructors. You will be assigned as Chief Owner.",
+    "roleOwner": "Owner",
+    "roleEditor": "Editor",
+    "roleViewer": "Observer"
+  },
+  "report": {
+    "teacherDetailsTitle": "Anti-Plagiarism Report Details",
+    "subject": "Subject",
+    "tag": "Report tag",
+    "createdAt": "Generated on",
+    "comparisonsList": "Detected similarities",
+    "maxSimilarity": "Max. Similarity",
+    "avgSimilarity": "Avg. Similarity",
+    "longestMatch": "Longest match (Tokens)",
+    "noCodeAvailable": "// Code unavailable. The file might not have been transmitted correctly.",
+    "fileError": "Cannot load report details. File might be corrupted or removed.",
+    "accessDenied": "Access denied to this report. Make sure you are assigned to the subject.",
+    "aiSummary": "AI summary",
+    "summaryLoading": "Generating summary…",
+    "summaryError": "Failed to generate the summary. Please try again in a moment.",
+    "notFound": "A report with the specified ID does not exist.",
+    "fetchError": "Server error occurred while fetching report details.",
+    "noComparisons": "No similarities detected in this report.",
+    "averageSimilarity": "Average similarity",
+    "similarity": "Similarity",
+    "tooltipCodeFrom": "Percentage of code from",
+    "tooltipFoundIn": "which was found inside the code of",
+    "tooltipAsymmetry": "Figures might be asymmetrical due to differing project dimensions.",
+    "repositories": "Repositories",
+    "selectRepositories": "Select repositories from the bar above to inspect the code.",
+    "files": "Files",
+    "totalTokens": "Sum of tokens",
+    "copiedFragments": "Amount of copied fragments",
+    "tokens": "tokens",
+    "tokensIn": "in",
+    "fragments": "frag.",
+    "noFiles": "No files to display",
+    "noCode": "// No code available",
+    "tokensLabel": "tokens",
+    "fragmentsLabel": "frag."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has been relocated.",
+    "goBack": "Go Back",
+    "backToHome": "Return to Home Page"
+  },
+  "success": {
+    "generic": "The operation completed successfully."
+  },
+  "errors": {
+    "unauthorized": "Your session time has ended, please log in again",
+    "networkDown": "Can't connect to server.",
+    "notFound": "The resource was not found.",
+    "generic": "An error occured",
+    "forbidden": "You do not have access to this resource.",
+    "conflict": "A conflict has occured",
+    "serverError": "There was an error on the server, try again later"
+  }
+}

@@ -1,0 +1,983 @@
+{
+  "common": {
+    "goToLogin": "Przejdź do logowania",
+    "cancel": "Anuluj",
+    "confirmPasswordChangeTitle": "Zmienić hasło?",
+    "confirmPasswordChangeDesc": "Czy napewno chcesz zmienić hasło? Przy następnym uwierzytelnieniu musisz wykorzystać nowe hasło.",
+    "confirmSaveDesc": "Czy napewno chcesz zapisać zmiany?",
+    "confirmSaveTitle": "Zapisać zmiany?",
+    "confirmUnblockTitle": "Odblokować użytkownika?",
+    "confirmBlockTitle": "Zablokować użytkownika?",
+    "confirmUnblockDesc": "Czy napewno chcesz odblokować użytkownika?",
+    "confirmBlockDesc": "Czy napewno chcesz zablokować użytkownika?",
+    "unblock": "Odblokuj",
+    "block": "Zablokuj",
+    "confirmPasswordChangeAdminDesc": "Czy napewno chcesz zmienić hasło tego użytkownika? Utraci dostęp do swoich poświadczeń.",
+    "confirmPasswordResetTitle": "Potwierdzasz reset hasła?",
+    "confirmPasswordResetDesc": "Czy napewno chcesz zresetować hasło?  Przy następnym uwierzytelnieniu musisz wykorzystać nowe hasło.",
+    "confirmEmailChangeTitle": "Potwierdzasz zmianę adresu email?",
+    "confirmEmailChangeDesc": "Czy napewno chcesz zmienić adres email?",
+    "refresh": "Odśwież",
+    "loading": "Ładowanie...",
+    "yes": "Tak",
+    "no": "Nie",
+    "saving": "Zapisywanie...",
+    "create": "Utwórz",
+    "delete": "Usuń",
+    "back": "Wróć",
+    "close": "Zamknij",
+    "confirm": "Potwierdź",
+    "save": "Zapisz",
+    "accessDenied": "Nie masz dostępu do tej strony",
+    "confirmAction": "Zapisz zmiany",
+    "searching": "Szukanie...",
+    "edit": "Edytuj"
+  },
+  "audit": {
+    "title": "Historia zmian w systemie",
+    "subtitle": "Zarządzanie logami audytowymi i historią edycji encji w bazie danych.",
+    "filter": {
+      "all": "Wszystkie encje"
+    },
+    "table": {
+      "date": "Data",
+      "author": "Autor",
+      "entity": "Typ Encji",
+      "entityId": "ID Obiektu",
+      "action": "Akcja",
+      "modifications": "Modyfikacje pól"
+    },
+    "details": {
+      "created": "Utworzenie obiektu",
+      "deleted": "Usunięcie obiektu"
+    }
+  },
+  "auth": {
+    "mobileTitle": "Antyplagiat PŁ",
+    "layoutTitle": "Uczelniany System",
+    "layoutTitleHighlight": "Antyplagiatowy",
+    "layoutSubtitle": "Zaawansowana weryfikacja i analiza strukturalna kodu źródłowego dostarczana dla studentów i pracowników Politechniki Łódzkiej.",
+    "features": {
+      "gitea": {
+        "title": "Repozytoria Gitea",
+        "desc": "Błyskawiczna integracja z projektami."
+      },
+      "jplag": {
+        "title": "Analiza JPlag",
+        "desc": "Wykrywanie plagiatu w strukturze kodu."
+      }
+    },
+    "footer": "Zespół 1 • {{year}} SSBD",
+    "title": "Ochrona Uczciwości Akademickiej",
+    "subtitle": "Analiza wkładu naukowego z precyzją i prestiżowym autorytetem na Politechnice Łódzkiej.",
+    "founded": "Założona w 1945",
+    "login": {
+      "heading": "Logowanie",
+      "subheading": "Uzyskaj dostęp do swojego panelu integralności akademickiej",
+      "loginLabel": "LOGIN",
+      "loginPlaceholder": "jkowalski",
+      "passwordLabel": "HASŁO",
+      "rememberMe": "Zapamiętaj moje urządzenie",
+      "button": "Zaloguj się",
+      "forgotPassword": "Zapomniałeś hasła?",
+      "noAccount": "Nowy w systemie antyplagiatowym?",
+      "createAccount": "Utwórz konto",
+      "errorInvalid": "Nieprawidłowy login lub hasło.",
+      "errorBlocked": "Twoje konto zostało zablokowane. Skontaktuj się z administratorem.",
+      "errorGeneric": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.",
+      "errorGoogle": "Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
+      "orLoginWith": "Lub zaloguj się przez"
+    },
+    "register": {
+      "heading": "Utwórz Konto",
+      "subheading": "Dostęp instytucjonalny dla prowadzących",
+      "name": "IMIĘ",
+      "surname": "NAZWISKO",
+      "login": "LOGIN",
+      "email": "EMAIL UCZELNIANY",
+      "password": "HASŁO",
+      "confirmPassword": "POTWIERDŹ HASŁO",
+      "passwordHelper": "Minimum 8 znaków, 1 wielka litera, 1 znak specjalny.",
+      "terms": "Akceptuję Regulamin i Politykę Prywatności dotyczącą przetwarzania danych naukowych.",
+      "button": "UTWÓRZ KONTO",
+      "haveAccount": "Jesteś już zarejestrowany w portalu?",
+      "loginLink": "ZALOGUJ SIĘ",
+      "successHeading": "Sprawdź swoją skrzynkę",
+      "successText": "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Kliknij go, aby zweryfikować konto przed logowaniem.",
+      "spamNote": "Nie widzisz wiadomości? Sprawdź folder SPAM.",
+      "backToLogin": "WRÓĆ DO LOGOWANIA"
+    },
+    "activate": {
+      "loading": "Aktywacja konta...",
+      "loadingSub": "Proszę czekać, weryfikujemy Twój token.",
+      "success": "Konto Aktywowane!",
+      "successSub": "Twój adres e-mail został pomyślnie zweryfikowany.",
+      "proceed": "PRZEJDŹ DO LOGOWANIA",
+      "error": "Aktywacja Nie Powiodła Się",
+      "errorSub": "Link aktywacyjny jest nieprawidłowy, wygasł lub Twoje konto jest już aktywne.",
+      "back": "WRÓĆ DO LOGOWANIA"
+    },
+    "2fa": {
+      "heading": "Weryfikacja",
+      "description": "Na Twój adres e-mail przypisany do konta przesłaliśmy 8-cyfrowy kod uwierzytelniający. Wprowadź go poniżej.",
+      "inputLabel": "Kod autoryzacyjny (8 cyfr)",
+      "submit": "Zaloguj się",
+      "resend": "Nie otrzymałeś kodu? Wyślij ponownie",
+      "cancel": "Anuluj i wróć do logowania",
+      "code": {
+        "required": "Kod autoryzacyjny jest wymagany",
+        "validationError": "Kod musi składać się dokładnie z 8 cyfr",
+        "invalid": "Nieprawidłowy kod weryfikacyjny.",
+        "retry": {
+          "success": "Nowy kod został wysłany! Sprawdź swoją skrzynkę.",
+          "fail": "Nie udało się wysłać kodu ponownie."
+        },
+        "unexpectedError": "Wystąpił nieoczekiwany błąd."
+      }
+    },
+    "unblock": {
+      "heading": "Odblokowanie konta po nieaktywności",
+      "description": "Kliknij przycisk, aby odblokować swoje konto z powodu nieaktywności.",
+      "button": "ODBLOKUJ KONTO",
+      "loading": "Odblokowywanie konta",
+      "loadingSub": "Proces odblokowywania konta jest przetwarzany przez system.",
+      "success": "Konto odblokowane",
+      "successSub": "Twoje konto zostało pomyślnie odblokowane. Możesz się teraz zalogować.",
+      "proceed": "PRZEJDŹ DO LOGOWANIA",
+      "error": "Odblokowanie nie powiodło się",
+      "errorSub": "Link jest nieprawidłowy, wygasł lub Twoje konto nie wymaga odblokowania.",
+      "back": "WRÓĆ DO LOGOWANIA"
+    },
+    "emailLogin": {
+      "heading": "Logowanie kodem",
+      "subheading": "Wprowadź swój adres e-mail, aby otrzymać jednorazowy kod logowania.",
+      "errorBlocked": "Twoje konto zostało zablokowane.",
+      "errorNotFound": "Konto z podanym adresem e-mail nie istnieje.",
+      "errorGeneric": "Wystąpił nieoczekiwany błąd.",
+      "emailLabel": "ADRES E-MAIL",
+      "emailPlaceholder": "213767@edu.p.lodz.pl",
+      "submitButton": "Wyślij kod",
+      "backToLogin": "Wróć do logowania",
+      "verify": {
+        "heading": "Wprowadź kod",
+        "subheading": "Wysłaliśmy kod weryfikacyjny na adres",
+        "subheadingTime": "Kod jest ważny przez 5 minut.",
+        "errorInvalid": "Nieprawidłowy lub wygasły kod.",
+        "errorGeneric": "Wystąpił nieoczekiwany błąd.",
+        "codeLabel": "KOD JEDNORAZOWY",
+        "codePlaceholder": "np. A1B2C3D4E5",
+        "submitButton": "Zweryfikuj i zaloguj",
+        "backToLogin": "Wstecz"
+      }
+    }
+  },
+  "userList": {
+    "changePasswordFor": "Zmień hasło dla",
+    "cancel": "Anuluj",
+    "title": "Zarządzanie użytkownikami",
+    "subtitle": "Skutecznie zarządzaj dostępem instytucjonalnym, definiuj role akademickie i monitoruj aktywność badaczy w repozytorium uniwersyteckim.",
+    "refresh": "Odśwież",
+    "filterPlaceholder": "Filtruj po imieniu, e-mailu...",
+    "noResults": "Brak wyników",
+    "changePassword": "Zmień hasło",
+    "table": {
+      "role": "Rola",
+      "firstName": "Imię",
+      "surname": "Nazwisko",
+      "login": "Login",
+      "email": "E-mail",
+      "lastLogin": "Ostatnie logowanie",
+      "actions": "Akcje",
+      "edit": "Edytuj",
+      "noUsers": "Nie znaleziono użytkowników spełniających kryteria filtrowania."
+    },
+    "pagination": {
+      "showing": "Wyświetlanie",
+      "to": "do",
+      "of": "z",
+      "users": "użytkowników",
+      "page": "Strona",
+      "first": "Pierwsza",
+      "prev": "Poprzednia",
+      "next": "Następna",
+      "last": "Ostatnia"
+    }
+  },
+  "userEdit": {
+    "title": "Edycja Użytkownika",
+    "noRoles": "Brak przypisanych ról",
+    "stats": {
+      "title": "Statystyki konta",
+      "lastLogin": "Ostatnie logowanie",
+      "lastLoginFail": "Ostatnie nieudane logowanie",
+      "never": "Nigdy",
+      "createdAt": "Utworzono",
+      "createdBy": "Przez",
+      "updatedAt": "Zmodyfikowano",
+      "modifiedBy": "Przez"
+    },
+    "credentials": {
+      "title": "Dane uwierzytelniające",
+      "login": "Login",
+      "loginHint": "Identyfikator instytucjonalny nie może być zmieniony ręcznie.",
+      "password": "Hasło"
+    },
+    "personal": {
+      "firstName": "Imię",
+      "surname": "Nazwisko",
+      "email": "Adres e-mail",
+      "emailError": "Podaj poprawny adres e-mail.",
+      "changeEmail": "Zmień e-mail"
+    },
+    "blockStatus": {
+      "title": "Blokada konta użytkownika",
+      "hint": "Zablokuj konto użytkownika w systemie",
+      "active": "Aktywny",
+      "blocked": "Zablokowany"
+    },
+    "roles": {
+      "title": "Przypisane role",
+      "student": "Student",
+      "teacher": "Prowadzący",
+      "admin": "Administrator",
+      "adminBadge": "ADMIN"
+    },
+    "actions": {
+      "discard": "Odrzuć zmiany",
+      "save": "Zapisz zmiany"
+    },
+    "messages": {
+      "updateError": "Wystąpił błąd podczas aktualizacji ról."
+    }
+  },
+  "force_password_change": {
+    "title": "Wymuszona zmiana hasła",
+    "description": "Ze względów bezpieczeństwa musisz ustalić nowe hasło przed wejściem do aplikacji."
+  },
+  "password": {
+    "old": "Stare hasło",
+    "new": "Nowe hasło",
+    "confirm": "Potwierdź nowe hasło",
+    "change_button": "Zmień hasło i odblokuj dostęp"
+  },
+  "profile": {
+    "oldPassword": "Stare hasło",
+    "newPassword": "Nowe hasło",
+    "confirmNewPassword": "Potwierdź nowe hasło",
+    "applyChanges": "Zapisz zmiany",
+    "loading": "Wczytywanie profilu...",
+    "errorLoad": "Nie udało się wczytać danych użytkownika.",
+    "accountSettings": "Ustawienia Konta",
+    "personalInfo": "Informacje osobiste",
+    "fullName": "Imię i Nazwisko",
+    "email": "E-mail",
+    "login": "Login",
+    "edit": "Edytuj",
+    "userList": "Lista Użytkowników",
+    "security": "Bezpieczeństwo",
+    "securityDesc": "Regularna zmiana hasła zwiększa bezpieczeństwo Twojego konta.",
+    "changeOwnPassword": "Zmień własne hasło",
+    "changePassword": "Zmień hasło",
+    "cancel": "Anuluj",
+    "passwordChangedSuccess": "Hasło zostało pomyślnie zmienione!"
+  },
+  "error": {
+    "changePasswordFailed": "Nie udało się zmienić hasła. Sprawdź, czy stare hasło i wersja danych są poprawne.",
+    "concurrent.update": "Dane zostały zmodyfikowane w tle. Spróbuj ponownie.",
+    "password.same.as.old": "Nowe hasło nie może być takie samo jak stare!",
+    "password.invalid.old": "Podane stare hasło jest nieprawidłowe.",
+    "password.already.used": "Zaproponowane hasło było już używane na tym koncie w przeszłości."
+  },
+  "emailChange": {
+    "main": {
+      "breadcrumb": "Zmiana adresu e-mail",
+      "title": "Zmień adres e-mail",
+      "backToProfile": "Powrót",
+      "success": {
+        "title": "Sprawdź swoją skrzynkę mailową",
+        "description": "Na Twój obecny adres e-mail został wysłany link do zmiany adresu na inny. Kliknij w niego w celu dokończenia akcji.",
+        "timeLimit": "Link jest ważny przez 10 minut.",
+        "backButton": "Powrót"
+      },
+      "form": {
+        "title": "Zmień swój adres e-mail",
+        "subtitle": "Zmiana adresu e-mail wymaga weryfikacji dwuetapowej poprzez link wysłany na obecną skrzynkę.",
+        "description1": "Po kliknięciu przycisku, system wyśle na Twój ",
+        "descriptionBold": "obecny adres e-mail",
+        "description2": "link do zmiany adresu.",
+        "submitButton": "Wyślij link do zmiany adresu e-mail"
+      },
+      "error": {
+        "default": "Wystąpił błąd podczas próby zmiany adresu e-mail.",
+        "unexpected": "Wystąpił nieoczekiwany błąd."
+      },
+      "resendButton": "Wyślij ponownie",
+      "resendSuccess": "Wysłano ponownie"
+    },
+    "confirm": {
+      "invalidLink": {
+        "title": "Link jest nieprawidłowy",
+        "description": "Link jest nieprawidłowy lub wygasł spróbuj ponownie."
+      },
+      "success": {
+        "title": "E-mail został zmieniony",
+        "description": "Twój adres e-mail został pomyślnie zaktualizowany."
+      },
+      "form": {
+        "title": "Wprowadź nowy adres e-mail",
+        "subtitle": "W celu zmiany adresu e-mail wprowadź nowy adres oraz potwierdź operację aktualnym hasłem do konta.",
+        "newEmailLabel": "Nowy adres E-mail",
+        "passwordLabel": "Obecne hasło",
+        "submitButton": "Potwierdź zmianę adresu e-mail"
+      },
+      "backButton": "Powrót",
+      "error": {
+        "wrongCredentials": "Nieprawidłowe poświadczenia do konta.",
+        "expired": "Link wygasł lub jest nieprawidłowy.",
+        "unexpected": "Wystąpił nieoczekiwany błąd."
+      }
+    },
+    "revert": {
+      "loading": "Przywracanie adresu e-mail",
+      "success": {
+        "title": "Poprzedni adres e-mail przywrócony",
+        "description": "Poprzedni adres e-mail został pomyślnie przywrócony do konta."
+      },
+      "error": {
+        "title": "Błąd podczas przywracania adresu email",
+        "description": "Link przywracający jest nieważny, został użyty lub wygasł."
+      }
+    }
+  },
+  "passwordReset": {
+    "confirm": {
+      "invalidLinkTitle": "Nieprawidłowy link",
+      "invalidLinkDesc": "Ten link do zresetowania hasła jest nieprawidłowy lub nie zawiera wymaganego tokenu bezpieczeństwa.",
+      "requestNewLink": "Poproś o nowy link",
+      "successTitle": "Hasło zostało zaktualizowane",
+      "successDesc": "Twoje hasło zostało pomyślnie zmienione. Możesz teraz zalogować się używając nowych danych.",
+      "returnToLogin": "Wróć do logowania",
+      "title": "Utwórz nowe hasło",
+      "subtitle": "Proszę wprowadzić poniżej nowe hasło.",
+      "newPassword": "Nowe hasło",
+      "confirmPassword": "Potwierdź hasło",
+      "submit": "Zresetuj hasło",
+      "backToLogin": "Powrót do logowania",
+      "errorExpired": "Nie udało się zresetować hasła. Link mógł wygasnąć lub został już użyty.",
+      "errorUnexpected": "Wystąpił nieoczekiwany błąd."
+    },
+    "init": {
+      "successTitle": "Sprawdź swoją skrzynkę",
+      "successDesc1": "Wysłaliśmy link do zresetowania hasła na adres ",
+      "successDesc2": ". Proszę sprawdź swoją skrzynkę odbiorczą oraz folder SPAM.",
+      "returnToLogin": "Wróć do logowania",
+      "title": "Zresetuj hasło",
+      "subtitle": "Wprowadź swój adres e-mail, a my wyślemy Ci bezpieczny link do zresetowania hasła.",
+      "email": "E-mail",
+      "submit": "Wyślij link resetujący",
+      "backToLogin": "Powrót do logowania",
+      "errorSend": "Wystąpił błąd podczas wysyłania linku resetującego.",
+      "errorUnexpected": "Wystąpił nieoczekiwany błąd.",
+      "codeLogin": "Zaloguj się jednorazowym kodem"
+    }
+  },
+  "header": {
+    "title": "System Antyplagiatowy",
+    "og nazwa wraca": "wielkie pozdro",
+    "subtitle": "Politechnika Łódzka",
+    "dashboard": "Panel Główny",
+    "userManagement": "Zarządzanie Użytkownikami",
+    "defaultUser": "Użytkownik",
+    "defaultGuest": "Gość",
+    "logout": "Wyloguj się",
+    "settings": {
+      "name": "Ustawienia systemowe",
+      "language": "Język",
+      "activeRole": "Aktywna rola"
+    }
+  },
+  "about": {
+    "title": "aleikum asalam"
+  },
+  "validation": {
+    "required": "To pole jest wymagane",
+    "email": {
+      "invalid": "Proszę podać poprawny adres e-mail (np. nazwa@edu.p.lodz.pl)"
+    },
+    "password": {
+      "minLength": "Hasło musi zawierać co najmniej 12 znaków",
+      "maxLength": "Hasło może zawierać maksymalnie 64 znaki",
+      "uppercase": "Hasło musi zawierać co najmniej jedną wielką literę",
+      "lowercase": "Hasło musi zawierać co najmniej jedną małą literę",
+      "number": "Hasło musi zawierać co najmniej jedną cyfrę",
+      "specialChar": "Hasło musi zawierać co najmniej jedną wielką literę i znak specjalny",
+      "confirmRequired": "Proszę potwierdzić swoje hasło",
+      "mismatch": "Hasła nie są identyczne"
+    },
+    "user": {
+      "nameMin": "Imię musi zawierać co najmniej 3 znaki",
+      "nameMax": "Imię nie może przekraczać 32 znaków",
+      "nameFormat": "Imię musi zaczynać się od litery i może zawierać tylko litery, spacje, myślniki i apostrofy",
+      "surnameMin": "Nazwisko musi zawierać co najmniej 3 znaki",
+      "surnameMax": "Nazwisko nie może przekraczać 32 znaków",
+      "surnameFormat": "Nazwisko musi zaczynać się od litery i może zawierać tylko litery, spacje, myślniki i apostrofy",
+      "loginMin": "Login musi zawierać co najmniej 3 znaki",
+      "loginMax": "Login nie może przekraczać 32 znaków",
+      "loginFormat": "Login może zawierać tylko litery i cyfry"
+    },
+    "terms": {
+      "required": "Musisz zaakceptować regulamin i warunki"
+    },
+    "emailCode": {
+      "required": "Kod jest wymagany",
+      "length": "Kod musi składać się dokładnie z 10 znaków",
+      "format": "Kod może zawierać tylko litery i cyfry"
+    }
+  },
+  "sessionModal": {
+    "title": "Sesja wkrótce wygaśnie",
+    "desc1": "Ze względów bezpieczeństwa zostaniesz wylogowany za ",
+    "desc2": " sekund. Czy chcesz przedłużyć swoją sesję?",
+    "logout": "Wyloguj",
+    "extend": "Przedłuż sesję"
+  },
+  "sidebar": {
+    "userManagement": "Zarządzanie użytkownikami",
+    "subjectList": "Moje przedmioty",
+    "reportList": "Lista raportów",
+    "globalRules": "Szablony reguł",
+    "studentScan": "Sprawdź swój kod",
+    "changeSubjectManager": "Zmień kierownika przedmiotu",
+    "auditLogs": "Historia zmian"
+  },
+  "subjectUsers": {
+    "title": "Lista studentów dla przedmiotu",
+    "subtitle": "Przeglądaj listę studentów oraz należące do nich repozytoria i średni wskaźnik plagiatu.",
+    "searchPlaceholder": "Szukaj...",
+    "noResults": "Brak studentów przypisanych do tego przedmiotu.",
+    "table": {
+      "firstName": "Imię",
+      "surname": "Nazwisko",
+      "repoName": "Nazwa repozytorium",
+      "plagiarism": "Średnia wartość wskaźniku podobieństwa",
+      "noData": "Brak wyników skanowania"
+    }
+  },
+  "globalRules": {
+    "error": {
+      "fetch": "Nie udało się pobrać szablonów reguł",
+      "createFailed": "Akcja nie powiodła się. Sprawdź poprawność danych.",
+      "invalidTokens": "Minimalna liczba tokenów musi wynosić co najmniej 1",
+      "invalidTickets": "Liczba nie może być ujemna",
+      "updateFailed": "Aktualizacja nie powiodła się. Spróbuj ponownie."
+    },
+    "add": {
+      "title": "Dodaj nową regułę",
+      "submit": "Utwórz regułę"
+    },
+    "edit": {
+      "title": "Edytuj regułę",
+      "submit": "Zapisz zmiany"
+    },
+    "editConfirmTitle": "Potwierdź edycję",
+    "editConfirmDescription": "Czy na pewno chcesz zapisać wprowadzone zmiany w tej regule?",
+    "form": {
+      "raportLevelLabel": "Poziom widoczności raportu",
+      "studentTicketsLabel": "Maksymalna liczba zgłoszeń na studenta",
+      "minTokensLabel": "Minimalna liczba tokenów dopasowania",
+      "normalizationLabel": "Włącz normalizację"
+    },
+    "table": {
+      "raportLevel": "Poziom widoczności raportu",
+      "studentTickets": "Ilość zgłoszeń na studenta",
+      "minTokens": "Min. dopasowanie tokenów (ziarno)",
+      "normalization": "Normalizacja",
+      "actions": "Akcje"
+    },
+    "noResults": "Brak szablonów reguł",
+    "levels": {
+      "NOTHING": "Nic",
+      "ONLY_PERCENTAGES": "Tylko procenty",
+      "ONLY_HIGHEST_PERCENT": "Tylko Najwyższe podobieństwo"
+    },
+    "subject": {
+      "create": {
+        "title": "Utwórz nowy przedmiot"
+      },
+      "name": "Nazwa przedmiotu",
+      "organizationName": "Nazwa organizacji na Gitea",
+      "edition": "Edycja (np. 2026)",
+      "giteaURL": "Adres URL Gitea",
+      "subjectDescription": "Opis przedmiotu",
+      "templateId": "Szablon reguł (opcjonalnie)",
+      "template": {
+        "none": "-- Brak (Własna konfiguracja poniżej) --"
+      },
+      "manualRules": {
+        "title": "Ręczna konfiguracja reguł"
+      },
+      "rules": {
+        "studentTicketCount": "Limit zgłoszeń na studenta",
+        "minimumTokensMatch": "Minimalne dopasowanie tokenów",
+        "enableNormalization": "Włącz normalizację kodu"
+      },
+      "info": {
+        "templateActive": "Reguły weryfikacji zostaną skopiowane automatycznie z wybranego szablonu."
+      }
+    },
+    "deleteTitle": "Usuń szablon reguł",
+    "deleteConfirmation": "Czy na pewno chcesz usunąć ten szablon reguł? Spowoduje to anulowanie i usunięcie wszystkich powiązanych zaplanowanych sprawdzeń.",
+    "deleteSuccess": "Szablon reguł został pomyślnie usunięty.",
+    "deleteError": "Wystąpił błąd podczas usuwania szablonu reguł.",
+    "deleteErrorNotFound": "Nie znaleziono reguły. Mogła zostać już usunięta.",
+    "conflictError": "Dane zostały zmodyfikowane przez innego użytkownika. Odśwież widok i spróbuj ponownie."
+  },
+  "reportList": {
+    "title": "Moje raporty",
+    "sub": "Przeglądaj i zarządzaj raportami analiz akademickiej integralności spośród wszystkich dostępnych przedmiotów.",
+    "refresh": "Odśwież",
+    "pagination": {
+      "showing": "Pokazuje",
+      "to": "do",
+      "of": "z",
+      "users": "raportów",
+      "page": "Strona",
+      "prev": "Poprzednia",
+      "next": "Następna"
+    },
+    "list": {
+      "subject": "Przedmiot",
+      "creation_date": "Utworzono",
+      "avg": "Średnie podobieństwo",
+      "action": "Akcja",
+      "notFound": "Nie znaleziono żadnych raportów",
+      "delete": "Usuń",
+      "viewDetails": "Pokaż szczegóły raportu"
+    }
+  },
+  "studentReportList": {
+    "title": "Moje raporty",
+    "sub": "Przeglądaj swoje raporty antyplagiatowe ze wszystkich przypisanych przedmiotów.",
+    "refresh": "Odśwież",
+    "list": {
+      "subject": "Przedmiot / Tag",
+      "creation_date": "Data utworzenia",
+      "avg": "Średnie podobieństwo",
+      "action": "Akcje",
+      "notFound": "Obecnie nie masz dostępnych raportów do wglądu.",
+      "view": "Zobacz raport"
+    },
+    "pagination": {
+      "showing": "Pokazano",
+      "of": "z"
+    }
+  },
+  "studentReportDetails": {
+    "back": "Wróć do listy",
+    "privacyNotice": "Ten widok został zanonimizowany. Zgodnie z polityką systemu antyplagiatowego, studenci nie mają wglądu w kod źródłowy - prezentowane są wyłącznie zanonimizowane statystyki procentowe.",
+    "hiddenTitle": "Wyniki ukryte",
+    "hiddenDesc": "Prowadzący wyłączył możliwość podglądu szczegółów dla tego raportu. Jeśli masz pytania, skontaktuj się z wykładowcą.",
+    "noMatches": "Brak znaczących podobieństw",
+    "noMatchesSub": "System nie wykrył plagiatu w Twoim repozytorium w tym raporcie.",
+    "matchesTitle": "Znalezione podobieństwa Twojego kodu",
+    "comparedWith": "Porównano z:",
+    "anonymized": "Repozytorium Innego Studenta",
+    "metrics": {
+      "studentSimilarity": "Ilość Twojego kodu w obcym repozytorium",
+      "otherSimilarity": "Ilość obcego kodu w Twoim repozytorium",
+      "average": "Średnie podobieństwo repozytoriów"
+    }
+  },
+  "studentScan": {
+    "title": "Sprawdź swój kod",
+    "sub": "Sprawdź swój kod względem potencjalnego plagiatu.",
+    "form": {
+      "tag": "Tag testowy",
+      "tagPlaceholder": "np. IAS64",
+      "submit": "Rozpocznij skanowanie",
+      "scanning": "Skanowanie...",
+      "repository": "Repozytorium",
+      "repositoryPlaceholder": "— wybierz repozytorium —",
+      "noRepositories": "Brak przypisanych do użytkownika repozytoriów.",
+      "scansUsed": "Ilość wykonanych skanowań",
+      "studentTag": "Nadany tag testowy",
+      "studentTagPlaceholder": "Podaj tag, którym został oznaczony zamieszczony kod",
+      "taskTag": "Tag sprawdzanego zadania",
+      "taskTagPlaceholder": "np. zadanie1_ias64"
+    },
+    "result": {
+      "title": "Wynik skanowania",
+      "tag": "Tag",
+      "subject": "Przedmiot",
+      "scannedAt": "Zeskanowano",
+      "matches": "Dopasowania",
+      "noMatches": "Brak dopasowań",
+      "similarity": "Podobieństwo",
+      "matchedLines": "Pasujące linie kodu",
+      "openReport" : "Otwórz raport"
+    },
+    "errors": {
+      "noTickets": "Brak dostępnych skanowań kodu dla tego repozytorium.",
+      "accessDenied": "Brak dostępu do tego repozytorium.",
+      "notFound": "Nie znaleziono repozytorium.",
+      "optimisticLock": "Wystąpił błąd, odśwież stronę i spróbuj ponownie.",
+      "base": "Wystąpił błąd podczas skanowania."
+    },
+    "history": {
+      "title": "Historia skanowań",
+      "empty": "Brak poprzednich skanowań kodu."
+    }
+  },
+  "subject": {
+    "deleteVersionError": "Błąd: Brak wersji przedmiotu (versionHash). Odśwież stronę.",
+    "manager": {
+      "change": {
+        "title": "Zmień kierownika przedmiotu",
+        "submit": "Zmień kierownika"
+      },
+      "subtitle": "Zarządzaj przypisaniem głównego kierownika do wybranego przedmiotu. Wpisz ścisły login użytkownika.",
+      "selectSubject": "Wybierz przedmiot",
+      "selectPlaceholder": "Wybierz przedmiot",
+      "selectNewManager": "Wybierz nowego kierownika",
+      "selectFirst": "Najpierw wybierz przedmiot",
+      "selectFromList": "Wybierz z przypisanej kadry",
+      "currentRole": "(Obecnie: {{role}})",
+      "loginInput": "Wpisz login nowego kierownika",
+      "loginPlaceholder": "np. jkowalski",
+      "teacherFound": "Poprawny identyfikator. Możesz go przypisać.",
+      "warning": "Akcja spowoduje natychmiastowe odebranie praw własności obecnemu prowadzącemu. Opcja zapisu odblokuje się po poprawnym zweryfikowaniu loginu w tle.",
+      "success": "Pomyślnie przypisano nowego kierownika do przedmiotu!",
+      "error": {
+        "fetchSubjects": "Nie udało się pobrać listy przedmiotów.",
+        "fetchTeachers": "Nie udało się pobrać listy kadry.",
+        "noCandidates": "Ten przedmiot nie ma przypisanych dodatkowych nauczycieli gotowych do przejęcia roli kierownika.",
+        "notATeacher": "Nie znaleziono nauczyciela o podanym loginie.",
+        "noSubjectSelected": "Proszę wybrać przedmiot.",
+        "notVerified": "Nie wprowadzono poprawnego loginu nauczyciela.",
+        "notFound": "Wskazany użytkownik nie posiada ról nauczycielskich lub przedmiot nie istnieje.",
+        "conflict": "Dane przedmiotu zostały zmodyfikowane w międzyczasie. Odśwież stronę i spróbuj ponownie.",
+        "forbidden": "Brak uprawnień do zmiany kierownika tego przedmiotu.",
+        "unexpected": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+      }
+    },
+    "translation": "Pokaż tłumaczenie",
+    "list": {
+      "title": "Zarządzane Przedmioty",
+      "description": "Przeglądaj swoje przedmioty i zarządzaj w nich regułami antyplagiatowymi oraz organizacjami w Gitea.",
+      "noDescription": "Brak opisu przedmiotu.",
+      "role": {
+        "student": "Panel Studenta / Moje Przedmioty",
+        "teacher": "Panel Prowadzącego / Moje Przedmioty"
+      },
+      "tabs": {
+        "active": "Aktywne Kursy",
+        "archived": "Zarchiwizowane"
+      },
+      "btn": {
+        "create": "Utwórz Przedmiot"
+      },
+      "empty": "Brak przedmiotów w tej kategorii.",
+      "card": {
+        "archived": "Archiwalny",
+        "pending": "Oczekuje",
+        "noScanPlanned": "Brak zaplanowanych skanów",
+        "nextScan": "Następny skan",
+        "exampleImage": "[ Przykładowe zdjęcie ]",
+        "btn": {
+          "manage": "Zarządzaj kursem",
+          "stats": "Statystyki",
+          "view": "Wyświetl",
+          "students": "Studenci",
+          "studentsTitle": "Pokaż listę studentów"
+        },
+        "status": {
+          "archived": "Zarchiwizowany",
+          "pending": "Oczekuje",
+          "noScanPlanned": "Brak zaplanowanych skanów"
+        }
+      },
+      "fetchError": "Wystąpił błąd podczas pobierania."
+    },
+    "details": {
+      "fetchError": "Błąd pobierania danych.",
+      "notFound": "Nie znaleziono przedmiotu.",
+      "breadcrumb": "Zarządzanie Kursem",
+      "edition": "Edycja",
+      "organization": "Organizacja Gitea",
+      "editionLabel": "Edycja:",
+      "organizationLabel": "Organizacja:",
+      "repoHeader": "Twoje Repozytorium",
+      "availableTickets": "Dostępne tokeny skanowań:",
+      "runScanBtn": "Wykonaj skan kodu",
+      "noRepoAssigned": "Nie jesteś przypisany do żadnego repozytorium w tym przedmiocie.",
+      "reportsHeader": "Widoczność Raportów",
+      "reportLevelLabel": "Poziom dostępu do wyników:",
+      "goToReportsBtn": "Przejdź do moich raportów",
+      "noDescription": "Brak opisu przedmiotu.",
+      "archivedWarning": "Ten przedmiot jest zarchiwizowany. Uruchamianie skanowań, usuwanie raportów oraz edycja są zablokowane.",
+      "studentBreadcrumb": "Szczegóły przedmiotu",
+      "studentArchivedWarning": "Ten przedmiot jest zarchiwizowany. Wykonywanie nowych skanów z Twojego repozytorium jest zablokowane.",
+      "syncError": "Błąd komunikacji z platformą Gitea podczas synchronizacji.",
+      "syncGitea": "Odśwież z Gitea",
+      "actions": {
+        "schedule": "Harmonogram",
+        "edit": "Edytuj Przedmiot",
+        "analyze": "Uruchom Analizę",
+        "statistics": "Statystyki",
+        "settings": "Ustawienia Archiwum"
+      },
+      "stats": {
+        "students": "LICZBA STUDENTÓW",
+        "repos": "AKTYWNE REPOZYTORIA",
+        "pending": "PRZEPROWADZONO ANALIZ",
+        "similarity": "ŚREDNIE PODOBIEŃSTWO"
+      },
+      "reports": {
+        "title": "Ostatnie Raporty",
+        "viewAll": "Zobacz wszystkie →",
+        "report": "Raport",
+        "reposCount": "repozytoriów studenckich",
+        "modalTitle": "Wszystkie Raporty Antyplagiatowe",
+        "modalReposCount": "Repozytoria",
+        "repositories": "Przeskanowano repozytoriów:",
+        "empty": "Brak wygenerowanych raportów."
+      },
+      "repos": {
+        "title": "Aktywne Repozytoria Studenckie",
+        "refresh": "Odśwież",
+        "filter": "Filtruj",
+        "sort": "Sortuj po dacie",
+        "lastCommit": "Ostatni commit",
+        "contributors": "Użytkownicy",
+        "viewCode": "Podgląd Kodu",
+        "analyze": "Analizuj",
+        "tickets": "Wykorzystane skanowania",
+        "empty": "Brak zsynchronizowanych repozytoriów. Kliknij \"Odśwież z Gitea\", aby pobrać nowości.",
+        "noUsers": "Brak przypisanych członków"
+      },
+      "status": {
+        "clean": "Kod czysty",
+        "alert": "Wykryto podobieństwo",
+        "pending": "Oczekuje na weryfikację"
+      },
+      "noAccess": "Brak uprawnień do przeglądania szczegółowych danych kursu.",
+      "visibility": {
+        "ONLY_PERCENTAGES": {
+          "label": "Tylko procenty",
+          "description": "Widzisz wyniki procentowe podobieństwa dla wszystkich swoich skanów. Dostęp do dokładnego porównania kodu źródłowego jest zablokowany."
+        },
+        "ONLY_HIGHEST_PERCENT": {
+          "label": "Tylko najwyższy procent",
+          "description": "Widzisz wyłącznie swój najwyższy wynik procentowy podobieństwa. Pozostałe skany oraz dokładne porównania kodu są zablokowane."
+        },
+        "NOTHING": {
+          "label": "Nic",
+          "description": "Wszystkie wygenerowane raporty są dla Ciebie ukryte. Wyłącznie kadra prowadząca przedmiot posiada pełny wgląd w analizę."
+        }
+      }
+    },
+    "student": {
+      "title": "Moje przedmioty",
+      "description": "Przeglądaj swoje przedmioty i wykonuj własne skanowania antyplagiatowe"
+    },
+    "analysis": {
+      "modal": {
+        "title": "Uruchom nową analizę",
+        "description": "Wprowadź odpowiedni tag żeby uruchomić analizę wszystkich repozytoriów które posiadają dany tag.",
+        "tagLabel": "Tag gitea",
+        "tagPlaceholder": "np. v67",
+        "submit": "Rozpocznij analizę"
+      }
+    },
+    "delete": "Usuń przedmiot",
+    "deleteConfirmTitle": "Czy na pewno chcesz usunąć ten przedmiot?",
+    "deleteConfirmMessage": "Ta operacja jest nieodwracalna. Z systemu zostaną trwale usunięte wszystkie dane przedmiotu, repozytoria oraz pliki raportów.",
+    "deleteGiteaOption": "Usuń również powiązaną organizację na serwerze Gitea",
+    "deleteSuccess": "Przedmiot został pomyślnie usunięty.",
+    "deleteError": "Wystąpił błąd podczas usuwania przedmiotu.",
+    "deleteConflict": "Dane przedmiotu zostały zmodyfikowane przez innego użytkownika. Odśwież stronę i spróbuj ponownie.",
+    "deleteForbidden": "Nie masz uprawnień do usunięcia tego przedmiotu."
+  },
+  "schedule": {
+    "modal": {
+      "title": "Zaplanuj analizę",
+      "desc": "Określ datę wykonania oraz wskaż tag repozytorium do sprawdzenia.",
+      "deadline": "Termin wykonania",
+      "giteaTag": "Tag Gitea",
+      "tagPlaceholder": "np. lab-01",
+      "errorPast": "Nie można zaplanować analizy w przeszłości."
+    },
+    "subtitle": "Zarządzaj zaplanowanymi i wykonanymi zadaniami skanowania repozytoriów.",
+    "date": "Data zaplanowania",
+    "tag": "Tag analizy",
+    "statusLabel": "Status",
+    "status": {
+      "all": "Wszystkie",
+      "planned": "Oczekuje",
+      "executed": "Wykonano",
+      "failed": "Nie powiódł się"
+    },
+    "empty": "Brak zaplanowanych analiz.",
+    "error": {
+      "fetch": "Nie udało się pobrać harmonogramu."
+    },
+    "sort": {
+      "toggle": "Zmień kierunek sortowania",
+      "newest": "Najnowsze",
+      "oldest": "Najstarsze"
+    },
+    "deleteScheduleTitle": "Usuń harmonogram",
+    "deleteScheduleConfirm": "Czy na pewno chcesz usunąć ten harmonogram?",
+    "deleteScheduleError": "Wystąpił błąd podczas usuwania harmonogramu.",
+    "deleteScheduleErrorNotFound": "Nie znaleziono harmonogramu. Mógł zostać już usunięty.",
+    "deleteScheduleConflict": "Dane harmonogramu zostały zmodyfikowane. Odśwież stronę i spróbuj ponownie.",
+    "actions": "Akcje"
+  },
+  "subjectEdit": {
+    "title": "Edytuj Przedmiot",
+    "subtitle": "Zaktualizuj metadane przedmiotu i parametry analizy.",
+    "generalInfo": "INFORMACJE OGÓLNE",
+    "nameLabel": "Nazwa Przedmiotu",
+    "descLabel": "Opis",
+    "coTeachers": "WSPÓŁPROWADZĄCY I UPRAWNIENIA",
+    "addTeacher": "Dodaj Prowadzącego",
+    "searchPlaceholder": "Szukaj po nazwisku lub emailu...",
+    "assignedStaff": "PRZYPISANA KADRA",
+    "errorEmptyName": "Nazwa przedmiotu nie może być pusta.",
+    "errorShortName": "Nazwa przedmiotu musi mieć przynajmniej 3 znaki.",
+    "errorLongDesc": "Opis przedmiotu jest za długi (maksymalnie 500 znaków).",
+    "confirmTitle": "Potwierdź modyfikację danych",
+    "confirmMessage": "Czy na pewno chcesz zapisać wprowadzone zmiany? Dotychczasowe dane biznesowe przedmiotu w bazie danych zostaną nadpisane.",
+    "archivedWarning": "Ten przedmiot jest zarchiwizowany. Odblokuj go na dole strony, aby edytować dane.",
+    "dangerZone": "STREFA NIEBEZPIECZNA",
+    "unarchiveSubject": "Przywróć przedmiot z archiwum",
+    "archiveSubject": "Zarchiwizuj przedmiot",
+    "unarchiveDesc": "Przywrócenie przedmiotu odblokuje możliwość edycji i skanowania.",
+    "archiveDesc": "Zarchiwizowanie zablokuje możliwość edycji, synchronizacji i uruchamiania nowych skanów.",
+    "unarchiveBtn": "Odarchiwizuj",
+    "archiveBtn": "Zarchiwizuj",
+    "defaultError": "Wystąpił błąd podczas operacji.",
+    "archiveError": "Wystąpił błąd podczas zmiany statusu archiwum.",
+    "roles": {
+      "OWNER": "Właściciel (Owner)",
+      "EDITOR": "Edytor (Edit Access)",
+      "VIEWER": "Obserwator (Read Only)"
+    },
+    "giteaAnalysis": "GITEA I ANALIZA",
+    "giteaUrl": "Adres URL Organizacji Gitea",
+    "tokens": "Tokeny dla Studentów",
+    "minTokens": "Minimalna zgodność tokenów",
+    "normalization": "Włącz normalizację (Normalization)",
+    "visibility": "Poziom Widoczności Raportu",
+    "levelPercentages": "Wszystkie Statystyki (Wszystkie porównania)",
+    "levelHighest": "Najwyższy wynik (Pojedyncze porówanie)",
+    "levelHidden": "Ukryty (Brak dostępu dla studenta)",
+    "cancel": "Anuluj",
+    "apply": "Zastosuj Zmiany",
+    "loading": "Zapisywanie...",
+    "errorEmpty": "Nazwa i URL nie mogą być puste.",
+    "success": "Przedmiot został zaktualizowany."
+  },
+  "subjectCreate": {
+    "breadcrumb": "Utwórz Przedmiot",
+    "title": "Utwórz Nowy Przedmiot",
+    "subtitle": "Wprowadź podstawowe informacje oraz skonfiguruj ustawienia analizy.",
+    "errorEmpty": "Wypełnij wszystkie wymagane pola (Nazwa, Organizacja, Edycja).",
+    "errorTemplate": "Wybierz szablon reguł z listy.",
+    "generalInfo": "Informacje Ogólne",
+    "nameLabel": "Nazwa Przedmiotu *",
+    "orgLabel": "Nazwa Organizacji Gitea *",
+    "editionLabel": "Edycja (Rok/Semestr) *",
+    "descLabel": "Opis Przedmiotu",
+    "rulesSection": "Reguły Oceniania i Analizy",
+    "visibilityLabel": "Poziom Widoczności Raportu",
+    "visibilityScore": "Tylko Wyniki Procentowe - student widzi jedynie procentowe dopasowanie",
+    "visibilityHighest": "Tylko Najwyższy Procent - student widzi tylko najwyższy wynik z całego raportu",
+    "visibilityHidden": "Ukryty - student nie widzi żadnych wyników analizy",
+    "jplagSettings": "Zaawansowane parametry skanera (JPlag)",
+    "modeManual": "Konfiguracja Ręczna",
+    "modeTemplate": "Użyj Szablonu",
+    "templateSelect": "Wybierz zapisany szablon parametrów",
+    "templateDefault": "-- Wybierz szablon z listy --",
+    "templateHelp": "Wybranie szablonu spowoduje automatyczne zaaplikowanie zapisanej w nim liczby tokenów oraz ustawień normalizacji.",
+    "tokensLabel": "Początkowe Tokeny",
+    "minTokensLabel": "Minimalna zgodność tokenów (%)",
+    "normalizationLabel": "Włącz normalizację kodu przed skanowaniem",
+    "scheduleSection": "Harmonogram Skanowania",
+    "scheduleTitle": "Zarządzanie Harmonogramem",
+    "scheduleDesc": "Opcje dodawania i konfiguracji automatycznych skanów w harmonogramie zostaną udostępnione w nadchodzących aktualizacjach systemu.",
+    "submitCreating": "Tworzenie...",
+    "submitButton": "Utwórz Przedmiot",
+    "errorShortName": "Nazwa przedmiotu musi mieć przynajmniej 3 znaki.",
+    "errorShortOrg": "Nazwa organizacji Gitea jest za krótka.",
+    "defaultError": "Wystąpił błąd podczas operacji.",
+    "noTemplates": "Brak zapisanych szablonów w bazie. Skonfiguruj reguły ręcznie.",
+    "templateOption": "Szablon: {{tickets}} tokenów (Dopasowanie: {{match}}%)",
+    "confirmTitle": "Potwierdź utworzenie przedmiotu",
+    "confirmMessage": "Czy na pewno chcesz utworzyć ten przedmiot? Akcja spowoduje nieodwracalne zapisanie nowych struktur biznesowych w relacyjnej bazie danych.",
+    "confirmAction": "Potwierdzam",
+    "addTeacher": "Dodaj Prowadzącego",
+    "searchPlaceholder": "Szukaj po nazwisku lub emailu...",
+    "addBtn": "Dodaj +",
+    "noResults": "Brak wyników",
+    "assignedStaff": "PRZYPISANA KADRA",
+    "noStaff": "Brak dodatkowych prowadzących. Zostaniesz przypisany jako Główny Właściciel.",
+    "roleOwner": "Właściciel",
+    "roleEditor": "Edytor",
+    "roleViewer": "Obserwator"
+  },
+  "report": {
+    "teacherDetailsTitle": "Szczegóły Raportu Antyplagiatowego",
+    "subject": "Przedmiot",
+    "tag": "Tag raportu",
+    "createdAt": "Wygenerowano",
+    "comparisonsList": "Wykryte podobieństwa",
+    "maxSimilarity": "Max. Podobieństwo",
+    "avgSimilarity": "Śr. Podobieństwo",
+    "longestMatch": "Najdłuższe dopasowanie (Tokeny)",
+    "noCodeAvailable": "// Kod niedostępny. Prawdopodobnie plik nie został poprawnie przesłany.",
+    "fileError": "Nie można załadować szczegółów raportu. Plik może być uszkodzony lub usunięty.",
+    "accessDenied": "Brak dostępu do tego raportu. Upewnij się, że jesteś przypisany do przedmiotu.",
+    "aiSummary": "Podsumowanie AI",
+    "summaryLoading": "Generowanie podsumowania…",
+    "summaryError": "Nie udało się wygenerować podsumowania. Spróbuj ponownie za chwilę.",
+    "notFound": "Raport o podanym ID nie istnieje.",
+    "fetchError": "Wystąpił błąd serwera podczas pobierania szczegółów raportu.",
+    "noComparisons": "Brak wykrytych podobieństw w tym raporcie.",
+    "averageSimilarity": "Średnie podobieństwo",
+    "similarity": "Podobieństwo",
+    "tooltipCodeFrom": "Procent kodu z",
+    "tooltipFoundIn": "który został znaleziony w kodzie",
+    "tooltipAsymmetry": "Liczby mogą nie być symetryczne ze względu na różne długości projektów.",
+    "repositories": "Repozytoria",
+    "selectRepositories": "Wybierz repozytoria z paska powyżej, aby zobaczyć kod.",
+    "files": "Pliki",
+    "totalTokens": "Suma tokenów",
+    "copiedFragments": "Ilość skopiowanych fragmentów",
+    "tokens": "tokenów",
+    "tokensIn": "w",
+    "fragments": "frgm.",
+    "noFiles": "Brak plików do wyświetlenia",
+    "noCode": "// Brak kodu",
+    "tokensLabel": "tokenów",
+    "fragmentsLabel": "frgm."
+  },
+  "notFound": {
+    "title": "Strona nie znaleziona",
+    "description": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "goBack": "Wróć",
+    "backToHome": "Wróć do strony głównej"
+  },
+  "success": {
+    "generic": "Operacja zakończyła się sukcesem."
+  },
+  "errors": {
+    "unauthorized": "Twoja sesja wygasła, proszę uwierzytelnić się ponownie.",
+    "networkDown": "Nie ma połączenia z serwerem.",
+    "notFound": "Nie znaleziono zasobu",
+    "generic": "Wystąpił błąd",
+    "forbidden": "Nie masz dostępu do danego zasobu.",
+    "conflict": "Wystąpił konflikt, odśwież stronę",
+    "serverError": "Wystąpił błąd serwera, spróbuj ponownie póżniej"
+  }
+}
